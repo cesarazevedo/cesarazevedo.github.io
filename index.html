@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>César Azevedo — IFRN</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      background: #0f1117;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 40px 16px;
+    }
+
+    /* Background subtle grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .profile {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 36px;
+    }
+
+    .avatar {
+      width: 88px;
+      height: 88px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -1px;
+      box-shadow: 0 0 0 3px rgba(139,92,246,.3);
+    }
+
+    .profile h1 {
+      color: #f1f5f9;
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: -.3px;
+    }
+
+    .profile .role {
+      color: #94a3b8;
+      font-size: .9rem;
+    }
+
+    .profile .email {
+      color: #64748b;
+      font-size: .82rem;
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .profile .email:hover { color: #94a3b8; }
+
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      text-decoration: none;
+      background: #1e2130;
+      border: 1px solid #2a2f45;
+      transition: transform .18s, border-color .18s, box-shadow .18s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+      background: var(--accent);
+      border-radius: 14px 0 0 14px;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent);
+      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+    }
+
+    .card-icon {
+      font-size: 1.6rem;
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--accent) 15%, transparent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .card-text { flex: 1; }
+
+    .card-title {
+      color: #f1f5f9;
+      font-size: .97rem;
+      font-weight: 600;
+    }
+
+    .card-sub {
+      color: #64748b;
+      font-size: .8rem;
+      margin-top: 2px;
+    }
+
+    .card-arrow {
+      color: #334155;
+      font-size: 1rem;
+      transition: color .18s, transform .18s;
+    }
+    .card:hover .card-arrow {
+      color: var(--accent);
+      transform: translateX(3px);
+    }
+
+    .footer {
+      margin-top: 40px;
+      color: #2a2f45;
+      font-size: .75rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="profile">
+    <div class="avatar">CA</div>
+    <h1>César Azevedo</h1>
+    <span class="role">Professor · IFRN</span>
+    <a class="email" href="mailto:cesar.augusto@ifrn.edu.br">✉ cesar.augusto@ifrn.edu.br</a>
+  </div>
+
+  <div class="links">
+
+    <a class="card" href="https://cesarazevedo.github.io/infodigitais" target="_blank"
+       style="--accent: #3b82f6;">
+      <div class="card-icon">💻</div>
+      <div class="card-text">
+        <div class="card-title">Informática</div>
+        <div class="card-sub">Introdução à Informática</div>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+    <a class="card" href="https://cesarazevedo.github.io/rc" target="_blank"
+       style="--accent: #10b981;">
+      <div class="card-icon">🌐</div>
+      <div class="card-text">
+        <div class="card-title">Redes de Computadores</div>
+        <div class="card-sub">Fundamentos e protocolos</div>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+    <a class="card" href="https://cesarazevedo.github.io/so" target="_blank"
+       style="--accent: #8b5cf6;">
+      <div class="card-icon">🖥️</div>
+      <div class="card-text">
+        <div class="card-title">Sistemas Operacionais</div>
+        <div class="card-sub">Processos, memória e arquivos</div>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+    <a class="card" href="https://cesarazevedo.github.io/python" target="_blank"
+       style="--accent: #f59e0b;">
+      <div class="card-icon">🐍</div>
+      <div class="card-text">
+        <div class="card-title">Python</div>
+        <div class="card-sub">Programação com Python</div>
+      </div>
+      <span class="card-arrow">→</span>
+    </a>
+
+  </div>
+
+  <p class="footer">IFRN · Campus Natal Central</p>
+
+</body>
+</html>
