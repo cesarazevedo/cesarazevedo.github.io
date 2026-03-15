@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>César Azevedo — IFRN</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -204,6 +205,83 @@
       transform: translateX(3px);
     }
 
+    /* ── Copiar email ── */
+    .email-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .copy-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: .85rem;
+      color: var(--text-muted);
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: color .2s, background .2s;
+      line-height: 1;
+    }
+    .copy-btn:hover { color: var(--text-sub); background: var(--card-border); }
+
+    /* ── QR Code ── */
+    .qr-btn {
+      background: var(--toggle-bg);
+      border: 1px solid var(--toggle-border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .82rem;
+      color: var(--text-sub);
+      transition: background .3s, border-color .3s, color .2s;
+      box-shadow: 0 2px 8px var(--shadow);
+      margin-top: 10px;
+    }
+    .qr-btn:hover { color: var(--text-h); }
+
+    .qr-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-overlay.open { display: flex; }
+
+    .qr-box {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 20px;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,.4);
+    }
+    .qr-box p {
+      color: var(--text-sub);
+      font-size: .85rem;
+    }
+    .qr-box canvas { border-radius: 10px; }
+    .qr-close {
+      background: none;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 6px 18px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: .82rem;
+      transition: color .2s;
+    }
+    .qr-close:hover { color: var(--text-h); }
+
     .footer {
       margin-top: 40px;
       color: var(--footer);
@@ -224,7 +302,11 @@
     <div class="avatar">CA</div>
     <h1>César Azevedo</h1>
     <span class="role">Professor · IFRN</span>
-    <a class="email" href="mailto:cesar.augusto@ifrn.edu.br">✉ cesar.augusto@ifrn.edu.br</a>
+    <div class="email-wrap">
+      <a class="email" href="mailto:cesar.augusto@ifrn.edu.br">✉ cesar.augusto@ifrn.edu.br</a>
+      <button class="copy-btn" onclick="copyEmail(this)" title="Copiar e-mail">⧉</button>
+    </div>
+    <button class="qr-btn" onclick="openQR()">⬛ QR Code da página</button>
   </div>
 
   <div class="links">
@@ -273,6 +355,15 @@
 
   <p class="footer">IFRN · Campus Natal Central</p>
 
+  <!-- Modal QR -->
+  <div class="qr-overlay" id="qr-overlay" onclick="closeQR(event)">
+    <div class="qr-box">
+      <p>Escaneie para acessar esta página</p>
+      <canvas id="qr-canvas"></canvas>
+      <button class="qr-close" onclick="closeQR()">Fechar</button>
+    </div>
+  </div>
+
   <script>
     // Carrega preferência salva ou usa escuro como padrão
     const saved = localStorage.getItem('theme') || 'dark';
@@ -281,6 +372,32 @@
     function toggleTheme() {
       const current = document.documentElement.getAttribute('data-theme');
       setTheme(current === 'dark' ? 'light' : 'dark');
+    }
+
+    // Copiar e-mail
+    function copyEmail(btn) {
+      navigator.clipboard.writeText('cesar.augusto@ifrn.edu.br');
+      btn.textContent = '✓';
+      setTimeout(() => btn.textContent = '⧉', 2000);
+    }
+
+    // QR Code
+    function openQR() {
+      const overlay = document.getElementById('qr-overlay');
+      const canvas  = document.getElementById('qr-canvas');
+      overlay.classList.add('open');
+      QRCode.toCanvas(canvas, 'https://cesarazevedo.github.io', {
+        width: 200,
+        margin: 2,
+        color: {
+          dark:  document.documentElement.getAttribute('data-theme') === 'dark' ? '#f1f5f9' : '#0f172a',
+          light: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1e2130' : '#ffffff'
+        }
+      });
+    }
+    function closeQR(e) {
+      if (!e || e.target === document.getElementById('qr-overlay') || !e.target.closest)
+        document.getElementById('qr-overlay').classList.remove('open');
     }
 
     function setTheme(theme) {
