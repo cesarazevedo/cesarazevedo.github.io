@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>César Azevedo — IFRN</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -269,7 +268,7 @@
       color: var(--text-sub);
       font-size: .85rem;
     }
-    .qr-box canvas { border-radius: 10px; }
+    .qr-box img { border-radius: 10px; width: 200px; height: 200px; }
     .qr-close {
       background: none;
       border: 1px solid var(--card-border);
@@ -359,7 +358,7 @@
   <div class="qr-overlay" id="qr-overlay" onclick="closeQR(event)">
     <div class="qr-box">
       <p>Escaneie para acessar esta página</p>
-      <canvas id="qr-canvas"></canvas>
+      <img id="qr-img" src="" alt="QR Code" />
       <button class="qr-close" onclick="closeQR()">Fechar</button>
     </div>
   </div>
@@ -384,16 +383,12 @@
     // QR Code
     function openQR() {
       const overlay = document.getElementById('qr-overlay');
-      const canvas  = document.getElementById('qr-canvas');
+      const img     = document.getElementById('qr-img');
+      const isDark  = document.documentElement.getAttribute('data-theme') === 'dark';
+      const fg      = isDark ? 'f1f5f9' : '0f172a';
+      const bg      = isDark ? '1e2130' : 'ffffff';
+      img.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://cesarazevedo.github.io&color=${fg}&bgcolor=${bg}&margin=10`;
       overlay.classList.add('open');
-      QRCode.toCanvas(canvas, 'https://cesarazevedo.github.io', {
-        width: 200,
-        margin: 2,
-        color: {
-          dark:  document.documentElement.getAttribute('data-theme') === 'dark' ? '#f1f5f9' : '#0f172a',
-          light: document.documentElement.getAttribute('data-theme') === 'dark' ? '#1e2130' : '#ffffff'
-        }
-      });
     }
     function closeQR(e) {
       if (!e || e.target === document.getElementById('qr-overlay') || !e.target.closest)
