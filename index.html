@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,29 +7,82 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    /* ── Tokens por tema ── */
+    [data-theme="dark"] {
+      --bg:         #0f1117;
+      --card-bg:    #1e2130;
+      --card-border:#2a2f45;
+      --text-h:     #f1f5f9;
+      --text-sub:   #94a3b8;
+      --text-muted: #64748b;
+      --arrow:      #334155;
+      --footer:     #2a2f45;
+      --grid-line:  rgba(255,255,255,.03);
+      --shadow:     rgba(0,0,0,.35);
+      --toggle-bg:  #1e2130;
+      --toggle-border: #2a2f45;
+    }
+    [data-theme="light"] {
+      --bg:         #f0f4f8;
+      --card-bg:    #ffffff;
+      --card-border:#dde3ec;
+      --text-h:     #0f172a;
+      --text-sub:   #475569;
+      --text-muted: #94a3b8;
+      --arrow:      #cbd5e1;
+      --footer:     #94a3b8;
+      --grid-line:  rgba(0,0,0,.04);
+      --shadow:     rgba(0,0,0,.10);
+      --toggle-bg:  #ffffff;
+      --toggle-border: #dde3ec;
+    }
+
     body {
       min-height: 100vh;
-      background: #0f1117;
+      background: var(--bg);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       font-family: 'Segoe UI', system-ui, sans-serif;
       padding: 40px 16px;
+      transition: background .3s;
     }
 
-    /* Background subtle grid */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px);
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
       background-size: 40px 40px;
       pointer-events: none;
     }
 
+    /* ── Toggle ── */
+    .theme-toggle {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      background: var(--toggle-bg);
+      border: 1px solid var(--toggle-border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .82rem;
+      color: var(--text-sub);
+      transition: background .3s, border-color .3s, color .2s;
+      user-select: none;
+      box-shadow: 0 2px 8px var(--shadow);
+    }
+    .theme-toggle:hover { color: var(--text-h); }
+    .theme-toggle .icon { font-size: 1rem; }
+
+    /* ── Perfil ── */
     .profile {
       display: flex;
       flex-direction: column;
@@ -54,25 +107,28 @@
     }
 
     .profile h1 {
-      color: #f1f5f9;
+      color: var(--text-h);
       font-size: 1.4rem;
       font-weight: 600;
       letter-spacing: -.3px;
+      transition: color .3s;
     }
 
     .profile .role {
-      color: #94a3b8;
+      color: var(--text-sub);
       font-size: .9rem;
+      transition: color .3s;
     }
 
     .profile .email {
-      color: #64748b;
+      color: var(--text-muted);
       font-size: .82rem;
       text-decoration: none;
       transition: color .2s;
     }
-    .profile .email:hover { color: #94a3b8; }
+    .profile .email:hover { color: var(--text-sub); }
 
+    /* ── Cards ── */
     .links {
       display: flex;
       flex-direction: column;
@@ -88,9 +144,9 @@
       padding: 16px 20px;
       border-radius: 14px;
       text-decoration: none;
-      background: #1e2130;
-      border: 1px solid #2a2f45;
-      transition: transform .18s, border-color .18s, box-shadow .18s;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      transition: transform .18s, border-color .18s, box-shadow .18s, background .3s;
       position: relative;
       overflow: hidden;
     }
@@ -107,7 +163,7 @@
     .card:hover {
       transform: translateY(-2px);
       border-color: var(--accent);
-      box-shadow: 0 8px 24px rgba(0,0,0,.35);
+      box-shadow: 0 8px 24px var(--shadow);
     }
 
     .card-icon {
@@ -125,19 +181,21 @@
     .card-text { flex: 1; }
 
     .card-title {
-      color: #f1f5f9;
+      color: var(--text-h);
       font-size: .97rem;
       font-weight: 600;
+      transition: color .3s;
     }
 
     .card-sub {
-      color: #64748b;
+      color: var(--text-muted);
       font-size: .8rem;
       margin-top: 2px;
+      transition: color .3s;
     }
 
     .card-arrow {
-      color: #334155;
+      color: var(--arrow);
       font-size: 1rem;
       transition: color .18s, transform .18s;
     }
@@ -148,12 +206,19 @@
 
     .footer {
       margin-top: 40px;
-      color: #2a2f45;
+      color: var(--footer);
       font-size: .75rem;
+      transition: color .3s;
     }
   </style>
 </head>
 <body>
+
+  <!-- Botão de tema -->
+  <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
+    <span class="icon" id="theme-icon">☀️</span>
+    <span id="theme-label">Claro</span>
+  </button>
 
   <div class="profile">
     <div class="avatar">CA</div>
@@ -194,9 +259,9 @@
       <span class="card-arrow">→</span>
     </a>
 
-    <a class="card" href="https://cesarazevedo.github.io/python" target="_blank"
+    <a class="card" href="https://cesarazevedo.github.io/aplicadainformatica" target="_blank"
        style="--accent: #f59e0b;">
-      <div class="card-icon">🐍</div>
+      <div class="card-icon">⚡</div>
       <div class="card-text">
         <div class="card-title">Informática Aplicada</div>
         <div class="card-sub">Tecnologia em Energias Renováveis</div>
@@ -207,6 +272,25 @@
   </div>
 
   <p class="footer">IFRN · Campus Natal Central</p>
+
+  <script>
+    // Carrega preferência salva ou usa escuro como padrão
+    const saved = localStorage.getItem('theme') || 'dark';
+    setTheme(saved);
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      setTheme(current === 'dark' ? 'light' : 'dark');
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      const isDark = theme === 'dark';
+      document.getElementById('theme-icon').textContent  = isDark ? '☀️' : '🌙';
+      document.getElementById('theme-label').textContent = isDark ? 'Claro' : 'Escuro';
+    }
+  </script>
 
 </body>
 </html>
