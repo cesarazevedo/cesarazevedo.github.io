@@ -318,7 +318,7 @@
       <a class="email" href="mailto:cesar.augusto@ifrn.edu.br">✉ cesar.augusto@ifrn.edu.br</a>
       <button class="copy-btn" onclick="copyEmail(this)" title="Copiar e-mail">⧉</button>
     </div>
-    <span class="motto">Estudar é desconfortável. Demora muito pra se conseguir as coisas na vida.</span>
+    <span class="motto" id="motto"></span>
     <button class="qr-btn" onclick="openQR()">⬛ QR Code da página</button>
   </div>
 
@@ -434,6 +434,27 @@
   </div>
 
   <script>
+    const mottos = [
+      'Estudar é desconfortável.',
+      'Demora muito pra se conseguir as coisas na vida.',
+      'Ninguém se importa tanto quanto você imagina.',
+      'Disciplina ganha da motivação quase sempre.',
+      'Você não vai ter vontade na maioria dos dias — mesmo assim tem que fazer.',
+      'Resultados pequenos repetidos vencem talento preguiçoso.',
+      'Tempo perdido não volta, só acumula arrependimento.',
+      'Reclamar não muda absolutamente nada.',
+      'Se você não define prioridades, alguém define por você.',
+      'Descanso demais vira estagnação.',
+      'Errar faz parte — repetir o mesmo erro é escolha.',
+      'Conforto constante cobra um preço alto depois.',
+      'Você não precisa de mais informação, precisa agir com o que já sabe.',
+      'Comparação só serve pra te atrasar ou te frustrar.',
+      'A maioria desiste antes de ficar bom.',
+      'Ninguém vai "te salvar" — é responsabilidade sua.',
+      'Fazer o básico bem feito já te coloca na frente de muita gente.',
+    ];
+    document.getElementById('motto').textContent = mottos[Math.floor(Math.random() * mottos.length)];
+
     const saved = localStorage.getItem('theme') || 'dark';
     setTheme(saved);
 
