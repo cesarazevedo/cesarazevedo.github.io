@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Linux Cheat Sheet — César Azevedo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    [data-theme="dark"] {
+      --bg: #0f1117;
+      --card-bg: #1e2130;
+      --card-border: #2a2f45;
+      --text-h: #f1f5f9;
+      --text-sub: #94a3b8;
+      --text-muted: #64748b;
+      --grid-line: rgba(255,255,255,.03);
+      --shadow: rgba(0,0,0,.35);
+      --toggle-bg: #1e2130;
+      --toggle-border: #2a2f45;
+      --input-bg: #131720;
+      --row-hover: rgba(255,255,255,.03);
+      --row-alt: rgba(255,255,255,.015);
+      --code-bg: rgba(255,255,255,.06);
+      --footer: #2a2f45;
+    }
+    [data-theme="light"] {
+      --bg: #f0f4f8;
+      --card-bg: #ffffff;
+      --card-border: #dde3ec;
+      --text-h: #0f172a;
+      --text-sub: #475569;
+      --text-muted: #94a3b8;
+      --grid-line: rgba(0,0,0,.04);
+      --shadow: rgba(0,0,0,.10);
+      --toggle-bg: #ffffff;
+      --toggle-border: #dde3ec;
+      --input-bg: #f8fafc;
+      --row-hover: rgba(0,0,0,.025);
+      --row-alt: rgba(0,0,0,.012);
+      --code-bg: rgba(0,0,0,.06);
+      --footer: #94a3b8;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      transition: background .3s;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Fixed top bar ── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--card-border);
+      box-shadow: 0 2px 12px var(--shadow);
+      padding: 10px 20px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .back-btn {
+      background: none; border: 1px solid var(--card-border);
+      border-radius: 999px; padding: 5px 12px; cursor: pointer;
+      font-size: .8rem; color: var(--text-sub); text-decoration: none;
+      white-space: nowrap; transition: color .2s;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .back-btn:hover { color: var(--text-h); }
+
+    .topbar-title {
+      font-size: .95rem; font-weight: 700; color: var(--text-h);
+      display: flex; align-items: center; gap: 8px;
+      white-space: nowrap;
+    }
+    .topbar-title .badge {
+      font-size: .7rem; font-weight: 600; letter-spacing: .05em;
+      background: rgba(16,185,129,.15); color: #10b981;
+      border: 1px solid rgba(16,185,129,.3);
+      border-radius: 999px; padding: 2px 8px;
+    }
+
+    .search-wrap {
+      flex: 1; position: relative; max-width: 360px; margin-left: auto;
+    }
+    .search-wrap .icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); font-size: .9rem; pointer-events: none;
+    }
+    #search {
+      width: 100%; background: var(--input-bg);
+      border: 1px solid var(--card-border); border-radius: 10px;
+      padding: 8px 12px 8px 34px; color: var(--text-h);
+      font-family: inherit; font-size: .88rem; outline: none;
+      transition: border-color .2s;
+    }
+    #search:focus { border-color: #6366f1; }
+    #search::placeholder { color: var(--text-muted); }
+
+    .theme-toggle {
+      background: none; border: 1px solid var(--card-border);
+      border-radius: 999px; padding: 5px 12px; cursor: pointer;
+      font-size: .8rem; color: var(--text-sub);
+      display: flex; align-items: center; gap: 6px;
+      white-space: nowrap; transition: color .2s;
+    }
+    .theme-toggle:hover { color: var(--text-h); }
+
+    /* ── Filter chips ── */
+    .filters-wrap {
+      position: fixed; top: 57px; left: 0; right: 0; z-index: 99;
+      background: var(--bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 10px 20px;
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .chip {
+      border: 1px solid var(--card-border);
+      border-radius: 999px; padding: 4px 12px;
+      font-size: .75rem; font-weight: 600; cursor: pointer;
+      background: none; color: var(--text-muted);
+      transition: background .15s, border-color .15s, color .15s;
+      white-space: nowrap;
+    }
+    .chip:hover { color: var(--text-sub); }
+    .chip.active { color: #fff; border-color: transparent; }
+    .chip[data-cat="all"].active    { background: #6366f1; }
+    .chip[data-cat="nav"].active    { background: #3b82f6; }
+    .chip[data-cat="arq"].active    { background: #10b981; }
+    .chip[data-cat="perm"].active   { background: #f59e0b; }
+    .chip[data-cat="proc"].active   { background: #ef4444; }
+    .chip[data-cat="rede"].active   { background: #6366f1; }
+    .chip[data-cat="usr"].active    { background: #ec4899; }
+    .chip[data-cat="sys"].active    { background: #8b5cf6; }
+    .chip[data-cat="txt"].active    { background: #14b8a6; }
+    .chip[data-cat="comp"].active   { background: #f97316; }
+    .chip[data-cat="redir"].active  { background: #84cc16; color: #0f172a; }
+
+    /* ── Main content ── */
+    .main {
+      padding-top: 118px; /* topbar + filters */
+      padding-bottom: 60px;
+      position: relative; z-index: 1;
+    }
+
+    .count-bar {
+      padding: 10px 24px 4px;
+      color: var(--text-muted); font-size: .78rem;
+    }
+
+    /* ── Table ── */
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%; border-collapse: collapse;
+      min-width: 600px;
+    }
+    thead th {
+      position: sticky; top: 118px; z-index: 10;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 10px 16px;
+      text-align: left; font-size: .72rem; font-weight: 700;
+      letter-spacing: .07em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    thead th:first-child { padding-left: 24px; }
+    thead th:last-child  { padding-right: 24px; text-align: center; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--card-border);
+      transition: background .12s;
+    }
+    tbody tr:nth-child(even) { background: var(--row-alt); }
+    tbody tr:hover { background: var(--row-hover); }
+    tbody tr.hidden { display: none; }
+
+    td { padding: 12px 16px; vertical-align: middle; }
+    td:first-child { padding-left: 24px; }
+    td:last-child  { padding-right: 24px; text-align: center; }
+
+    .cat-badge {
+      display: inline-block;
+      border-radius: 999px; padding: 2px 9px;
+      font-size: .68rem; font-weight: 700; letter-spacing: .04em;
+      white-space: nowrap;
+    }
+
+    .cmd-cell { font-family: 'Consolas', 'Fira Code', monospace; }
+    .cmd-text {
+      color: var(--text-h); font-size: .9rem; font-weight: 600;
+    }
+
+    .desc-cell { color: var(--text-sub); font-size: .88rem; max-width: 260px; }
+
+    .ex-cell { display: flex; align-items: center; gap: 8px; }
+    .ex-code {
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: .82rem; color: var(--text-sub);
+      background: var(--code-bg);
+      border-radius: 6px; padding: 3px 8px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 220px;
+    }
+
+    .copy-btn {
+      flex-shrink: 0; background: none;
+      border: 1px solid var(--card-border); border-radius: 6px;
+      padding: 3px 8px; cursor: pointer;
+      font-size: .72rem; color: var(--text-muted);
+      transition: color .15s, border-color .15s, background .15s;
+      white-space: nowrap;
+    }
+    .copy-btn:hover { color: var(--text-h); border-color: var(--text-muted); }
+    .copy-btn.copied { color: #10b981; border-color: #10b981; background: rgba(16,185,129,.1); }
+
+    /* ── Category colors ── */
+    .c-nav  { background: rgba(59,130,246,.15);  color: #60a5fa; }
+    .c-arq  { background: rgba(16,185,129,.15);  color: #34d399; }
+    .c-perm { background: rgba(245,158,11,.15);  color: #fbbf24; }
+    .c-proc { background: rgba(239,68,68,.15);   color: #f87171; }
+    .c-rede { background: rgba(99,102,241,.15);  color: #818cf8; }
+    .c-usr  { background: rgba(236,72,153,.15);  color: #f472b6; }
+    .c-sys  { background: rgba(139,92,246,.15);  color: #a78bfa; }
+    .c-txt  { background: rgba(20,184,166,.15);  color: #2dd4bf; }
+    .c-comp { background: rgba(249,115,22,.15);  color: #fb923c; }
+    .c-redir{ background: rgba(132,204,22,.15);  color: #a3e635; }
+
+    /* ── Empty state ── */
+    .empty {
+      display: none; text-align: center;
+      padding: 60px 20px; color: var(--text-muted); font-size: .9rem;
+    }
+    .empty .big { font-size: 2.5rem; margin-bottom: 12px; }
+
+    .footer {
+      text-align: center; padding: 20px;
+      color: var(--footer); font-size: .75rem;
+    }
+
+    @media (max-width: 600px) {
+      .topbar-title .badge { display: none; }
+      .topbar-title { font-size: .85rem; }
+      thead th:nth-child(3), td:nth-child(3) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <a class="back-btn" href="https://cesarazevedo.github.io">← Voltar</a>
+    <div class="topbar-title">
+      🐧 Linux Cheat Sheet
+      <span class="badge">Referência rápida</span>
+    </div>
+    <div class="search-wrap">
+      <span class="icon">🔍</span>
+      <input id="search" type="search" placeholder="Buscar comando…" oninput="filter()" autocomplete="off" />
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-label">Claro</span>
+    </button>
+  </div>
+
+  <!-- Category filters -->
+  <div class="filters-wrap">
+    <button class="chip active" data-cat="all"   onclick="setFilter('all')">Todos</button>
+    <button class="chip" data-cat="nav"   onclick="setFilter('nav')">📁 Navegação</button>
+    <button class="chip" data-cat="arq"   onclick="setFilter('arq')">📄 Arquivos</button>
+    <button class="chip" data-cat="perm"  onclick="setFilter('perm')">🔒 Permissões</button>
+    <button class="chip" data-cat="proc"  onclick="setFilter('proc')">⚙️ Processos</button>
+    <button class="chip" data-cat="rede"  onclick="setFilter('rede')">🌐 Rede</button>
+    <button class="chip" data-cat="usr"   onclick="setFilter('usr')">👤 Usuários</button>
+    <button class="chip" data-cat="sys"   onclick="setFilter('sys')">🖥️ Sistema</button>
+    <button class="chip" data-cat="txt"   onclick="setFilter('txt')">📝 Texto</button>
+    <button class="chip" data-cat="comp"  onclick="setFilter('comp')">📦 Compressão</button>
+    <button class="chip" data-cat="redir" onclick="setFilter('redir')">↪️ Redirecionamento</button>
+  </div>
+
+  <div class="main">
+    <div class="count-bar" id="count-bar"></div>
+    <div class="table-wrap">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th style="width:110px">Categoria</th>
+            <th style="width:200px">Comando</th>
+            <th>Descrição</th>
+            <th style="width:300px">Exemplo</th>
+            <th style="width:60px"></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty" id="empty">
+        <div class="big">🔍</div>
+        Nenhum comando encontrado para "<span id="empty-term"></span>"
+      </div>
+    </div>
+    <p class="footer">César Azevedo · IFRN · Campus João Câmara</p>
+  </div>
+
+  <script>
+    // ─── Data ─────────────────────────────────────────────────────────────────
+    const CATS = {
+      nav:   { label: 'Navegação',        cls: 'c-nav'  },
+      arq:   { label: 'Arquivos',         cls: 'c-arq'  },
+      perm:  { label: 'Permissões',       cls: 'c-perm' },
+      proc:  { label: 'Processos',        cls: 'c-proc' },
+      rede:  { label: 'Rede',             cls: 'c-rede' },
+      usr:   { label: 'Usuários',         cls: 'c-usr'  },
+      sys:   { label: 'Sistema',          cls: 'c-sys'  },
+      txt:   { label: 'Texto',            cls: 'c-txt'  },
+      comp:  { label: 'Compressão',       cls: 'c-comp' },
+      redir: { label: 'Redirecionamento', cls: 'c-redir'},
+    };
+
+    const DATA = [
+      // Navegação
+      { cat:'nav',  cmd:'pwd',             desc:'Exibe o diretório atual',                        ex:'pwd' },
+      { cat:'nav',  cmd:'ls',              desc:'Lista arquivos e diretórios',                    ex:'ls -la' },
+      { cat:'nav',  cmd:'ls -lh',          desc:'Lista com tamanhos legíveis',                    ex:'ls -lh /var/log' },
+      { cat:'nav',  cmd:'cd <dir>',        desc:'Muda para o diretório especificado',             ex:'cd /var/log' },
+      { cat:'nav',  cmd:'cd ..',           desc:'Volta um nível na hierarquia',                   ex:'cd ..' },
+      { cat:'nav',  cmd:'cd ~',            desc:'Vai para o diretório home do usuário',           ex:'cd ~' },
+      { cat:'nav',  cmd:'cd -',            desc:'Volta ao diretório anterior',                    ex:'cd -' },
+      { cat:'nav',  cmd:'find',            desc:'Busca arquivos por nome, tipo ou data',          ex:'find /etc -name "*.conf"' },
+      { cat:'nav',  cmd:'locate',          desc:'Busca rápida usando banco de dados',             ex:'locate nginx.conf' },
+      { cat:'nav',  cmd:'tree',            desc:'Exibe estrutura em árvore',                      ex:'tree -L 2 /var/www' },
+
+      // Arquivos
+      { cat:'arq',  cmd:'cp',              desc:'Copia arquivo ou diretório',                     ex:'cp arquivo.txt /tmp/' },
+      { cat:'arq',  cmd:'cp -r',           desc:'Copia diretório recursivamente',                 ex:'cp -r pasta/ /backup/' },
+      { cat:'arq',  cmd:'mv',              desc:'Move ou renomeia arquivo/diretório',             ex:'mv old.txt new.txt' },
+      { cat:'arq',  cmd:'rm',              desc:'Remove arquivo',                                 ex:'rm arquivo.txt' },
+      { cat:'arq',  cmd:'rm -rf',          desc:'Remove diretório e conteúdo forçadamente',       ex:'rm -rf /tmp/pasta' },
+      { cat:'arq',  cmd:'mkdir',           desc:'Cria diretório',                                 ex:'mkdir -p /tmp/a/b/c' },
+      { cat:'arq',  cmd:'touch',           desc:'Cria arquivo vazio ou atualiza data',            ex:'touch arquivo.txt' },
+      { cat:'arq',  cmd:'cat',             desc:'Exibe o conteúdo de um arquivo',                 ex:'cat /etc/hosts' },
+      { cat:'arq',  cmd:'less',            desc:'Navega pelo conteúdo de um arquivo',             ex:'less /var/log/syslog' },
+      { cat:'arq',  cmd:'head',            desc:'Exibe as primeiras linhas do arquivo',           ex:'head -n 20 arquivo.txt' },
+      { cat:'arq',  cmd:'tail',            desc:'Exibe as últimas linhas do arquivo',             ex:'tail -n 50 app.log' },
+      { cat:'arq',  cmd:'tail -f',         desc:'Acompanha arquivo em tempo real',                ex:'tail -f /var/log/syslog' },
+      { cat:'arq',  cmd:'ln -s',           desc:'Cria link simbólico',                            ex:'ln -s /var/www html' },
+      { cat:'arq',  cmd:'file',            desc:'Identifica o tipo do arquivo',                   ex:'file imagem.png' },
+      { cat:'arq',  cmd:'stat',            desc:'Detalhes de inode e datas do arquivo',           ex:'stat arquivo.txt' },
+      { cat:'arq',  cmd:'diff',            desc:'Compara dois arquivos linha a linha',            ex:'diff arquivo1.txt arquivo2.txt' },
+
+      // Permissões
+      { cat:'perm', cmd:'chmod',           desc:'Altera as permissões de arquivo/diretório',      ex:'chmod 755 script.sh' },
+      { cat:'perm', cmd:'chmod +x',        desc:'Torna o arquivo executável',                     ex:'chmod +x deploy.sh' },
+      { cat:'perm', cmd:'chown',           desc:'Altera o proprietário do arquivo',               ex:'chown user:grupo arquivo' },
+      { cat:'perm', cmd:'chown -R',        desc:'Altera proprietário recursivamente',             ex:'chown -R www-data:www-data /var/www' },
+      { cat:'perm', cmd:'ls -l',           desc:'Lista com permissões e proprietário',            ex:'ls -l /etc/ssh' },
+      { cat:'perm', cmd:'umask',           desc:'Define máscara padrão de criação',               ex:'umask 022' },
+      { cat:'perm', cmd:'getfacl',         desc:'Exibe ACLs do arquivo',                          ex:'getfacl arquivo.txt' },
+      { cat:'perm', cmd:'setfacl',         desc:'Define ACLs do arquivo',                         ex:'setfacl -m u:joao:rw arquivo.txt' },
+
+      // Processos
+      { cat:'proc', cmd:'ps aux',          desc:'Lista todos os processos em execução',           ex:'ps aux | grep nginx' },
+      { cat:'proc', cmd:'top',             desc:'Monitor de processos em tempo real',             ex:'top' },
+      { cat:'proc', cmd:'htop',            desc:'Monitor interativo (instalar se necessário)',    ex:'htop' },
+      { cat:'proc', cmd:'kill',            desc:'Envia sinal para processo pelo PID',             ex:'kill -9 1234' },
+      { cat:'proc', cmd:'killall',         desc:'Encerra todos os processos pelo nome',           ex:'killall firefox' },
+      { cat:'proc', cmd:'pkill',           desc:'Encerra processos por padrão de nome',           ex:'pkill -f "python app"' },
+      { cat:'proc', cmd:'&',               desc:'Executa comando em background',                  ex:'sleep 60 &' },
+      { cat:'proc', cmd:'jobs',            desc:'Lista jobs em background',                       ex:'jobs' },
+      { cat:'proc', cmd:'bg',              desc:'Retoma job parado em background',                ex:'bg %1' },
+      { cat:'proc', cmd:'fg',              desc:'Traz job para foreground',                       ex:'fg %1' },
+      { cat:'proc', cmd:'nohup',           desc:'Executa ignorando encerramento da sessão',       ex:'nohup ./script.sh &' },
+      { cat:'proc', cmd:'nice',            desc:'Define prioridade de CPU do processo',           ex:'nice -n 10 ./script.sh' },
+
+      // Rede
+      { cat:'rede', cmd:'ping',            desc:'Testa conectividade com host',                   ex:'ping -c 4 google.com' },
+      { cat:'rede', cmd:'ip addr',         desc:'Exibe endereços IP das interfaces',              ex:'ip addr show' },
+      { cat:'rede', cmd:'ip route',        desc:'Exibe a tabela de roteamento',                   ex:'ip route show' },
+      { cat:'rede', cmd:'ip link',         desc:'Gerencia interfaces de rede',                    ex:'ip link set eth0 up' },
+      { cat:'rede', cmd:'ss -tuln',        desc:'Exibe portas abertas e conexões',                ex:'ss -tuln' },
+      { cat:'rede', cmd:'ssh',             desc:'Conexão remota segura via SSH',                  ex:'ssh usuario@192.168.1.10' },
+      { cat:'rede', cmd:'scp',             desc:'Copia arquivo via SSH',                          ex:'scp arquivo.txt user@host:/tmp/' },
+      { cat:'rede', cmd:'rsync',           desc:'Sincroniza arquivos local ou remoto',            ex:'rsync -avz pasta/ user@host:/backup/' },
+      { cat:'rede', cmd:'wget',            desc:'Baixa arquivo da web',                           ex:'wget https://exemplo.com/file.tar.gz' },
+      { cat:'rede', cmd:'curl',            desc:'Transfere dados via URL',                        ex:'curl -I https://exemplo.com' },
+      { cat:'rede', cmd:'curl -O',         desc:'Baixa e salva com o nome original',              ex:'curl -O https://exemplo.com/file.zip' },
+      { cat:'rede', cmd:'traceroute',      desc:'Rastreia a rota até o host',                     ex:'traceroute google.com' },
+      { cat:'rede', cmd:'dig',             desc:'Consulta registros DNS',                         ex:'dig A google.com' },
+      { cat:'rede', cmd:'nmap',            desc:'Escaneia portas e serviços na rede',             ex:'nmap -sV 192.168.1.0/24' },
+      { cat:'rede', cmd:'netstat -tuln',   desc:'Portas em escuta (legado)',                      ex:'netstat -tuln' },
+      { cat:'rede', cmd:'iptables -L',     desc:'Lista regras do firewall',                       ex:'iptables -L -v -n' },
+
+      // Usuários
+      { cat:'usr',  cmd:'whoami',          desc:'Exibe o nome do usuário atual',                  ex:'whoami' },
+      { cat:'usr',  cmd:'who',             desc:'Lista usuários logados no sistema',              ex:'who' },
+      { cat:'usr',  cmd:'w',               desc:'Usuários logados e o que estão fazendo',         ex:'w' },
+      { cat:'usr',  cmd:'id',              desc:'Exibe UID, GID e grupos do usuário',             ex:'id joao' },
+      { cat:'usr',  cmd:'su',              desc:'Muda para outro usuário',                        ex:'su - root' },
+      { cat:'usr',  cmd:'sudo',            desc:'Executa comando como superusuário',              ex:'sudo apt update' },
+      { cat:'usr',  cmd:'useradd',         desc:'Cria novo usuário',                              ex:'useradd -m -s /bin/bash joao' },
+      { cat:'usr',  cmd:'passwd',          desc:'Altera a senha do usuário',                      ex:'passwd joao' },
+      { cat:'usr',  cmd:'usermod',         desc:'Modifica propriedades do usuário',               ex:'usermod -aG sudo joao' },
+      { cat:'usr',  cmd:'userdel',         desc:'Remove usuário do sistema',                      ex:'userdel -r joao' },
+      { cat:'usr',  cmd:'groupadd',        desc:'Cria novo grupo',                                ex:'groupadd desenvolvedores' },
+      { cat:'usr',  cmd:'groups',          desc:'Lista grupos do usuário',                        ex:'groups joao' },
+      { cat:'usr',  cmd:'last',            desc:'Histórico de logins',                            ex:'last -n 20' },
+
+      // Sistema
+      { cat:'sys',  cmd:'uname -a',        desc:'Informações completas do kernel e sistema',      ex:'uname -a' },
+      { cat:'sys',  cmd:'df -h',           desc:'Uso do espaço em disco',                         ex:'df -h' },
+      { cat:'sys',  cmd:'du -sh',          desc:'Tamanho de arquivo ou diretório',                ex:'du -sh /var/log' },
+      { cat:'sys',  cmd:'du -sh *',        desc:'Tamanho de cada item no diretório atual',        ex:'du -sh *' },
+      { cat:'sys',  cmd:'free -h',         desc:'Uso de memória RAM e swap',                      ex:'free -h' },
+      { cat:'sys',  cmd:'uptime',          desc:'Tempo ligado e carga do sistema',                ex:'uptime' },
+      { cat:'sys',  cmd:'history',         desc:'Histórico de comandos executados',               ex:'history | grep ssh' },
+      { cat:'sys',  cmd:'man',             desc:'Manual do comando',                              ex:'man ls' },
+      { cat:'sys',  cmd:'which',           desc:'Localiza o executável do comando',               ex:'which python3' },
+      { cat:'sys',  cmd:'whereis',         desc:'Localiza binário, fonte e manual',               ex:'whereis nginx' },
+      { cat:'sys',  cmd:'env',             desc:'Exibe variáveis de ambiente',                    ex:'env | grep PATH' },
+      { cat:'sys',  cmd:'export',          desc:'Define variável de ambiente',                    ex:'export PATH=$PATH:/opt/bin' },
+      { cat:'sys',  cmd:'crontab -e',      desc:'Edita tarefas agendadas do usuário',             ex:'crontab -e' },
+      { cat:'sys',  cmd:'crontab -l',      desc:'Lista tarefas agendadas',                        ex:'crontab -l' },
+      { cat:'sys',  cmd:'systemctl',       desc:'Gerencia serviços do systemd',                   ex:'systemctl status nginx' },
+      { cat:'sys',  cmd:'systemctl start', desc:'Inicia um serviço',                              ex:'systemctl start ssh' },
+      { cat:'sys',  cmd:'systemctl enable',desc:'Habilita serviço na inicialização',              ex:'systemctl enable nginx' },
+      { cat:'sys',  cmd:'journalctl',      desc:'Visualiza logs do systemd',                      ex:'journalctl -u ssh -f' },
+      { cat:'sys',  cmd:'lsblk',           desc:'Lista dispositivos de bloco/disco',              ex:'lsblk' },
+      { cat:'sys',  cmd:'mount',           desc:'Monta sistema de arquivos',                      ex:'mount /dev/sdb1 /mnt' },
+      { cat:'sys',  cmd:'alias',           desc:'Cria atalho para comando',                       ex:'alias ll="ls -la"' },
+      { cat:'sys',  cmd:'shutdown',        desc:'Desliga ou reinicia o sistema',                  ex:'shutdown -r now' },
+
+      // Texto
+      { cat:'txt',  cmd:'grep',            desc:'Busca padrão em texto',                          ex:'grep -r "erro" /var/log/' },
+      { cat:'txt',  cmd:'grep -i',         desc:'Busca sem diferenciar maiúsculas',               ex:'grep -i "warning" app.log' },
+      { cat:'txt',  cmd:'grep -v',         desc:'Exclui linhas com o padrão',                     ex:'grep -v "DEBUG" app.log' },
+      { cat:'txt',  cmd:'grep -n',         desc:'Exibe número da linha',                          ex:'grep -n "def " script.py' },
+      { cat:'txt',  cmd:'sed',             desc:'Edita texto em stream (substituição)',            ex:"sed 's/old/new/g' arquivo.txt" },
+      { cat:'txt',  cmd:'sed -i',          desc:'Edita arquivo in-place',                         ex:"sed -i 's/old/new/g' arquivo.txt" },
+      { cat:'txt',  cmd:'awk',             desc:'Processa e extrai colunas de texto',             ex:"awk '{print $1, $3}' arquivo.txt" },
+      { cat:'txt',  cmd:'sort',            desc:'Ordena linhas de texto',                         ex:'sort -r lista.txt' },
+      { cat:'txt',  cmd:'sort -u',         desc:'Ordena e remove duplicatas',                     ex:'sort -u lista.txt' },
+      { cat:'txt',  cmd:'uniq',            desc:'Remove linhas duplicadas consecutivas',          ex:'sort lista.txt | uniq -c' },
+      { cat:'txt',  cmd:'wc -l',           desc:'Conta o número de linhas',                       ex:'wc -l arquivo.txt' },
+      { cat:'txt',  cmd:'cut',             desc:'Extrai colunas ou campos de texto',              ex:'cut -d: -f1 /etc/passwd' },
+      { cat:'txt',  cmd:'tr',              desc:'Substitui ou remove caracteres',                 ex:"tr 'a-z' 'A-Z' < texto.txt" },
+      { cat:'txt',  cmd:'echo',            desc:'Exibe texto ou valor de variável',               ex:'echo $HOME' },
+      { cat:'txt',  cmd:'tee',             desc:'Divide saída para tela e arquivo',               ex:'ls | tee lista.txt' },
+      { cat:'txt',  cmd:'xargs',           desc:'Constrói comandos com saída de outro',           ex:'find . -name "*.log" | xargs rm' },
+
+      // Compressão
+      { cat:'comp', cmd:'tar -czf',        desc:'Compacta diretório em .tar.gz',                  ex:'tar -czf backup.tar.gz pasta/' },
+      { cat:'comp', cmd:'tar -xzf',        desc:'Extrai arquivo .tar.gz',                         ex:'tar -xzf backup.tar.gz' },
+      { cat:'comp', cmd:'tar -cjf',        desc:'Compacta em .tar.bz2 (mais comprimido)',          ex:'tar -cjf backup.tar.bz2 pasta/' },
+      { cat:'comp', cmd:'tar -xjf',        desc:'Extrai arquivo .tar.bz2',                         ex:'tar -xjf backup.tar.bz2' },
+      { cat:'comp', cmd:'tar -tf',         desc:'Lista conteúdo sem extrair',                     ex:'tar -tf arquivo.tar.gz' },
+      { cat:'comp', cmd:'gzip',            desc:'Comprime um arquivo (.gz)',                       ex:'gzip arquivo.txt' },
+      { cat:'comp', cmd:'gunzip',          desc:'Descomprime arquivo .gz',                         ex:'gunzip arquivo.txt.gz' },
+      { cat:'comp', cmd:'zip -r',          desc:'Cria arquivo .zip',                               ex:'zip -r arquivo.zip pasta/' },
+      { cat:'comp', cmd:'unzip',           desc:'Extrai arquivo .zip',                             ex:'unzip arquivo.zip -d /tmp/' },
+      { cat:'comp', cmd:'unzip -l',        desc:'Lista conteúdo do .zip sem extrair',             ex:'unzip -l arquivo.zip' },
+
+      // Redirecionamento
+      { cat:'redir', cmd:'>',              desc:'Redireciona saída para arquivo (sobrescreve)',    ex:'ls > lista.txt' },
+      { cat:'redir', cmd:'>>',             desc:'Acrescenta saída ao final do arquivo',           ex:'echo "linha" >> log.txt' },
+      { cat:'redir', cmd:'|',              desc:'Passa saída de um comando para outro',           ex:'ps aux | grep nginx' },
+      { cat:'redir', cmd:'<',              desc:'Usa arquivo como entrada do comando',            ex:'sort < lista.txt' },
+      { cat:'redir', cmd:'2>',             desc:'Redireciona mensagens de erro',                  ex:'comando 2> erro.log' },
+      { cat:'redir', cmd:'2>&1',           desc:'Combina saída padrão e de erro',                 ex:'comando > saida.log 2>&1' },
+      { cat:'redir', cmd:'&>',             desc:'Redireciona saída e erro juntos',                ex:'comando &> tudo.log' },
+      { cat:'redir', cmd:'/dev/null',      desc:'Descarta saída completamente',                   ex:'comando > /dev/null 2>&1' },
+    ];
+
+    // ─── State ────────────────────────────────────────────────────────────────
+    let activeFilter = 'all';
+    let searchTerm = '';
+
+    // ─── Render ───────────────────────────────────────────────────────────────
+    function render() {
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = DATA.map((row, i) => {
+        const cat = CATS[row.cat];
+        const exSafe = row.ex.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const cmdSafe = row.cmd.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const descSafe = row.desc.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return `<tr data-cat="${row.cat}" data-search="${(row.cmd+' '+row.desc+' '+row.ex).toLowerCase()}">
+          <td><span class="cat-badge ${cat.cls}">${cat.label}</span></td>
+          <td class="cmd-cell"><span class="cmd-text">${cmdSafe}</span></td>
+          <td class="desc-cell">${descSafe}</td>
+          <td class="ex-cell">
+            <span class="ex-code" title="${exSafe}">${exSafe}</span>
+          </td>
+          <td>
+            <button class="copy-btn" onclick="copyCmd(this,'${row.ex.replace(/'/g,"\\'")}')">⧉ Copiar</button>
+          </td>
+        </tr>`;
+      }).join('');
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const rows = document.querySelectorAll('#tbody tr');
+      let visible = 0;
+      rows.forEach(row => {
+        const catMatch = activeFilter === 'all' || row.dataset.cat === activeFilter;
+        const txtMatch = !searchTerm || row.dataset.search.includes(searchTerm);
+        const show = catMatch && txtMatch;
+        row.classList.toggle('hidden', !show);
+        if (show) visible++;
+      });
+      const total = DATA.length;
+      document.getElementById('count-bar').textContent =
+        visible === total ? `${total} comandos` : `${visible} de ${total} comandos`;
+      const empty = document.getElementById('empty');
+      empty.style.display = visible === 0 ? 'block' : 'none';
+      document.getElementById('empty-term').textContent = searchTerm;
+    }
+
+    function filter() {
+      searchTerm = document.getElementById('search').value.trim().toLowerCase();
+      applyFilters();
+    }
+
+    function setFilter(cat) {
+      activeFilter = cat;
+      document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
+      applyFilters();
+    }
+
+    function copyCmd(btn, text) {
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = '✓ Copiado';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '⧉ Copiar'; btn.classList.remove('copied'); }, 1800);
+      });
+    }
+
+    // ─── Theme ────────────────────────────────────────────────────────────────
+    const saved = localStorage.getItem('theme') || 'dark';
+    setTheme(saved);
+
+    function toggleTheme() { setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('theme', t);
+      const d = t === 'dark';
+      document.getElementById('theme-icon').textContent  = d ? '☀️' : '🌙';
+      document.getElementById('theme-label').textContent = d ? 'Claro' : 'Escuro';
+    }
+
+    // ─── Init ─────────────────────────────────────────────────────────────────
+    render();
+  </script>
+
+</body>
+</html>
