@@ -145,8 +145,22 @@
     }
     .card-count strong { color: #818cf8; }
 
+    .input-actions {
+      display: flex; gap: 10px; margin-top: 16px;
+    }
+    .btn-import {
+      background: none; border: 1px solid var(--card-border);
+      border-radius: 12px; padding: 14px 18px;
+      color: var(--text-sub); font-size: .9rem; font-weight: 600;
+      cursor: pointer; white-space: nowrap;
+      display: flex; align-items: center; gap: 7px;
+      transition: color .2s, border-color .2s;
+      flex-shrink: 0;
+    }
+    .btn-import:hover { color: var(--text-h); border-color: var(--text-sub); }
+
     .btn-start {
-      width: 100%; margin-top: 16px;
+      flex: 1; margin-top: 0;
       background: linear-gradient(135deg, #6366f1, #8b5cf6);
       border: none; border-radius: 12px; padding: 14px;
       color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer;
@@ -435,9 +449,15 @@ O que faz o chmod? | Altera permissões de arquivos"
           💡 Uma linha por card: <code>Pergunta | Resposta</code> — use o <code>|</code> para separar
         </div>
         <div class="card-count" id="card-count">0 cards detectados</div>
-        <button class="btn-start" id="btn-start" onclick="startStudy()" disabled>
-          🃏 Começar estudos
-        </button>
+        <input type="file" id="file-input" accept=".txt" style="display:none" onchange="importFile(event)" />
+        <div class="input-actions">
+          <button class="btn-import" onclick="document.getElementById('file-input').click()">
+            📂 Importar .txt
+          </button>
+          <button class="btn-start" id="btn-start" onclick="startStudy()" disabled>
+            🃏 Começar estudos
+          </button>
+        </div>
       </div>
     </div>
 
@@ -543,6 +563,18 @@ O que faz o chmod? | Altera permissões de arquivos"
     let allCards  = [];   // original deck for restart
 
     // ─── Input phase ─────────────────────────────────────────────────────────
+    function importFile(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('deck-input').value = e.target.result;
+        updateCount();
+      };
+      reader.readAsText(file, 'UTF-8');
+      event.target.value = ''; // allow re-importing same file
+    }
+
     function parseCards(text) {
       return text.split('\n')
         .map(l => l.trim())
