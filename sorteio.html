@@ -241,6 +241,7 @@
     .winner-name { color: var(--text-h); font-size: 1.6rem; font-weight: 700; }
 
     .spin-controls { display: flex; gap: 10px; margin-top: 20px; width: 100%; }
+    .btn-mute { padding: 12px 14px; flex-shrink: 0; }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(8px); }
@@ -363,6 +364,7 @@
         <div class="spin-controls">
           <button class="btn-primary" id="btn-spin" onclick="spinWheel()">🎡 Girar</button>
           <button class="btn-ghost" id="btn-remove" onclick="removeWinner()" style="display:none" title="Remover da lista">✕ Remover</button>
+          <button class="btn-ghost btn-mute" id="btn-mute" onclick="toggleMute()" title="Som">🔊</button>
         </div>
       </div>
     </div>
@@ -507,6 +509,77 @@
       return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
     }
 
+    // ─── Audio ───────────────────────────────────────────────────────────────
+    let audioCtx = null;
+    let muted = localStorage.getItem('muted') === '1';
+    updateMuteBtn();
+
+    function updateMuteBtn() {
+      const btn = document.getElementById('btn-mute');
+      if (btn) btn.textContent = muted ? '🔇' : '🔊';
+    }
+    function toggleMute() {
+      muted = !muted;
+      localStorage.setItem('muted', muted ? '1' : '0');
+      updateMuteBtn();
+    }
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+      return audioCtx;
+    }
+
+    function playTick(speed) {
+      if (muted) return;
+      try {
+        const ac = getAudioCtx();
+        // Short noise burst filtered to sound like a mechanical click
+        const bufLen = Math.floor(ac.sampleRate * 0.018);
+        const buf = ac.createBuffer(1, bufLen, ac.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < bufLen; i++) {
+          data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (bufLen * 0.12));
+        }
+        const src = ac.createBufferSource();
+        src.buffer = buf;
+
+        const hp = ac.createBiquadFilter();
+        hp.type = 'highpass';
+        hp.frequency.value = 800;
+
+        const gain = ac.createGain();
+        // Louder when slow (dramatic deceleration), quieter when fast
+        gain.gain.value = Math.min(0.35, 0.12 + (1 - speed) * 0.28);
+
+        src.connect(hp);
+        hp.connect(gain);
+        gain.connect(ac.destination);
+        src.start();
+      } catch (_) {}
+    }
+
+    function playWinSound() {
+      if (muted) return;
+      try {
+        const ac = getAudioCtx();
+        // Rising arpeggio: C5 E5 G5 C6
+        [523, 659, 784, 1047].forEach((freq, i) => {
+          const osc = ac.createOscillator();
+          const gain = ac.createGain();
+          osc.connect(gain);
+          gain.connect(ac.destination);
+          osc.type = 'sine';
+          osc.frequency.value = freq;
+          const t = ac.currentTime + i * 0.13;
+          gain.gain.setValueAtTime(0, t);
+          gain.gain.linearRampToValueAtTime(0.18, t + 0.025);
+          gain.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+          osc.start(t);
+          osc.stop(t + 0.4);
+        });
+      } catch (_) {}
+    }
+
     // ─── Roleta ───────────────────────────────────────────────────────────────
     const WHEEL_COLORS = [
       '#6366f1','#3b82f6','#10b981','#f59e0b',
@@ -649,11 +722,20 @@
       const startAngle = wheelAngle;
       const duration = 4500 + Math.random() * 1000;
       const startTime = performance.now();
+      let prevAngle = startAngle;
 
       function animate(now) {
         const t = Math.min((now - startTime) / duration, 1);
         wheelAngle = startAngle + (target - startAngle) * easeOut(t);
         drawWheel();
+
+        // Count slice boundary crossings since last frame and tick for each
+        const totalRotation = target - startAngle;
+        const speed = 1 - easeOut(t); // 1 = fast, 0 = stopped
+        const crossed = Math.floor((wheelAngle - startAngle) / slice) - Math.floor((prevAngle - startAngle) / slice);
+        for (let k = 0; k < Math.min(crossed, 3); k++) playTick(speed);
+        prevAngle = wheelAngle;
+
         if (t < 1) {
           animFrame = requestAnimationFrame(animate);
         } else {
@@ -663,6 +745,7 @@
           document.getElementById('btn-spin').disabled = false;
           lastWinner = names[winnerIdx];
           showWinner(lastWinner);
+          playWinSound();
         }
       }
       animFrame = requestAnimationFrame(animate);
