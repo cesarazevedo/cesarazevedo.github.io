@@ -523,10 +523,13 @@
       const tbody = document.getElementById('tbody');
       tbody.innerHTML = DATA.map((row) => {
         const cat = CATS[row.cat];
-        const exSafe   = row.ex.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const cmdSafe  = row.cmd.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        const descSafe = row.desc.replace(/</g,'&lt;').replace(/>/g,'&gt;');
-        return `<tr data-cat="${row.cat}" data-search="${(row.cat+' '+row.cmd+' '+row.desc+' '+row.ex).toLowerCase()}">
+        const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        const exSafe   = esc(row.ex);
+        const cmdSafe  = esc(row.cmd);
+        const descSafe = esc(row.desc);
+        const searchVal = esc((row.cat+' '+row.cmd+' '+row.desc+' '+row.ex).toLowerCase());
+        const copyVal = row.ex.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ');
+        return `<tr data-cat="${row.cat}" data-search="${searchVal}">
           <td><span class="cat-badge ${cat.cls}">${cat.label}</span></td>
           <td class="cmd-cell"><span class="cmd-text">${cmdSafe}</span></td>
           <td class="desc-cell">${descSafe}</td>
@@ -534,7 +537,7 @@
             <span class="ex-code" title="${exSafe}">${exSafe}</span>
           </td>
           <td>
-            <button class="copy-btn" onclick="copyCmd(this,'${row.ex.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ')}')">⧉ Copiar</button>
+            <button class="copy-btn" onclick="copyCmd(this,'${copyVal}')">⧉ Copiar</button>
           </td>
         </tr>`;
       }).join('');
