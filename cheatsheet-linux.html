@@ -146,9 +146,14 @@
     .chip[data-cat="redir"].active  { background: #84cc16; color: #0f172a; }
 
     /* ── Main content ── */
+    .scroll-body {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      overflow-y: auto;
+      /* top set by JS */
+    }
     .main {
       padding-bottom: 60px;
-      position: relative; z-index: 1;
     }
 
     .count-bar {
@@ -165,6 +170,7 @@
     }
     thead th {
       position: sticky; top: 0; z-index: 10;
+      /* top: 0 is relative to .scroll-body, not the viewport */
       background: var(--card-bg);
       border-bottom: 1px solid var(--card-border);
       padding: 10px 16px;
@@ -287,6 +293,7 @@
     <button class="chip" data-cat="redir" onclick="setFilter('redir')">↪️ Redirecionamento</button>
   </div>
 
+  <div class="scroll-body" id="scroll-body">
   <div class="main">
     <div class="count-bar" id="count-bar"></div>
     <div class="table-wrap">
@@ -308,6 +315,7 @@
       </div>
     </div>
     <p class="footer">César Azevedo · IFRN · Campus João Câmara</p>
+  </div>
   </div>
 
   <script>
@@ -555,16 +563,13 @@
       document.getElementById('theme-label').textContent = d ? 'Claro' : 'Escuro';
     }
 
-    // ─── Layout (dynamic sticky offsets) ─────────────────────────────────────
+    // ─── Layout ───────────────────────────────────────────────────────────────
     function layout() {
       const topbarH = document.querySelector('.topbar').offsetHeight;
       const filtersEl = document.querySelector('.filters-wrap');
       filtersEl.style.top = topbarH + 'px';
-      const filtersH = filtersEl.offsetHeight;
-      const total = topbarH + filtersH;
-      document.querySelector('.main').style.paddingTop = (total + 8) + 'px';
-      document.querySelectorAll('thead th').forEach(th => th.style.top = total + 'px');
-      document.querySelector('.count-bar').style.paddingTop = '10px';
+      const total = topbarH + filtersEl.offsetHeight;
+      document.getElementById('scroll-body').style.top = total + 'px';
     }
     window.addEventListener('resize', layout);
 
