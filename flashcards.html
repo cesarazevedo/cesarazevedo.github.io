@@ -306,12 +306,19 @@
     }
     .btn-nao:hover { background: rgba(239,68,68,.22); }
 
-    .btn-sei {
+    .btn-dificil {
+      background: rgba(245,158,11,.15);
+      border: 1px solid rgba(245,158,11,.3);
+      color: #fbbf24;
+    }
+    .btn-dificil:hover { background: rgba(245,158,11,.22); }
+
+    .btn-facil {
       background: rgba(16,185,129,.15);
       border: 1px solid rgba(16,185,129,.3);
       color: #34d399;
     }
-    .btn-sei:hover { background: rgba(16,185,129,.22); }
+    .btn-facil:hover { background: rgba(16,185,129,.22); }
 
     .key-hint {
       text-align: center; color: var(--text-muted); font-size: .75rem;
@@ -331,12 +338,16 @@
     @keyframes flyLeft {
       to { transform: translateX(-160%) rotate(-18deg) scale(.9); opacity: 0; }
     }
+    @keyframes flyDown {
+      to { transform: translateY(120%) scale(.9); opacity: 0; }
+    }
     @keyframes enterCard {
       from { opacity: 0; transform: scale(.88) translateY(16px); }
       to   { opacity: 1; transform: scale(1) translateY(0); }
     }
     .card-scene.exit-right { animation: flyRight .38s cubic-bezier(.4,0,1,1) forwards; }
     .card-scene.exit-left  { animation: flyLeft  .38s cubic-bezier(.4,0,1,1) forwards; }
+    .card-scene.exit-down  { animation: flyDown  .38s cubic-bezier(.4,0,1,1) forwards; }
     .card-scene.enter      { animation: enterCard .35s cubic-bezier(.2,.8,.4,1) both; }
 
     /* ── Results ── */
@@ -378,8 +389,9 @@
     }
     .stat-num { font-size: 2rem; font-weight: 800; }
     .stat-label { font-size: .75rem; color: var(--text-muted); margin-top: 2px; }
-    .stat-sei  .stat-num { color: #34d399; }
-    .stat-nao  .stat-num { color: #f87171; }
+    .stat-sei   .stat-num { color: #34d399; }
+    .stat-dif   .stat-num { color: #fbbf24; }
+    .stat-nao   .stat-num { color: #f87171; }
 
     .result-btns {
       display: flex; flex-direction: column; gap: 10px;
@@ -469,6 +481,7 @@ O que faz o chmod? | Altera permissões de arquivos"
           <span class="progress-label" id="prog-label">Card 1 de 10</span>
           <span class="progress-chips">
             <span class="chip-sei" id="chip-sei">✓ 0</span>
+            <span class="chip-nao" id="chip-dif" style="color:#fbbf24">~ 0</span>
             <span class="chip-nao" id="chip-nao">✗ 0</span>
           </span>
         </div>
@@ -490,21 +503,23 @@ O que faz o chmod? | Altera permissões de arquivos"
             <div class="card-face card-back">
               <div class="card-label">Resposta</div>
               <div class="card-text" id="card-a"></div>
-              <div class="flip-hint"><kbd>←</kbd> Revisar &nbsp;·&nbsp; <kbd>→</kbd> Sei</div>
+              <div class="flip-hint"><kbd>←</kbd> Não sei &nbsp;·&nbsp; <kbd>↓</kbd> Difícil &nbsp;·&nbsp; <kbd>→</kbd> Fácil</div>
             </div>
           </div>
         </div>
       </div>
 
       <div class="actions" id="actions">
-        <button class="btn-action btn-nao" onclick="markCard(false)">✗ Revisar depois</button>
-        <button class="btn-action btn-sei" onclick="markCard(true)">✓ Sei!</button>
+        <button class="btn-action btn-nao"     onclick="markCard('nao')">✗ Não sei</button>
+        <button class="btn-action btn-dificil" onclick="markCard('dificil')">~ Difícil</button>
+        <button class="btn-action btn-facil"   onclick="markCard('facil')">✓ Fácil!</button>
       </div>
 
       <div class="key-hint">
         <span><kbd>Espaço</kbd> virar</span>
-        <span><kbd>→</kbd> sei</span>
-        <span><kbd>←</kbd> revisar</span>
+        <span><kbd>←</kbd> não sei</span>
+        <span><kbd>↓</kbd> difícil</span>
+        <span><kbd>→</kbd> fácil</span>
       </div>
 
     </div>
@@ -519,16 +534,20 @@ O que faz o chmod? | Altera permissões de arquivos"
         <div class="result-stats">
           <div class="stat-box stat-sei">
             <div class="stat-num" id="stat-sei-num">0</div>
-            <div class="stat-label">Sabia</div>
+            <div class="stat-label">Fácil</div>
+          </div>
+          <div class="stat-box stat-dif">
+            <div class="stat-num" id="stat-dif-num">0</div>
+            <div class="stat-label">Difícil</div>
           </div>
           <div class="stat-box stat-nao">
             <div class="stat-num" id="stat-nao-num">0</div>
-            <div class="stat-label">Para revisar</div>
+            <div class="stat-label">Não sabia</div>
           </div>
         </div>
         <div class="result-btns">
           <button class="btn-retry" id="btn-retry" onclick="retryMissed()" style="display:none">
-            🔁 Revisar os erros
+            🔁 Revisar difíceis e erros
           </button>
           <button class="btn-restart" onclick="restartAll()">↺ Reiniciar tudo</button>
           <button class="btn-new" onclick="goToInput()">+ Novo baralho</button>
@@ -554,13 +573,14 @@ O que faz o chmod? | Altera permissões de arquivos"
     }
 
     // ─── State ───────────────────────────────────────────────────────────────
-    let deck      = [];   // cards remaining
-    let missed    = [];   // cards marked "não sei"
-    let correct   = 0;
-    let total     = 0;
-    let isFlipped = false;
+    let deck        = [];  // active queue
+    let mastered    = [];  // marked Fácil — done
+    let difficult   = [];  // marked Difícil (for results)
+    let notKnown    = [];  // marked Não sei (for results)
+    let totalUnique = 0;
+    let isFlipped   = false;
     let isAnimating = false;
-    let allCards  = [];   // original deck for restart
+    let allCards    = [];
 
     // ─── Input phase ─────────────────────────────────────────────────────────
     function importFile(event) {
@@ -610,10 +630,11 @@ O que faz o chmod? | Altera permissões de arquivos"
         cards = shuffle(parseCards(document.getElementById('deck-input').value));
         allCards = [...cards];
       }
-      deck    = [...cards];
-      missed  = [];
-      correct = 0;
-      total   = cards.length;
+      deck        = [...cards];
+      mastered    = [];
+      difficult   = [];
+      notKnown    = [];
+      totalUnique = cards.length;
       showPhase('study');
       loadCard();
     }
@@ -670,20 +691,39 @@ O que faz o chmod? | Altera permissões de arquivos"
       document.getElementById('actions').classList.remove('visible');
     }
 
-    function markCard(knew) {
+    function markCard(level) {
+      // level: 'facil' | 'dificil' | 'nao'
       if (isAnimating || !isFlipped) return;
       isAnimating = true;
+
       const card = deck.shift();
-      if (!knew) missed.push(card);
-      else correct++;
+
+      if (level === 'facil') {
+        mastered.push(card);
+      } else if (level === 'dificil') {
+        difficult.push(card);
+        // Re-insert after 3 cards (or at end if fewer remain)
+        const pos = Math.min(3, deck.length);
+        deck.splice(pos, 0, card);
+      } else {
+        notKnown.push(card);
+        // Re-insert after 1 card (or at end if deck is empty)
+        const pos = Math.min(1, deck.length);
+        deck.splice(pos, 0, card);
+      }
+
+      const exitClass = level === 'facil' ? 'exit-right'
+                      : level === 'dificil' ? 'exit-down'
+                      : 'exit-left';
 
       const scene = document.getElementById('card-scene');
       hideActions();
-      scene.classList.add(knew ? 'exit-right' : 'exit-left');
+      scene.classList.add(exitClass);
 
       scene.addEventListener('animationend', () => {
         isAnimating = false;
-        if (deck.length === 0) {
+        // Session ends only when all unique cards are mastered
+        if (mastered.length === totalUnique) {
           showResults();
         } else {
           loadCard(true);
@@ -692,11 +732,14 @@ O que faz o chmod? | Altera permissões de arquivos"
     }
 
     function updateProgress() {
-      const done = total - deck.length;
-      document.getElementById('prog-label').textContent = `Card ${done + 1} de ${total}`;
-      document.getElementById('prog-fill').style.width  = (done / total * 100) + '%';
-      document.getElementById('chip-sei').textContent   = `✓ ${correct}`;
-      document.getElementById('chip-nao').textContent   = `✗ ${missed.length}`;
+      const remaining = deck.length;
+      document.getElementById('prog-label').textContent =
+        `${mastered.length} de ${totalUnique} dominados`;
+      document.getElementById('prog-fill').style.width =
+        (mastered.length / totalUnique * 100) + '%';
+      document.getElementById('chip-sei').textContent = `✓ ${mastered.length}`;
+      document.getElementById('chip-dif').textContent = `~ ${[...new Set(difficult)].length}`;
+      document.getElementById('chip-nao').textContent = `✗ ${[...new Set(notKnown)].length}`;
     }
 
     // ─── Keyboard ────────────────────────────────────────────────────────────
@@ -704,33 +747,48 @@ O que faz o chmod? | Altera permissões de arquivos"
       const phase = document.querySelector('.phase.active')?.id;
       if (phase !== 'phase-study') return;
       if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
-      if (e.key === 'ArrowRight') markCard(true);
-      if (e.key === 'ArrowLeft')  markCard(false);
+      if (e.key === 'ArrowRight') markCard('facil');
+      if (e.key === 'ArrowDown')  { e.preventDefault(); markCard('dificil'); }
+      if (e.key === 'ArrowLeft')  markCard('nao');
     });
 
     // ─── Results phase ────────────────────────────────────────────────────────
     function showResults() {
-      document.getElementById('stat-sei-num').textContent = correct;
-      document.getElementById('stat-nao-num').textContent = missed.length;
+      // Unique counts (a card can appear multiple times in difficult/notKnown)
+      const uniqueDif = new Set(difficult.map(c => c.q)).size;
+      const uniqueNao = new Set(notKnown.map(c => c.q)).size;
 
-      const pct = Math.round(correct / total * 100);
+      document.getElementById('stat-sei-num').textContent = mastered.length;
+      document.getElementById('stat-dif-num').textContent = uniqueDif;
+      document.getElementById('stat-nao-num').textContent = uniqueNao;
+
+      const pct = Math.round(mastered.length / totalUnique * 100);
       const icon  = pct === 100 ? '🏆' : pct >= 70 ? '🎉' : pct >= 40 ? '💪' : '📚';
       const title = pct === 100 ? 'Perfeito!' : pct >= 70 ? 'Muito bem!' : pct >= 40 ? 'Continue assim!' : 'Bora revisar!';
       const sub   = pct === 100
-        ? 'Você acertou todos os cards!'
-        : `${pct}% de aproveitamento — você pode melhorar!`;
+        ? 'Você dominou todos os cards!'
+        : `${mastered.length} de ${totalUnique} dominados — continue praticando!`;
 
       document.getElementById('result-icon').textContent  = icon;
       document.getElementById('result-title').textContent = title;
       document.getElementById('result-sub').textContent   = sub;
-      document.getElementById('btn-retry').style.display  = missed.length > 0 ? '' : 'none';
+
+      const needsRetry = uniqueDif > 0 || uniqueNao > 0;
+      document.getElementById('btn-retry').style.display = needsRetry ? '' : 'none';
 
       showPhase('results');
       if (pct >= 70) launchConfetti();
     }
 
     function retryMissed() {
-      startStudy(shuffle(missed));
+      // Retry: unique cards from difficult + not known
+      const seen = new Set();
+      const cards = [...difficult, ...notKnown].filter(c => {
+        if (seen.has(c.q)) return false;
+        seen.add(c.q);
+        return true;
+      });
+      startStudy(shuffle(cards));
     }
     function restartAll() {
       startStudy(shuffle(allCards));
