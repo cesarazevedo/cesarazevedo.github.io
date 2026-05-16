@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sorteio de Grupos — César Azevedo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    [data-theme="dark"] {
+      --bg: #0f1117;
+      --card-bg: #1e2130;
+      --card-border: #2a2f45;
+      --text-h: #f1f5f9;
+      --text-sub: #94a3b8;
+      --text-muted: #64748b;
+      --arrow: #334155;
+      --footer: #2a2f45;
+      --grid-line: rgba(255,255,255,.03);
+      --shadow: rgba(0,0,0,.35);
+      --toggle-bg: #1e2130;
+      --toggle-border: #2a2f45;
+      --input-bg: #131720;
+      --tag-bg: rgba(99,102,241,.15);
+      --tag-border: rgba(99,102,241,.3);
+    }
+    [data-theme="light"] {
+      --bg: #f0f4f8;
+      --card-bg: #ffffff;
+      --card-border: #dde3ec;
+      --text-h: #0f172a;
+      --text-sub: #475569;
+      --text-muted: #94a3b8;
+      --arrow: #cbd5e1;
+      --footer: #94a3b8;
+      --grid-line: rgba(0,0,0,.04);
+      --shadow: rgba(0,0,0,.10);
+      --toggle-bg: #ffffff;
+      --toggle-border: #dde3ec;
+      --input-bg: #f8fafc;
+      --tag-bg: rgba(99,102,241,.08);
+      --tag-border: rgba(99,102,241,.2);
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 40px 16px 60px;
+      transition: background .3s;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 18px; right: 18px;
+      background: var(--toggle-bg);
+      border: 1px solid var(--toggle-border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .82rem;
+      color: var(--text-sub);
+      transition: background .3s, border-color .3s, color .2s;
+      user-select: none;
+      box-shadow: 0 2px 8px var(--shadow);
+      z-index: 10;
+    }
+    .theme-toggle:hover { color: var(--text-h); }
+
+    .back-btn {
+      position: fixed;
+      top: 18px; left: 18px;
+      background: var(--toggle-bg);
+      border: 1px solid var(--toggle-border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .82rem;
+      color: var(--text-sub);
+      text-decoration: none;
+      transition: background .3s, border-color .3s, color .2s;
+      box-shadow: 0 2px 8px var(--shadow);
+      z-index: 10;
+    }
+    .back-btn:hover { color: var(--text-h); }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+      margin-top: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+    .header .icon-wrap {
+      width: 64px; height: 64px;
+      border-radius: 16px;
+      background: rgba(99,102,241,.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      margin: 0 auto 16px;
+    }
+    .header h1 {
+      color: var(--text-h);
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+    .header p {
+      color: var(--text-sub);
+      font-size: .88rem;
+      margin-top: 6px;
+    }
+
+    .panel {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 4px 20px var(--shadow);
+    }
+
+    .panel-title {
+      color: var(--text-sub);
+      font-size: .75rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 180px;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text-h);
+      font-family: inherit;
+      font-size: .9rem;
+      line-height: 1.6;
+      resize: vertical;
+      transition: border-color .2s;
+      outline: none;
+    }
+    textarea:focus { border-color: #6366f1; }
+    textarea::placeholder { color: var(--text-muted); }
+
+    .counter {
+      color: var(--text-muted);
+      font-size: .78rem;
+      margin-top: 6px;
+      text-align: right;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .field label {
+      color: var(--text-sub);
+      font-size: .82rem;
+      font-weight: 600;
+    }
+
+    input[type="number"] {
+      width: 90px;
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      color: var(--text-h);
+      font-family: inherit;
+      font-size: .95rem;
+      text-align: center;
+      outline: none;
+      transition: border-color .2s;
+    }
+    input[type="number"]:focus { border-color: #6366f1; }
+
+    .mode-btns {
+      display: flex;
+      gap: 6px;
+    }
+    .mode-btn {
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-sub);
+      font-size: .82rem;
+      cursor: pointer;
+      transition: background .2s, border-color .2s, color .2s;
+      white-space: nowrap;
+    }
+    .mode-btn.active {
+      background: rgba(99,102,241,.15);
+      border-color: #6366f1;
+      color: #818cf8;
+      font-weight: 600;
+    }
+
+    .btn-sort {
+      flex: 1;
+      min-width: 140px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none;
+      border-radius: 10px;
+      padding: 12px 20px;
+      color: #fff;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .btn-sort:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-sort:active { transform: translateY(0); }
+    .btn-sort:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    .btn-clear {
+      background: none;
+      border: 1px solid var(--card-border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text-muted);
+      font-size: .88rem;
+      cursor: pointer;
+      transition: color .2s, border-color .2s;
+    }
+    .btn-clear:hover { color: var(--text-sub); border-color: var(--text-muted); }
+
+    /* Results */
+    .results-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .results-header h2 {
+      color: var(--text-h);
+      font-size: 1rem;
+      font-weight: 600;
+    }
+    .btn-copy-all {
+      background: none;
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 5px 12px;
+      color: var(--text-muted);
+      font-size: .78rem;
+      cursor: pointer;
+      transition: color .2s;
+    }
+    .btn-copy-all:hover { color: var(--text-sub); }
+
+    .groups-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    .group-card {
+      background: var(--input-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 16px;
+      animation: fadeIn .3s ease both;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .group-title {
+      font-size: .78rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      margin-bottom: 10px;
+    }
+
+    .group-members {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .member {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-h);
+      font-size: .88rem;
+      padding: 4px 0;
+    }
+    .member-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: .88rem;
+      padding: 32px 0 8px;
+    }
+    .empty-state .big { font-size: 2.5rem; margin-bottom: 10px; }
+
+    .info-bar {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+    .info-chip {
+      background: var(--tag-bg);
+      border: 1px solid var(--tag-border);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: .78rem;
+      color: #818cf8;
+    }
+
+    .footer {
+      margin-top: 40px;
+      color: var(--footer);
+      font-size: .75rem;
+    }
+
+    /* Group color palette */
+    .gc0  { color: #60a5fa; } .gc0  .member-dot { background: #60a5fa; }
+    .gc1  { color: #34d399; } .gc1  .member-dot { background: #34d399; }
+    .gc2  { color: #f87171; } .gc2  .member-dot { background: #f87171; }
+    .gc3  { color: #fbbf24; } .gc3  .member-dot { background: #fbbf24; }
+    .gc4  { color: #a78bfa; } .gc4  .member-dot { background: #a78bfa; }
+    .gc5  { color: #fb923c; } .gc5  .member-dot { background: #fb923c; }
+    .gc6  { color: #e879f9; } .gc6  .member-dot { background: #e879f9; }
+    .gc7  { color: #2dd4bf; } .gc7  .member-dot { background: #2dd4bf; }
+    .gc8  { color: #f472b6; } .gc8  .member-dot { background: #f472b6; }
+    .gc9  { color: #86efac; } .gc9  .member-dot { background: #86efac; }
+    .gc10 { color: #93c5fd; } .gc10 .member-dot { background: #93c5fd; }
+    .gc11 { color: #fdba74; } .gc11 .member-dot { background: #fdba74; }
+
+    .group-card.gc0  { border-left: 3px solid #60a5fa; }
+    .group-card.gc1  { border-left: 3px solid #34d399; }
+    .group-card.gc2  { border-left: 3px solid #f87171; }
+    .group-card.gc3  { border-left: 3px solid #fbbf24; }
+    .group-card.gc4  { border-left: 3px solid #a78bfa; }
+    .group-card.gc5  { border-left: 3px solid #fb923c; }
+    .group-card.gc6  { border-left: 3px solid #e879f9; }
+    .group-card.gc7  { border-left: 3px solid #2dd4bf; }
+    .group-card.gc8  { border-left: 3px solid #f472b6; }
+    .group-card.gc9  { border-left: 3px solid #86efac; }
+    .group-card.gc10 { border-left: 3px solid #93c5fd; }
+    .group-card.gc11 { border-left: 3px solid #fdba74; }
+  </style>
+</head>
+<body>
+
+  <a class="back-btn" href="https://cesarazevedo.github.io">← Voltar</a>
+  <button class="theme-toggle" onclick="toggleTheme()">
+    <span id="theme-icon">☀️</span>
+    <span id="theme-label">Claro</span>
+  </button>
+
+  <div class="container">
+
+    <div class="header">
+      <div class="icon-wrap">🎲</div>
+      <h1>Sorteio de Grupos</h1>
+      <p>Cole os nomes, escolha a quantidade e sorteie!</p>
+    </div>
+
+    <!-- Painel de entrada -->
+    <div class="panel">
+      <div class="panel-title">Participantes</div>
+      <textarea id="names-input"
+        placeholder="Cole os nomes aqui, um por linha:&#10;&#10;Ana Silva&#10;Bruno Costa&#10;Carla Mendes&#10;..."
+        oninput="updateCounter()"
+      ></textarea>
+      <div class="counter" id="counter">0 participantes</div>
+    </div>
+
+    <!-- Painel de configuração -->
+    <div class="panel">
+      <div class="panel-title">Configuração</div>
+      <div class="controls">
+        <div class="field">
+          <label for="num-input" id="num-label">Nº de grupos</label>
+          <input type="number" id="num-input" value="4" min="1" max="99" />
+        </div>
+        <div class="field">
+          <label>Modo</label>
+          <div class="mode-btns">
+            <button class="mode-btn active" id="btn-mode-groups" onclick="setMode('groups')">Por grupos</button>
+            <button class="mode-btn" id="btn-mode-size" onclick="setMode('size')">Por tamanho</button>
+          </div>
+        </div>
+        <button class="btn-sort" id="btn-sort" onclick="sort()">🎲 Sortear</button>
+        <button class="btn-clear" onclick="clearAll()" title="Limpar tudo">✕</button>
+      </div>
+    </div>
+
+    <!-- Resultados -->
+    <div class="panel" id="results-panel">
+      <div class="results-header">
+        <h2 id="results-title">Resultado</h2>
+        <button class="btn-copy-all" id="btn-copy" onclick="copyAll()" style="display:none">⧉ Copiar</button>
+      </div>
+      <div id="groups-grid" class="groups-grid">
+        <div class="empty-state">
+          <div class="big">🎲</div>
+          Adicione participantes e clique em <strong>Sortear</strong>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="footer">César Azevedo · IFRN · Campus João Câmara</p>
+
+  <script>
+    let mode = 'groups';
+    let lastGroups = [];
+
+    const saved = localStorage.getItem('theme') || 'dark';
+    setTheme(saved);
+
+    function setMode(m) {
+      mode = m;
+      document.getElementById('btn-mode-groups').classList.toggle('active', m === 'groups');
+      document.getElementById('btn-mode-size').classList.toggle('active', m === 'size');
+      const label = document.getElementById('num-label');
+      label.textContent = m === 'groups' ? 'Nº de grupos' : 'Por grupo';
+    }
+
+    function getNames() {
+      return document.getElementById('names-input').value
+        .split('\n')
+        .map(n => n.trim())
+        .filter(n => n.length > 0);
+    }
+
+    function updateCounter() {
+      const n = getNames().length;
+      document.getElementById('counter').textContent =
+        n === 0 ? '0 participantes' :
+        n === 1 ? '1 participante' :
+        `${n} participantes`;
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function sort() {
+      const names = getNames();
+      if (names.length === 0) {
+        alert('Adicione pelo menos um participante.');
+        return;
+      }
+      const num = parseInt(document.getElementById('num-input').value) || 1;
+      const shuffled = shuffle(names);
+
+      let groups = [];
+      if (mode === 'groups') {
+        const k = Math.min(num, names.length);
+        groups = Array.from({ length: k }, () => []);
+        shuffled.forEach((name, i) => groups[i % k].push(name));
+      } else {
+        const size = Math.max(1, num);
+        for (let i = 0; i < shuffled.length; i += size) {
+          groups.push(shuffled.slice(i, i + size));
+        }
+      }
+
+      lastGroups = groups;
+      render(groups);
+    }
+
+    function render(groups) {
+      const grid = document.getElementById('groups-grid');
+      const title = document.getElementById('results-title');
+      const copyBtn = document.getElementById('btn-copy');
+
+      if (groups.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><div class="big">🎲</div>Adicione participantes e clique em <strong>Sortear</strong></div>';
+        copyBtn.style.display = 'none';
+        title.textContent = 'Resultado';
+        return;
+      }
+
+      const total = groups.reduce((s, g) => s + g.length, 0);
+      title.textContent = `${groups.length} grupo${groups.length > 1 ? 's' : ''} · ${total} participante${total > 1 ? 's' : ''}`;
+      copyBtn.style.display = '';
+
+      grid.innerHTML = groups.map((members, gi) => {
+        const ci = gi % 12;
+        const delay = gi * 40;
+        return `
+          <div class="group-card gc${ci}" style="animation-delay:${delay}ms">
+            <div class="group-title gc${ci}">Grupo ${gi + 1}</div>
+            <div class="group-members">
+              ${members.map(m => `
+                <div class="member">
+                  <div class="member-dot"></div>
+                  ${escHtml(m)}
+                </div>`).join('')}
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    function escHtml(s) {
+      return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+
+    function clearAll() {
+      document.getElementById('names-input').value = '';
+      document.getElementById('num-input').value = 4;
+      updateCounter();
+      lastGroups = [];
+      render([]);
+    }
+
+    function copyAll() {
+      if (!lastGroups.length) return;
+      const text = lastGroups.map((members, gi) =>
+        `Grupo ${gi + 1}:\n${members.map(m => `  • ${m}`).join('\n')}`
+      ).join('\n\n');
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.getElementById('btn-copy');
+        btn.textContent = '✓ Copiado!';
+        setTimeout(() => btn.textContent = '⧉ Copiar', 2000);
+      });
+    }
+
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute('data-theme');
+      setTheme(cur === 'dark' ? 'light' : 'dark');
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      const isDark = theme === 'dark';
+      document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+      document.getElementById('theme-label').textContent = isDark ? 'Claro' : 'Escuro';
+    }
+  </script>
+
+</body>
+</html>
