@@ -117,7 +117,7 @@
 
     /* ── Filter chips ── */
     .filters-wrap {
-      position: fixed; top: 57px; left: 0; right: 0; z-index: 99;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 99;
       background: var(--bg);
       border-bottom: 1px solid var(--card-border);
       padding: 10px 20px;
@@ -147,7 +147,6 @@
 
     /* ── Main content ── */
     .main {
-      padding-top: 118px; /* topbar + filters */
       padding-bottom: 60px;
       position: relative; z-index: 1;
     }
@@ -165,7 +164,7 @@
       min-width: 600px;
     }
     thead th {
-      position: sticky; top: 118px; z-index: 10;
+      position: sticky; top: 0; z-index: 10;
       background: var(--card-bg);
       border-bottom: 1px solid var(--card-border);
       padding: 10px 16px;
@@ -556,8 +555,22 @@
       document.getElementById('theme-label').textContent = d ? 'Claro' : 'Escuro';
     }
 
+    // ─── Layout (dynamic sticky offsets) ─────────────────────────────────────
+    function layout() {
+      const topbarH = document.querySelector('.topbar').offsetHeight;
+      const filtersEl = document.querySelector('.filters-wrap');
+      filtersEl.style.top = topbarH + 'px';
+      const filtersH = filtersEl.offsetHeight;
+      const total = topbarH + filtersH;
+      document.querySelector('.main').style.paddingTop = (total + 8) + 'px';
+      document.querySelectorAll('thead th').forEach(th => th.style.top = total + 'px');
+      document.querySelector('.count-bar').style.paddingTop = '10px';
+    }
+    window.addEventListener('resize', layout);
+
     // ─── Init ─────────────────────────────────────────────────────────────────
     render();
+    layout();
   </script>
 
 </body>
