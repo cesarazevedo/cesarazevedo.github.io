@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Serviços de Rede Linux — Cheat Sheet</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    [data-theme="dark"] {
+      --bg: #0f1117;
+      --card-bg: #1e2130;
+      --card-border: #2a2f45;
+      --text-h: #f1f5f9;
+      --text-sub: #94a3b8;
+      --text-muted: #64748b;
+      --grid-line: rgba(255,255,255,.03);
+      --shadow: rgba(0,0,0,.35);
+      --input-bg: #131720;
+      --row-hover: rgba(255,255,255,.03);
+      --row-alt: rgba(255,255,255,.015);
+      --code-bg: rgba(255,255,255,.06);
+      --footer: #2a2f45;
+    }
+    [data-theme="light"] {
+      --bg: #f0f4f8;
+      --card-bg: #ffffff;
+      --card-border: #dde3ec;
+      --text-h: #0f172a;
+      --text-sub: #475569;
+      --text-muted: #94a3b8;
+      --grid-line: rgba(0,0,0,.04);
+      --shadow: rgba(0,0,0,.10);
+      --input-bg: #f8fafc;
+      --row-hover: rgba(0,0,0,.025);
+      --row-alt: rgba(0,0,0,.012);
+      --code-bg: rgba(0,0,0,.06);
+      --footer: #94a3b8;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      transition: background .3s;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--card-border);
+      box-shadow: 0 2px 12px var(--shadow);
+      padding: 10px 20px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .back-btn {
+      background: none; border: 1px solid var(--card-border);
+      border-radius: 999px; padding: 5px 12px; cursor: pointer;
+      font-size: .8rem; color: var(--text-sub); text-decoration: none;
+      white-space: nowrap; transition: color .2s;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .back-btn:hover { color: var(--text-h); }
+
+    .topbar-title {
+      font-size: .95rem; font-weight: 700; color: var(--text-h);
+      display: flex; align-items: center; gap: 8px;
+      white-space: nowrap;
+    }
+    .topbar-title .badge {
+      font-size: .7rem; font-weight: 600; letter-spacing: .05em;
+      background: rgba(16,185,129,.15); color: #10b981;
+      border: 1px solid rgba(16,185,129,.3);
+      border-radius: 999px; padding: 2px 8px;
+    }
+
+    .search-wrap {
+      flex: 1; position: relative; max-width: 360px; margin-left: auto;
+    }
+    .search-wrap .icon {
+      position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+      color: var(--text-muted); font-size: .9rem; pointer-events: none;
+    }
+    #search {
+      width: 100%; background: var(--input-bg);
+      border: 1px solid var(--card-border); border-radius: 10px;
+      padding: 8px 12px 8px 34px; color: var(--text-h);
+      font-family: inherit; font-size: .88rem; outline: none;
+      transition: border-color .2s;
+    }
+    #search:focus { border-color: #6366f1; }
+    #search::placeholder { color: var(--text-muted); }
+
+    .theme-toggle {
+      background: none; border: 1px solid var(--card-border);
+      border-radius: 999px; padding: 5px 12px; cursor: pointer;
+      font-size: .8rem; color: var(--text-sub);
+      display: flex; align-items: center; gap: 6px;
+      white-space: nowrap; transition: color .2s;
+    }
+    .theme-toggle:hover { color: var(--text-h); }
+
+    .filters-wrap {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 99;
+      background: var(--bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 10px 20px;
+      display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .chip {
+      border: 1px solid var(--card-border);
+      border-radius: 999px; padding: 4px 12px;
+      font-size: .75rem; font-weight: 600; cursor: pointer;
+      background: none; color: var(--text-muted);
+      transition: background .15s, border-color .15s, color .15s;
+      white-space: nowrap;
+    }
+    .chip:hover { color: var(--text-sub); }
+    .chip.active { color: #fff; border-color: transparent; }
+    .chip[data-cat="all"].active    { background: #6366f1; }
+    .chip[data-cat="dhcp"].active   { background: #3b82f6; }
+    .chip[data-cat="dns"].active    { background: #10b981; }
+    .chip[data-cat="proxy"].active  { background: #f59e0b; }
+    .chip[data-cat="ssh"].active    { background: #8b5cf6; }
+    .chip[data-cat="ftp"].active    { background: #ec4899; }
+    .chip[data-cat="nfs"].active    { background: #14b8a6; }
+    .chip[data-cat="smb"].active    { background: #f97316; }
+    .chip[data-cat="web"].active    { background: #06b6d4; }
+    .chip[data-cat="fw"].active     { background: #ef4444; }
+    .chip[data-cat="vpn"].active    { background: #84cc16; color: #0f172a; }
+
+    .scroll-body {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      overflow-y: auto;
+    }
+    .main { padding-bottom: 60px; }
+
+    .count-bar {
+      padding: 10px 24px 4px;
+      color: var(--text-muted); font-size: .78rem;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%; border-collapse: collapse;
+      min-width: 640px;
+    }
+    thead th {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--card-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 10px 16px;
+      text-align: left; font-size: .72rem; font-weight: 700;
+      letter-spacing: .07em; text-transform: uppercase;
+      color: var(--text-muted);
+    }
+    thead th:first-child { padding-left: 24px; }
+    thead th:last-child  { padding-right: 24px; text-align: center; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--card-border);
+      transition: background .12s;
+    }
+    tbody tr:nth-child(even) { background: var(--row-alt); }
+    tbody tr:hover { background: var(--row-hover); }
+    tbody tr.hidden { display: none; }
+
+    td { padding: 12px 16px; vertical-align: middle; }
+    td:first-child { padding-left: 24px; }
+    td:last-child  { padding-right: 24px; text-align: center; }
+
+    .cat-badge {
+      display: inline-block;
+      border-radius: 999px; padding: 2px 9px;
+      font-size: .68rem; font-weight: 700; letter-spacing: .04em;
+      white-space: nowrap;
+    }
+
+    .cmd-cell { font-family: 'Consolas', 'Fira Code', monospace; }
+    .cmd-text { color: var(--text-h); font-size: .88rem; font-weight: 600; }
+
+    .desc-cell { color: var(--text-sub); font-size: .88rem; max-width: 280px; }
+
+    .ex-cell { display: flex; align-items: center; gap: 8px; }
+    .ex-code {
+      font-family: 'Consolas', 'Fira Code', monospace;
+      font-size: .82rem; color: var(--text-sub);
+      background: var(--code-bg);
+      border-radius: 6px; padding: 3px 8px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      max-width: 260px;
+    }
+
+    .copy-btn {
+      flex-shrink: 0; background: none;
+      border: 1px solid var(--card-border); border-radius: 6px;
+      padding: 3px 8px; cursor: pointer;
+      font-size: .72rem; color: var(--text-muted);
+      transition: color .15s, border-color .15s, background .15s;
+      white-space: nowrap;
+    }
+    .copy-btn:hover { color: var(--text-h); border-color: var(--text-muted); }
+    .copy-btn.copied { color: #10b981; border-color: #10b981; background: rgba(16,185,129,.1); }
+
+    /* Category badge colors */
+    .c-dhcp  { background: rgba(59,130,246,.15);   color: #60a5fa; }
+    .c-dns   { background: rgba(16,185,129,.15);   color: #34d399; }
+    .c-proxy { background: rgba(245,158,11,.15);   color: #fbbf24; }
+    .c-ssh   { background: rgba(139,92,246,.15);   color: #a78bfa; }
+    .c-ftp   { background: rgba(236,72,153,.15);   color: #f472b6; }
+    .c-nfs   { background: rgba(20,184,166,.15);   color: #2dd4bf; }
+    .c-smb   { background: rgba(249,115,22,.15);   color: #fb923c; }
+    .c-web   { background: rgba(6,182,212,.15);    color: #22d3ee; }
+    .c-fw    { background: rgba(239,68,68,.15);    color: #f87171; }
+    .c-vpn   { background: rgba(132,204,22,.15);   color: #a3e635; }
+
+    .empty {
+      display: none; text-align: center;
+      padding: 60px 20px; color: var(--text-muted); font-size: .9rem;
+    }
+    .empty .big { font-size: 2.5rem; margin-bottom: 12px; }
+
+    .footer {
+      text-align: center; padding: 20px;
+      color: var(--footer); font-size: .75rem;
+    }
+
+    @media (max-width: 600px) {
+      .topbar-title .badge { display: none; }
+      .topbar-title { font-size: .85rem; }
+      thead th:nth-child(3), td:nth-child(3) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <a class="back-btn" href="https://cesarazevedo.github.io">← Voltar</a>
+    <div class="topbar-title">
+      🌐 Serviços de Rede Linux
+      <span class="badge">Cheat Sheet</span>
+    </div>
+    <div class="search-wrap">
+      <span class="icon">🔍</span>
+      <input id="search" type="search" placeholder="Buscar comando ou serviço…" oninput="filter()" autocomplete="off" />
+    </div>
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <span id="theme-icon">☀️</span>
+      <span id="theme-label">Claro</span>
+    </button>
+  </div>
+
+  <!-- Category filters -->
+  <div class="filters-wrap">
+    <button class="chip active" data-cat="all"   onclick="setFilter('all')">Todos</button>
+    <button class="chip" data-cat="dhcp"  onclick="setFilter('dhcp')">📡 DHCP</button>
+    <button class="chip" data-cat="dns"   onclick="setFilter('dns')">🔎 DNS</button>
+    <button class="chip" data-cat="proxy" onclick="setFilter('proxy')">🔀 Proxy</button>
+    <button class="chip" data-cat="ssh"   onclick="setFilter('ssh')">🔐 SSH</button>
+    <button class="chip" data-cat="ftp"   onclick="setFilter('ftp')">📂 FTP</button>
+    <button class="chip" data-cat="nfs"   onclick="setFilter('nfs')">🗄️ NFS</button>
+    <button class="chip" data-cat="smb"   onclick="setFilter('smb')">🪟 Samba</button>
+    <button class="chip" data-cat="web"   onclick="setFilter('web')">🕸️ Web</button>
+    <button class="chip" data-cat="fw"    onclick="setFilter('fw')">🛡️ Firewall</button>
+    <button class="chip" data-cat="vpn"   onclick="setFilter('vpn')">🔒 VPN</button>
+  </div>
+
+  <div class="scroll-body" id="scroll-body">
+  <div class="main">
+    <div class="count-bar" id="count-bar"></div>
+    <div class="table-wrap">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th style="width:110px">Serviço</th>
+            <th style="width:230px">Comando / Arquivo</th>
+            <th>Descrição</th>
+            <th style="width:310px">Exemplo</th>
+            <th style="width:60px"></th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="empty" id="empty">
+        <div class="big">🔍</div>
+        Nenhum resultado para "<span id="empty-term"></span>"
+      </div>
+    </div>
+    <p class="footer">César Azevedo · IFRN · Campus João Câmara</p>
+  </div>
+  </div>
+
+  <script>
+    const CATS = {
+      dhcp:  { label: 'DHCP',    cls: 'c-dhcp'  },
+      dns:   { label: 'DNS',     cls: 'c-dns'   },
+      proxy: { label: 'Proxy',   cls: 'c-proxy' },
+      ssh:   { label: 'SSH',     cls: 'c-ssh'   },
+      ftp:   { label: 'FTP',     cls: 'c-ftp'   },
+      nfs:   { label: 'NFS',     cls: 'c-nfs'   },
+      smb:   { label: 'Samba',   cls: 'c-smb'   },
+      web:   { label: 'Web',     cls: 'c-web'   },
+      fw:    { label: 'Firewall',cls: 'c-fw'    },
+      vpn:   { label: 'VPN',     cls: 'c-vpn'   },
+    };
+
+    const DATA = [
+      // ── DHCP (isc-dhcp-server) ──────────────────────────────────────────────
+      { cat:'dhcp', cmd:'apt install isc-dhcp-server',      desc:'Instala o servidor DHCP ISC',                          ex:'apt install isc-dhcp-server' },
+      { cat:'dhcp', cmd:'/etc/dhcp/dhcpd.conf',             desc:'Arquivo principal de configuração do DHCP',            ex:'nano /etc/dhcp/dhcpd.conf' },
+      { cat:'dhcp', cmd:'/etc/default/isc-dhcp-server',     desc:'Define a interface que o DHCP vai escutar',            ex:'INTERFACESv4="eth0"' },
+      { cat:'dhcp', cmd:'subnet ... { ... }',               desc:'Declara escopo de endereços para uma sub-rede',         ex:'subnet 192.168.1.0 netmask 255.255.255.0 { ... }' },
+      { cat:'dhcp', cmd:'range',                            desc:'Define intervalo de IPs para distribuição',             ex:'range 192.168.1.100 192.168.1.200;' },
+      { cat:'dhcp', cmd:'option routers',                   desc:'Informa o gateway padrão aos clientes',                 ex:'option routers 192.168.1.1;' },
+      { cat:'dhcp', cmd:'option domain-name-servers',       desc:'Informa servidores DNS aos clientes',                   ex:'option domain-name-servers 8.8.8.8, 8.8.4.4;' },
+      { cat:'dhcp', cmd:'option domain-name',               desc:'Informa o nome de domínio aos clientes',               ex:'option domain-name "rede.local";' },
+      { cat:'dhcp', cmd:'default-lease-time',               desc:'Tempo padrão de concessão em segundos',                ex:'default-lease-time 600;' },
+      { cat:'dhcp', cmd:'max-lease-time',                   desc:'Tempo máximo de concessão em segundos',                ex:'max-lease-time 7200;' },
+      { cat:'dhcp', cmd:'host (reserva)',                   desc:'Reserva IP fixo para um MAC específico',               ex:'host pc01 { hardware ethernet 00:11:22:33:44:55; fixed-address 192.168.1.50; }' },
+      { cat:'dhcp', cmd:'systemctl start isc-dhcp-server',  desc:'Inicia o serviço DHCP',                                ex:'systemctl start isc-dhcp-server' },
+      { cat:'dhcp', cmd:'systemctl enable isc-dhcp-server', desc:'Habilita o DHCP na inicialização',                     ex:'systemctl enable isc-dhcp-server' },
+      { cat:'dhcp', cmd:'systemctl status isc-dhcp-server', desc:'Verifica o status do serviço DHCP',                    ex:'systemctl status isc-dhcp-server' },
+      { cat:'dhcp', cmd:'dhcpd -t -cf dhcpd.conf',         desc:'Testa a sintaxe do arquivo de configuração',           ex:'dhcpd -t -cf /etc/dhcp/dhcpd.conf' },
+      { cat:'dhcp', cmd:'/var/lib/dhcp/dhcpd.leases',      desc:'Arquivo com as concessões ativas',                     ex:'cat /var/lib/dhcp/dhcpd.leases' },
+      { cat:'dhcp', cmd:'journalctl -u isc-dhcp-server',   desc:'Logs do serviço DHCP',                                 ex:'journalctl -u isc-dhcp-server -f' },
+
+      // ── DNS (BIND9) ──────────────────────────────────────────────────────────
+      { cat:'dns',  cmd:'apt install bind9',                desc:'Instala o servidor DNS BIND9',                         ex:'apt install bind9 bind9utils' },
+      { cat:'dns',  cmd:'/etc/bind/named.conf',            desc:'Arquivo de configuração principal do BIND',            ex:'nano /etc/bind/named.conf' },
+      { cat:'dns',  cmd:'/etc/bind/named.conf.options',    desc:'Opções globais: forwarders, recursão, ACLs',           ex:'nano /etc/bind/named.conf.options' },
+      { cat:'dns',  cmd:'/etc/bind/named.conf.local',      desc:'Declara zonas locais (diretas e reversas)',             ex:'nano /etc/bind/named.conf.local' },
+      { cat:'dns',  cmd:'zone "dominio.local"',            desc:'Declara uma zona DNS direta',                          ex:'zone "rede.local" { type master; file "/etc/bind/db.rede.local"; };' },
+      { cat:'dns',  cmd:'zone "x.x.x.in-addr.arpa"',      desc:'Declara uma zona DNS reversa',                         ex:'zone "1.168.192.in-addr.arpa" { type master; file "/etc/bind/db.192"; };' },
+      { cat:'dns',  cmd:'forwarders',                      desc:'Encaminha consultas não resolvidas localmente',         ex:'forwarders { 8.8.8.8; 8.8.4.4; };' },
+      { cat:'dns',  cmd:'allow-query',                     desc:'Define quais hosts podem fazer consultas',             ex:'allow-query { any; };' },
+      { cat:'dns',  cmd:'allow-recursion',                 desc:'Permite recursão para redes especificadas',             ex:'allow-recursion { 192.168.1.0/24; };' },
+      { cat:'dns',  cmd:'Registro A',                      desc:'Mapeia nome de host para IPv4',                        ex:'pc01    IN  A  192.168.1.10' },
+      { cat:'dns',  cmd:'Registro AAAA',                   desc:'Mapeia nome de host para IPv6',                        ex:'pc01    IN  AAAA  fe80::1' },
+      { cat:'dns',  cmd:'Registro CNAME',                  desc:'Cria alias para outro nome de host',                   ex:'www     IN  CNAME  servidor' },
+      { cat:'dns',  cmd:'Registro MX',                     desc:'Define servidor de e-mail da zona',                    ex:'@       IN  MX  10  mail.rede.local.' },
+      { cat:'dns',  cmd:'Registro PTR',                    desc:'Resolução reversa (IP → nome)',                        ex:'10      IN  PTR  pc01.rede.local.' },
+      { cat:'dns',  cmd:'Registro NS',                     desc:'Define servidores de nomes da zona',                   ex:'@       IN  NS   ns1.rede.local.' },
+      { cat:'dns',  cmd:'named-checkconf',                 desc:'Verifica a sintaxe da configuração do BIND',           ex:'named-checkconf /etc/bind/named.conf' },
+      { cat:'dns',  cmd:'named-checkzone',                 desc:'Verifica a sintaxe de um arquivo de zona',             ex:'named-checkzone rede.local /etc/bind/db.rede.local' },
+      { cat:'dns',  cmd:'systemctl restart bind9',         desc:'Reinicia o serviço DNS',                               ex:'systemctl restart bind9' },
+      { cat:'dns',  cmd:'rndc reload',                     desc:'Recarrega zonas sem reiniciar o BIND',                 ex:'rndc reload' },
+      { cat:'dns',  cmd:'rndc flush',                      desc:'Limpa o cache do DNS',                                 ex:'rndc flush' },
+      { cat:'dns',  cmd:'dig',                             desc:'Consulta DNS diretamente no servidor',                  ex:'dig @192.168.1.1 A servidor.rede.local' },
+      { cat:'dns',  cmd:'dig -x',                          desc:'Consulta reversa de IP para nome',                     ex:'dig -x 192.168.1.10' },
+      { cat:'dns',  cmd:'nslookup',                        desc:'Consulta interativa de registros DNS',                 ex:'nslookup servidor.rede.local 192.168.1.1' },
+      { cat:'dns',  cmd:'host',                            desc:'Resolução simples de nome ou IP',                      ex:'host rede.local' },
+
+      // ── Proxy (Squid) ────────────────────────────────────────────────────────
+      { cat:'proxy', cmd:'apt install squid',              desc:'Instala o servidor proxy Squid',                       ex:'apt install squid' },
+      { cat:'proxy', cmd:'/etc/squid/squid.conf',          desc:'Arquivo de configuração principal do Squid',           ex:'nano /etc/squid/squid.conf' },
+      { cat:'proxy', cmd:'http_port',                      desc:'Define a porta de escuta do proxy',                    ex:'http_port 3128' },
+      { cat:'proxy', cmd:'http_port (transparente)',       desc:'Proxy transparente (intercepta sem configurar cliente)', ex:'http_port 3128 intercept' },
+      { cat:'proxy', cmd:'acl localnet',                   desc:'Define ACL de rede local permitida',                   ex:'acl localnet src 192.168.1.0/24' },
+      { cat:'proxy', cmd:'http_access allow',             desc:'Permite acesso a uma ACL',                             ex:'http_access allow localnet' },
+      { cat:'proxy', cmd:'http_access deny all',          desc:'Bloqueia todo o resto (regra final)',                   ex:'http_access deny all' },
+      { cat:'proxy', cmd:'acl bloqueados dstdomain',      desc:'ACL de domínios bloqueados',                           ex:'acl bloqueados dstdomain .facebook.com .youtube.com' },
+      { cat:'proxy', cmd:'acl horario time',              desc:'ACL com restrição de horário',                         ex:'acl horario time MTWHF 08:00-18:00' },
+      { cat:'proxy', cmd:'acl sites_proibidos url_regex', desc:'ACL com expressão regular de URLs proibidas',          ex:'acl sites_proibidos url_regex -i /etc/squid/bloqueados.txt' },
+      { cat:'proxy', cmd:'cache_mem',                     desc:'Define memória reservada para cache',                  ex:'cache_mem 256 MB' },
+      { cat:'proxy', cmd:'maximum_object_size',           desc:'Tamanho máximo de objeto em cache',                    ex:'maximum_object_size 10 MB' },
+      { cat:'proxy', cmd:'cache_dir',                     desc:'Define o diretório e tamanho do cache em disco',       ex:'cache_dir ufs /var/spool/squid 2048 16 256' },
+      { cat:'proxy', cmd:'squid -z',                      desc:'Inicializa estrutura do cache em disco',               ex:'squid -z' },
+      { cat:'proxy', cmd:'squid -k parse',                desc:'Testa a sintaxe do arquivo de configuração',           ex:'squid -k parse' },
+      { cat:'proxy', cmd:'systemctl restart squid',       desc:'Reinicia o serviço Squid',                             ex:'systemctl restart squid' },
+      { cat:'proxy', cmd:'/var/log/squid/access.log',     desc:'Log de acessos do proxy',                              ex:'tail -f /var/log/squid/access.log' },
+      { cat:'proxy', cmd:'/var/log/squid/cache.log',      desc:'Log de operações do cache',                            ex:'tail -f /var/log/squid/cache.log' },
+      { cat:'proxy', cmd:'squidclient mgr:info',          desc:'Estatísticas de uso do Squid',                         ex:'squidclient -h 127.0.0.1 mgr:info' },
+
+      // ── SSH Server (sshd) ────────────────────────────────────────────────────
+      { cat:'ssh',  cmd:'apt install openssh-server',      desc:'Instala o servidor SSH',                               ex:'apt install openssh-server' },
+      { cat:'ssh',  cmd:'/etc/ssh/sshd_config',            desc:'Arquivo de configuração do servidor SSH',              ex:'nano /etc/ssh/sshd_config' },
+      { cat:'ssh',  cmd:'Port',                            desc:'Muda a porta padrão do SSH',                           ex:'Port 2222' },
+      { cat:'ssh',  cmd:'PermitRootLogin',                 desc:'Permite ou bloqueia login do root via SSH',            ex:'PermitRootLogin no' },
+      { cat:'ssh',  cmd:'PasswordAuthentication',          desc:'Habilita ou desabilita autenticação por senha',        ex:'PasswordAuthentication no' },
+      { cat:'ssh',  cmd:'PubkeyAuthentication',            desc:'Habilita autenticação por chave pública',              ex:'PubkeyAuthentication yes' },
+      { cat:'ssh',  cmd:'AllowUsers',                      desc:'Restringe quais usuários podem se conectar',           ex:'AllowUsers joao maria' },
+      { cat:'ssh',  cmd:'MaxAuthTries',                    desc:'Número máximo de tentativas de autenticação',          ex:'MaxAuthTries 3' },
+      { cat:'ssh',  cmd:'ClientAliveInterval',             desc:'Intervalo de keepalive para clientes inativos',        ex:'ClientAliveInterval 300' },
+      { cat:'ssh',  cmd:'ssh-keygen',                      desc:'Gera par de chaves SSH (pública e privada)',           ex:'ssh-keygen -t ed25519 -C "usuario@host"' },
+      { cat:'ssh',  cmd:'ssh-copy-id',                     desc:'Copia chave pública para o servidor remoto',           ex:'ssh-copy-id usuario@192.168.1.10' },
+      { cat:'ssh',  cmd:'~/.ssh/authorized_keys',          desc:'Arquivo com chaves públicas autorizadas no servidor',  ex:'cat id_ed25519.pub >> ~/.ssh/authorized_keys' },
+      { cat:'ssh',  cmd:'sshd -t',                         desc:'Testa a sintaxe do arquivo sshd_config',              ex:'sshd -t' },
+      { cat:'ssh',  cmd:'systemctl reload sshd',           desc:'Recarrega a configuração do SSH sem desconectar',      ex:'systemctl reload sshd' },
+      { cat:'ssh',  cmd:'ssh -L',                          desc:'Cria túnel local (Local Port Forwarding)',             ex:'ssh -L 8080:servidor:80 usuario@gateway' },
+      { cat:'ssh',  cmd:'ssh -R',                          desc:'Cria túnel reverso (Remote Port Forwarding)',          ex:'ssh -R 9090:localhost:80 usuario@gateway' },
+      { cat:'ssh',  cmd:'ssh -D',                          desc:'Cria proxy SOCKS dinâmico',                           ex:'ssh -D 1080 usuario@gateway' },
+      { cat:'ssh',  cmd:'journalctl -u ssh',               desc:'Logs do servidor SSH',                                 ex:'journalctl -u ssh -f' },
+
+      // ── FTP (vsftpd) ─────────────────────────────────────────────────────────
+      { cat:'ftp',  cmd:'apt install vsftpd',              desc:'Instala o servidor FTP vsftpd',                        ex:'apt install vsftpd' },
+      { cat:'ftp',  cmd:'/etc/vsftpd.conf',               desc:'Arquivo de configuração principal do vsftpd',          ex:'nano /etc/vsftpd.conf' },
+      { cat:'ftp',  cmd:'anonymous_enable',               desc:'Permite ou bloqueia acesso anônimo',                   ex:'anonymous_enable=NO' },
+      { cat:'ftp',  cmd:'local_enable',                   desc:'Permite login de usuários locais do sistema',          ex:'local_enable=YES' },
+      { cat:'ftp',  cmd:'write_enable',                   desc:'Permite operações de escrita (upload)',                 ex:'write_enable=YES' },
+      { cat:'ftp',  cmd:'chroot_local_user',              desc:'Confina usuários ao próprio diretório home',           ex:'chroot_local_user=YES' },
+      { cat:'ftp',  cmd:'pasv_enable',                    desc:'Habilita modo passivo (essencial atrás de NAT)',       ex:'pasv_enable=YES' },
+      { cat:'ftp',  cmd:'pasv_min_port / pasv_max_port',  desc:'Define faixa de portas para modo passivo',             ex:'pasv_min_port=40000\npasv_max_port=50000' },
+      { cat:'ftp',  cmd:'userlist_enable',                desc:'Usa lista de usuários permitidos ou bloqueados',       ex:'userlist_enable=YES' },
+      { cat:'ftp',  cmd:'/etc/vsftpd.userlist',          desc:'Lista de usuários permitidos/bloqueados no FTP',        ex:'echo "joao" >> /etc/vsftpd.userlist' },
+      { cat:'ftp',  cmd:'ssl_enable',                     desc:'Habilita FTPS (FTP sobre TLS)',                        ex:'ssl_enable=YES' },
+      { cat:'ftp',  cmd:'systemctl restart vsftpd',       desc:'Reinicia o serviço vsftpd',                            ex:'systemctl restart vsftpd' },
+      { cat:'ftp',  cmd:'/var/log/vsftpd.log',           desc:'Log de acessos do FTP',                                ex:'tail -f /var/log/vsftpd.log' },
+      { cat:'ftp',  cmd:'ftp (cliente)',                  desc:'Conecta a um servidor FTP pelo terminal',              ex:'ftp 192.168.1.10' },
+      { cat:'ftp',  cmd:'lftp (cliente)',                 desc:'Cliente FTP avançado com suporte a scripts',           ex:'lftp -u usuario,senha ftp://192.168.1.10' },
+
+      // ── NFS ──────────────────────────────────────────────────────────────────
+      { cat:'nfs',  cmd:'apt install nfs-kernel-server', desc:'Instala o servidor NFS',                                ex:'apt install nfs-kernel-server' },
+      { cat:'nfs',  cmd:'/etc/exports',                  desc:'Define os diretórios exportados e permissões',          ex:'nano /etc/exports' },
+      { cat:'nfs',  cmd:'Entrada no /etc/exports',       desc:'Exporta diretório para uma rede com permissões',        ex:'/dados 192.168.1.0/24(rw,sync,no_subtree_check)' },
+      { cat:'nfs',  cmd:'rw / ro',                       desc:'Exporta com leitura/escrita ou somente leitura',        ex:'/pub *(ro,sync)' },
+      { cat:'nfs',  cmd:'sync',                          desc:'Garante escrita síncrona no disco',                     ex:'/dados 192.168.1.0/24(rw,sync)' },
+      { cat:'nfs',  cmd:'no_root_squash',                desc:'Permite que root remoto atue como root local',          ex:'/dados 192.168.1.5(rw,no_root_squash)' },
+      { cat:'nfs',  cmd:'exportfs -a',                   desc:'Aplica as mudanças no /etc/exports sem reiniciar',      ex:'exportfs -a' },
+      { cat:'nfs',  cmd:'exportfs -v',                   desc:'Lista os exports ativos com opções',                    ex:'exportfs -v' },
+      { cat:'nfs',  cmd:'exportfs -r',                   desc:'Reexporta todos os diretórios (recarrega)',             ex:'exportfs -r' },
+      { cat:'nfs',  cmd:'systemctl restart nfs-kernel-server', desc:'Reinicia o servidor NFS',                         ex:'systemctl restart nfs-kernel-server' },
+      { cat:'nfs',  cmd:'showmount -e',                  desc:'Lista os exports disponíveis no servidor',              ex:'showmount -e 192.168.1.1' },
+      { cat:'nfs',  cmd:'mount (cliente NFS)',            desc:'Monta um compartilhamento NFS no cliente',             ex:'mount -t nfs 192.168.1.1:/dados /mnt/nfs' },
+      { cat:'nfs',  cmd:'/etc/fstab (NFS)',              desc:'Monta NFS automaticamente na inicialização',            ex:'192.168.1.1:/dados  /mnt/nfs  nfs  defaults  0  0' },
+      { cat:'nfs',  cmd:'nfsstat',                       desc:'Estatísticas de uso do servidor NFS',                  ex:'nfsstat -s' },
+
+      // ── Samba ────────────────────────────────────────────────────────────────
+      { cat:'smb',  cmd:'apt install samba',             desc:'Instala o servidor Samba',                              ex:'apt install samba' },
+      { cat:'smb',  cmd:'/etc/samba/smb.conf',          desc:'Arquivo de configuração principal do Samba',            ex:'nano /etc/samba/smb.conf' },
+      { cat:'smb',  cmd:'[global] workgroup',           desc:'Define o nome do grupo de trabalho',                    ex:'workgroup = WORKGROUP' },
+      { cat:'smb',  cmd:'[nome-do-share]',              desc:'Declara um compartilhamento de arquivos',               ex:'[dados]\n  path = /srv/dados\n  browseable = yes' },
+      { cat:'smb',  cmd:'path',                         desc:'Diretório local que será compartilhado',                ex:'path = /srv/compartilhado' },
+      { cat:'smb',  cmd:'valid users',                  desc:'Lista de usuários com acesso ao share',                 ex:'valid users = joao, @desenvolvedores' },
+      { cat:'smb',  cmd:'read only',                    desc:'Define se o share é somente leitura',                   ex:'read only = no' },
+      { cat:'smb',  cmd:'browseable',                   desc:'Exibe ou oculta o share na navegação da rede',          ex:'browseable = yes' },
+      { cat:'smb',  cmd:'guest ok',                     desc:'Permite acesso sem autenticação',                       ex:'guest ok = no' },
+      { cat:'smb',  cmd:'create mask / directory mask', desc:'Define permissões padrão de arquivos e pastas',         ex:'create mask = 0664\ndirectory mask = 0775' },
+      { cat:'smb',  cmd:'smbpasswd -a',                 desc:'Adiciona usuário ao banco de senhas do Samba',          ex:'smbpasswd -a joao' },
+      { cat:'smb',  cmd:'pdbedit -L',                   desc:'Lista usuários do banco Samba',                         ex:'pdbedit -L -v' },
+      { cat:'smb',  cmd:'testparm',                     desc:'Verifica a sintaxe do smb.conf',                        ex:'testparm' },
+      { cat:'smb',  cmd:'systemctl restart smbd nmbd',  desc:'Reinicia os serviços Samba',                            ex:'systemctl restart smbd nmbd' },
+      { cat:'smb',  cmd:'smbclient -L',                 desc:'Lista compartilhamentos de um servidor Samba',          ex:'smbclient -L //192.168.1.1 -U joao' },
+      { cat:'smb',  cmd:'smbclient (conectar)',         desc:'Conecta a um share Samba pelo terminal',               ex:'smbclient //192.168.1.1/dados -U joao' },
+      { cat:'smb',  cmd:'mount.cifs (cliente)',         desc:'Monta share Samba como sistema de arquivos',            ex:'mount -t cifs //192.168.1.1/dados /mnt/smb -o user=joao' },
+
+      // ── Web (Apache2 / Nginx) ─────────────────────────────────────────────────
+      { cat:'web',  cmd:'apt install apache2',          desc:'Instala o servidor web Apache',                          ex:'apt install apache2' },
+      { cat:'web',  cmd:'apt install nginx',            desc:'Instala o servidor web Nginx',                           ex:'apt install nginx' },
+      { cat:'web',  cmd:'/etc/apache2/apache2.conf',   desc:'Configuração principal do Apache',                       ex:'nano /etc/apache2/apache2.conf' },
+      { cat:'web',  cmd:'/etc/nginx/nginx.conf',       desc:'Configuração principal do Nginx',                        ex:'nano /etc/nginx/nginx.conf' },
+      { cat:'web',  cmd:'/etc/apache2/sites-available',desc:'Arquivos de VirtualHost do Apache',                      ex:'ls /etc/apache2/sites-available/' },
+      { cat:'web',  cmd:'/etc/nginx/sites-available',  desc:'Arquivos de server block do Nginx',                      ex:'ls /etc/nginx/sites-available/' },
+      { cat:'web',  cmd:'a2ensite',                    desc:'Habilita um VirtualHost no Apache',                      ex:'a2ensite 000-default.conf' },
+      { cat:'web',  cmd:'a2dissite',                   desc:'Desabilita um VirtualHost no Apache',                    ex:'a2dissite default-ssl.conf' },
+      { cat:'web',  cmd:'a2enmod',                     desc:'Habilita um módulo do Apache',                           ex:'a2enmod rewrite ssl' },
+      { cat:'web',  cmd:'ln -s (nginx enable)',        desc:'Habilita server block no Nginx via symlink',              ex:'ln -s /etc/nginx/sites-available/site /etc/nginx/sites-enabled/' },
+      { cat:'web',  cmd:'apachectl configtest',        desc:'Testa a sintaxe da configuração do Apache',              ex:'apachectl configtest' },
+      { cat:'web',  cmd:'nginx -t',                    desc:'Testa a sintaxe da configuração do Nginx',               ex:'nginx -t' },
+      { cat:'web',  cmd:'systemctl reload apache2',    desc:'Recarrega o Apache sem derrubar conexões',               ex:'systemctl reload apache2' },
+      { cat:'web',  cmd:'systemctl reload nginx',      desc:'Recarrega o Nginx sem derrubar conexões',                ex:'systemctl reload nginx' },
+      { cat:'web',  cmd:'/var/www/html',               desc:'Diretório raiz padrão do Apache e Nginx',                ex:'ls -la /var/www/html/' },
+      { cat:'web',  cmd:'/var/log/apache2/access.log', desc:'Log de acessos do Apache',                               ex:'tail -f /var/log/apache2/access.log' },
+      { cat:'web',  cmd:'/var/log/nginx/access.log',  desc:'Log de acessos do Nginx',                                 ex:'tail -f /var/log/nginx/access.log' },
+      { cat:'web',  cmd:'certbot',                     desc:'Obtém e instala certificado SSL Let\'s Encrypt',         ex:'certbot --apache -d exemplo.com' },
+      { cat:'web',  cmd:'certbot renew',               desc:'Renova certificados SSL automaticamente',                 ex:'certbot renew --dry-run' },
+
+      // ── Firewall (iptables / ufw / firewalld) ────────────────────────────────
+      { cat:'fw',   cmd:'ufw enable',                  desc:'Ativa o firewall UFW',                                    ex:'ufw enable' },
+      { cat:'fw',   cmd:'ufw status verbose',          desc:'Exibe regras e status do UFW',                            ex:'ufw status verbose' },
+      { cat:'fw',   cmd:'ufw allow',                   desc:'Permite tráfego em uma porta ou serviço',                 ex:'ufw allow 22/tcp' },
+      { cat:'fw',   cmd:'ufw deny',                    desc:'Bloqueia tráfego em uma porta ou serviço',               ex:'ufw deny 23/tcp' },
+      { cat:'fw',   cmd:'ufw allow from',              desc:'Permite tráfego de um IP ou rede específica',             ex:'ufw allow from 192.168.1.0/24 to any port 22' },
+      { cat:'fw',   cmd:'ufw delete',                  desc:'Remove uma regra do UFW',                                 ex:'ufw delete allow 80/tcp' },
+      { cat:'fw',   cmd:'ufw reset',                   desc:'Remove todas as regras e desativa o UFW',                 ex:'ufw reset' },
+      { cat:'fw',   cmd:'iptables -L -v -n',           desc:'Lista todas as regras ativas com contadores',             ex:'iptables -L -v -n' },
+      { cat:'fw',   cmd:'iptables -A INPUT',           desc:'Adiciona regra de entrada',                               ex:'iptables -A INPUT -p tcp --dport 80 -j ACCEPT' },
+      { cat:'fw',   cmd:'iptables -A OUTPUT',          desc:'Adiciona regra de saída',                                 ex:'iptables -A OUTPUT -p tcp --dport 443 -j ACCEPT' },
+      { cat:'fw',   cmd:'iptables -A FORWARD',         desc:'Adiciona regra de encaminhamento (roteamento)',           ex:'iptables -A FORWARD -i eth1 -o eth0 -j ACCEPT' },
+      { cat:'fw',   cmd:'iptables -t nat -A POSTROUTING', desc:'Habilita NAT/mascaramento (compartilhar internet)',   ex:'iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE' },
+      { cat:'fw',   cmd:'iptables -D',                 desc:'Remove uma regra específica do iptables',                ex:'iptables -D INPUT 3' },
+      { cat:'fw',   cmd:'iptables -F',                 desc:'Limpa todas as regras de uma chain',                      ex:'iptables -F INPUT' },
+      { cat:'fw',   cmd:'iptables-save',               desc:'Salva as regras atuais para arquivo',                     ex:'iptables-save > /etc/iptables/rules.v4' },
+      { cat:'fw',   cmd:'iptables-restore',            desc:'Restaura regras a partir de arquivo',                     ex:'iptables-restore < /etc/iptables/rules.v4' },
+      { cat:'fw',   cmd:'echo 1 > /proc/sys/net/ipv4/ip_forward', desc:'Habilita roteamento IP temporariamente',    ex:'echo 1 > /proc/sys/net/ipv4/ip_forward' },
+      { cat:'fw',   cmd:'net.ipv4.ip_forward=1',       desc:'Habilita roteamento IP permanentemente no sysctl.conf', ex:'echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf' },
+
+      // ── VPN (OpenVPN / WireGuard) ─────────────────────────────────────────────
+      { cat:'vpn',  cmd:'apt install openvpn',         desc:'Instala o OpenVPN',                                       ex:'apt install openvpn easy-rsa' },
+      { cat:'vpn',  cmd:'apt install wireguard',       desc:'Instala o WireGuard',                                     ex:'apt install wireguard' },
+      { cat:'vpn',  cmd:'/etc/openvpn/server.conf',   desc:'Arquivo de configuração do servidor OpenVPN',             ex:'nano /etc/openvpn/server.conf' },
+      { cat:'vpn',  cmd:'/etc/wireguard/wg0.conf',    desc:'Arquivo de configuração da interface WireGuard',          ex:'nano /etc/wireguard/wg0.conf' },
+      { cat:'vpn',  cmd:'wg genkey',                   desc:'Gera chave privada WireGuard',                            ex:'wg genkey | tee privatekey | wg pubkey > publickey' },
+      { cat:'vpn',  cmd:'wg-quick up wg0',            desc:'Ativa a interface VPN WireGuard',                         ex:'wg-quick up wg0' },
+      { cat:'vpn',  cmd:'wg-quick down wg0',          desc:'Desativa a interface VPN WireGuard',                      ex:'wg-quick down wg0' },
+      { cat:'vpn',  cmd:'wg show',                     desc:'Exibe status e peers da VPN WireGuard',                  ex:'wg show' },
+      { cat:'vpn',  cmd:'systemctl enable wg-quick@wg0', desc:'Habilita WireGuard na inicialização do sistema',       ex:'systemctl enable wg-quick@wg0' },
+      { cat:'vpn',  cmd:'[Interface] (WireGuard)',     desc:'Configura a interface local do WireGuard',                ex:'[Interface]\nAddress = 10.0.0.1/24\nListenPort = 51820\nPrivateKey = <chave>' },
+      { cat:'vpn',  cmd:'[Peer] (WireGuard)',          desc:'Declara um peer (cliente) WireGuard',                     ex:'[Peer]\nPublicKey = <chave_pub>\nAllowedIPs = 10.0.0.2/32' },
+      { cat:'vpn',  cmd:'systemctl start openvpn@server', desc:'Inicia o servidor OpenVPN',                            ex:'systemctl start openvpn@server' },
+      { cat:'vpn',  cmd:'openvpn --config',            desc:'Conecta como cliente OpenVPN a partir de arquivo .ovpn', ex:'openvpn --config cliente.ovpn' },
+      { cat:'vpn',  cmd:'/var/log/openvpn/openvpn.log',desc:'Log de conexões do OpenVPN',                             ex:'tail -f /var/log/openvpn/openvpn.log' },
+    ];
+
+    // ─── State ────────────────────────────────────────────────────────────────
+    let activeFilter = 'all';
+    let searchTerm = '';
+
+    // ─── Render ───────────────────────────────────────────────────────────────
+    function render() {
+      const tbody = document.getElementById('tbody');
+      tbody.innerHTML = DATA.map((row) => {
+        const cat = CATS[row.cat];
+        const exSafe   = row.ex.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const cmdSafe  = row.cmd.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        const descSafe = row.desc.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+        return `<tr data-cat="${row.cat}" data-search="${(row.cat+' '+row.cmd+' '+row.desc+' '+row.ex).toLowerCase()}">
+          <td><span class="cat-badge ${cat.cls}">${cat.label}</span></td>
+          <td class="cmd-cell"><span class="cmd-text">${cmdSafe}</span></td>
+          <td class="desc-cell">${descSafe}</td>
+          <td class="ex-cell">
+            <span class="ex-code" title="${exSafe}">${exSafe}</span>
+          </td>
+          <td>
+            <button class="copy-btn" onclick="copyCmd(this,'${row.ex.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ')}')">⧉ Copiar</button>
+          </td>
+        </tr>`;
+      }).join('');
+      applyFilters();
+    }
+
+    function applyFilters() {
+      const rows = document.querySelectorAll('#tbody tr');
+      let visible = 0;
+      rows.forEach(row => {
+        const catMatch = activeFilter === 'all' || row.dataset.cat === activeFilter;
+        const txtMatch = !searchTerm || row.dataset.search.includes(searchTerm);
+        const show = catMatch && txtMatch;
+        row.classList.toggle('hidden', !show);
+        if (show) visible++;
+      });
+      const total = DATA.length;
+      document.getElementById('count-bar').textContent =
+        visible === total ? `${total} entradas` : `${visible} de ${total} entradas`;
+      const empty = document.getElementById('empty');
+      empty.style.display = visible === 0 ? 'block' : 'none';
+      document.getElementById('empty-term').textContent = searchTerm;
+    }
+
+    function filter() {
+      searchTerm = document.getElementById('search').value.trim().toLowerCase();
+      applyFilters();
+    }
+
+    function setFilter(cat) {
+      activeFilter = cat;
+      document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.cat === cat));
+      applyFilters();
+    }
+
+    function copyCmd(btn, text) {
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = '✓ Copiado';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = '⧉ Copiar'; btn.classList.remove('copied'); }, 1800);
+      });
+    }
+
+    // ─── Theme ────────────────────────────────────────────────────────────────
+    const saved = localStorage.getItem('theme') || 'dark';
+    setTheme(saved);
+
+    function toggleTheme() { setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('theme', t);
+      const d = t === 'dark';
+      document.getElementById('theme-icon').textContent  = d ? '☀️' : '🌙';
+      document.getElementById('theme-label').textContent = d ? 'Claro' : 'Escuro';
+    }
+
+    // ─── Layout ───────────────────────────────────────────────────────────────
+    function layout() {
+      const topbarH   = document.querySelector('.topbar').offsetHeight;
+      const filtersEl = document.querySelector('.filters-wrap');
+      filtersEl.style.top = topbarH + 'px';
+      const total = topbarH + filtersEl.offsetHeight;
+      document.getElementById('scroll-body').style.top = total + 'px';
+    }
+    window.addEventListener('resize', layout);
+
+    // ─── Init ─────────────────────────────────────────────────────────────────
+    render();
+    layout();
+  </script>
+
+</body>
+</html>
