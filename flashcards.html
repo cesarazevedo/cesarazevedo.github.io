@@ -599,7 +599,13 @@ O que faz o chmod? | Altera permissões de arquivos"
       isFlipped = false;
       const scene = document.getElementById('card-scene');
       const card3d = document.getElementById('card-3d');
+
+      // Disable flip transition so the back face doesn't flash during reset
+      card3d.style.transition = 'none';
       card3d.classList.remove('flipped');
+      void card3d.offsetWidth; // force immediate reflow at 0deg
+      card3d.style.transition = '';
+
       hideActions();
 
       // Always clear exit/enter animations and force reflow
