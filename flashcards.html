@@ -602,15 +602,16 @@ O que faz o chmod? | Altera permissões de arquivos"
       card3d.classList.remove('flipped');
       hideActions();
 
-      // Update behind cards
+      // Always clear exit/enter animations and force reflow
+      scene.classList.remove('exit-right', 'exit-left', 'enter');
+      void scene.offsetWidth;
+
       const b1 = document.getElementById('behind1');
       const b2 = document.getElementById('behind2');
       b1.style.display = deck.length > 1 ? '' : 'none';
       b2.style.display = deck.length > 2 ? '' : 'none';
 
       if (entering) {
-        scene.classList.remove('exit-right', 'exit-left');
-        void scene.offsetWidth; // reflow
         scene.classList.add('enter');
         scene.addEventListener('animationend', () => scene.classList.remove('enter'), { once: true });
       }
