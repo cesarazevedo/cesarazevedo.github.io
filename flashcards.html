@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flashcards — César Azevedo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    [data-theme="dark"] {
+      --bg: #0f1117;
+      --card-bg: #1e2130;
+      --card-border: #2a2f45;
+      --text-h: #f1f5f9;
+      --text-sub: #94a3b8;
+      --text-muted: #64748b;
+      --grid-line: rgba(255,255,255,.03);
+      --shadow: rgba(0,0,0,.4);
+      --toggle-bg: #1e2130;
+      --toggle-border: #2a2f45;
+      --input-bg: #131720;
+      --footer: #2a2f45;
+      --front-bg: #1e2130;
+      --back-bg: #1a2035;
+      --front-accent: #6366f1;
+      --back-accent: #10b981;
+      --progress-bg: #2a2f45;
+    }
+    [data-theme="light"] {
+      --bg: #f0f4f8;
+      --card-bg: #ffffff;
+      --card-border: #dde3ec;
+      --text-h: #0f172a;
+      --text-sub: #475569;
+      --text-muted: #94a3b8;
+      --grid-line: rgba(0,0,0,.04);
+      --shadow: rgba(0,0,0,.12);
+      --toggle-bg: #ffffff;
+      --toggle-border: #dde3ec;
+      --input-bg: #f8fafc;
+      --footer: #94a3b8;
+      --front-bg: #ffffff;
+      --back-bg: #f0fdf4;
+      --front-accent: #6366f1;
+      --back-accent: #10b981;
+      --progress-bg: #e2e8f0;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 16px 60px;
+      transition: background .3s;
+    }
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    /* ── Fixed buttons ── */
+    .back-btn {
+      position: fixed; top: 18px; left: 18px; z-index: 20;
+      background: var(--toggle-bg); border: 1px solid var(--toggle-border);
+      border-radius: 999px; padding: 6px 14px;
+      font-size: .82rem; color: var(--text-sub); text-decoration: none;
+      display: flex; align-items: center; gap: 6px;
+      box-shadow: 0 2px 8px var(--shadow);
+      transition: color .2s;
+    }
+    .back-btn:hover { color: var(--text-h); }
+
+    .theme-toggle {
+      position: fixed; top: 18px; right: 18px; z-index: 20;
+      background: var(--toggle-bg); border: 1px solid var(--toggle-border);
+      border-radius: 999px; padding: 6px 14px; cursor: pointer;
+      font-size: .82rem; color: var(--text-sub);
+      display: flex; align-items: center; gap: 6px;
+      box-shadow: 0 2px 8px var(--shadow);
+      transition: color .2s;
+    }
+    .theme-toggle:hover { color: var(--text-h); }
+
+    /* ── Container ── */
+    .container {
+      width: 100%; max-width: 560px;
+      margin-top: 20px;
+      position: relative; z-index: 1;
+    }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 32px; }
+    .header .icon-wrap {
+      width: 64px; height: 64px; border-radius: 16px;
+      background: rgba(99,102,241,.15);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; margin: 0 auto 16px;
+    }
+    .header h1 { color: var(--text-h); font-size: 1.5rem; font-weight: 700; letter-spacing: -.3px; }
+    .header p  { color: var(--text-sub); font-size: .88rem; margin-top: 6px; }
+
+    /* ── Panel ── */
+    .panel {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 24px; margin-bottom: 16px;
+      box-shadow: 0 4px 20px var(--shadow);
+    }
+    .panel-title {
+      color: var(--text-sub); font-size: .75rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase; margin-bottom: 14px;
+    }
+
+    textarea {
+      width: 100%; min-height: 200px;
+      background: var(--input-bg); border: 1px solid var(--card-border);
+      border-radius: 10px; padding: 14px 16px;
+      color: var(--text-h); font-family: inherit; font-size: .9rem;
+      line-height: 1.8; resize: vertical; outline: none;
+      transition: border-color .2s;
+    }
+    textarea:focus { border-color: #6366f1; }
+    textarea::placeholder { color: var(--text-muted); }
+
+    .format-hint {
+      margin-top: 10px; padding: 10px 14px;
+      background: rgba(99,102,241,.08); border: 1px solid rgba(99,102,241,.2);
+      border-radius: 8px; font-size: .78rem; color: var(--text-sub);
+      display: flex; gap: 8px; align-items: flex-start;
+    }
+    .format-hint code {
+      font-family: 'Consolas', monospace; color: #818cf8;
+    }
+
+    .card-count {
+      text-align: right; margin-top: 8px;
+      font-size: .78rem; color: var(--text-muted);
+    }
+    .card-count strong { color: #818cf8; }
+
+    .btn-start {
+      width: 100%; margin-top: 16px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none; border-radius: 12px; padding: 14px;
+      color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: opacity .2s, transform .15s;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      letter-spacing: .02em;
+    }
+    .btn-start:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+    .btn-start:disabled { opacity: .35; cursor: not-allowed; }
+
+    /* ── Phases ── */
+    .phase { display: none; }
+    .phase.active { display: block; }
+
+    /* ── Progress ── */
+    .progress-area { margin-bottom: 28px; }
+    .progress-meta {
+      display: flex; justify-content: space-between;
+      align-items: center; margin-bottom: 8px;
+    }
+    .progress-label { color: var(--text-sub); font-size: .85rem; font-weight: 600; }
+    .progress-chips { display: flex; gap: 8px; }
+    .chip-sei  { font-size: .75rem; color: #34d399; }
+    .chip-nao  { font-size: .75rem; color: #f87171; }
+    .progress-track {
+      height: 6px; background: var(--progress-bg); border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #6366f1, #8b5cf6);
+      border-radius: 999px;
+      transition: width .4s cubic-bezier(.4,0,.2,1);
+    }
+
+    /* ── Deck (card stack) ── */
+    .deck-area {
+      position: relative;
+      height: 280px;
+      margin-bottom: 32px;
+    }
+    .card-behind {
+      position: absolute; left: 0; right: 0;
+      border-radius: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      transition: transform .3s;
+    }
+    .card-behind.b1 { top: 12px; transform: scale(0.95); opacity: .6; }
+    .card-behind.b2 { top: 22px; transform: scale(0.90); opacity: .35; }
+
+    /* ── 3D Card ── */
+    .card-scene {
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 260px;
+      perspective: 1400px;
+      cursor: pointer;
+    }
+    .card-3d {
+      width: 100%; height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform .55s cubic-bezier(.4,.2,.2,1);
+    }
+    .card-3d.flipped { transform: rotateY(180deg); }
+
+    .card-face {
+      position: absolute; inset: 0;
+      backface-visibility: hidden;
+      border-radius: 20px;
+      border: 1px solid var(--card-border);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 36px 32px;
+      box-shadow: 0 8px 32px var(--shadow);
+      overflow: hidden;
+    }
+    .card-face::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 4px;
+      border-radius: 20px 20px 0 0;
+    }
+
+    .card-front { background: var(--front-bg); }
+    .card-front::before { background: linear-gradient(90deg, #6366f1, #8b5cf6); }
+
+    .card-back {
+      background: var(--back-bg);
+      transform: rotateY(180deg);
+    }
+    .card-back::before { background: linear-gradient(90deg, #10b981, #06b6d4); }
+
+    .card-label {
+      font-size: .68rem; font-weight: 800; letter-spacing: .12em;
+      text-transform: uppercase; margin-bottom: 16px;
+      opacity: .5;
+    }
+    .card-front .card-label { color: #818cf8; }
+    .card-back  .card-label { color: #34d399; }
+
+    .card-text {
+      text-align: center; color: var(--text-h);
+      font-size: 1.15rem; font-weight: 600;
+      line-height: 1.5; max-height: 160px;
+      overflow-y: auto;
+    }
+    .card-text::-webkit-scrollbar { width: 4px; }
+    .card-text::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
+
+    .flip-hint {
+      position: absolute; bottom: 16px;
+      font-size: .72rem; color: var(--text-muted);
+      display: flex; align-items: center; gap: 5px;
+    }
+    .flip-hint kbd {
+      background: var(--progress-bg); border-radius: 4px;
+      padding: 1px 5px; font-family: inherit; font-size: .68rem;
+    }
+
+    /* ── Action buttons ── */
+    .actions {
+      display: flex; gap: 12px; margin-bottom: 20px;
+      opacity: 0; pointer-events: none;
+      transform: translateY(12px);
+      transition: opacity .3s, transform .3s;
+    }
+    .actions.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+
+    .btn-action {
+      flex: 1; padding: 14px;
+      border: none; border-radius: 12px;
+      font-size: .95rem; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: transform .15s, opacity .15s;
+    }
+    .btn-action:hover { transform: translateY(-2px); }
+    .btn-action:active { transform: translateY(0); }
+
+    .btn-nao {
+      background: rgba(239,68,68,.15);
+      border: 1px solid rgba(239,68,68,.3);
+      color: #f87171;
+    }
+    .btn-nao:hover { background: rgba(239,68,68,.22); }
+
+    .btn-sei {
+      background: rgba(16,185,129,.15);
+      border: 1px solid rgba(16,185,129,.3);
+      color: #34d399;
+    }
+    .btn-sei:hover { background: rgba(16,185,129,.22); }
+
+    .key-hint {
+      text-align: center; color: var(--text-muted); font-size: .75rem;
+      display: flex; justify-content: center; gap: 16px;
+    }
+    .key-hint span { display: flex; align-items: center; gap: 4px; }
+    .key-hint kbd {
+      background: var(--progress-bg); border-radius: 4px;
+      padding: 1px 7px; font-family: inherit; font-size: .7rem;
+      color: var(--text-sub);
+    }
+
+    /* ── Card exit animations ── */
+    @keyframes flyRight {
+      to { transform: translateX(160%) rotate(18deg) scale(.9); opacity: 0; }
+    }
+    @keyframes flyLeft {
+      to { transform: translateX(-160%) rotate(-18deg) scale(.9); opacity: 0; }
+    }
+    @keyframes enterCard {
+      from { opacity: 0; transform: scale(.88) translateY(16px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .card-scene.exit-right { animation: flyRight .38s cubic-bezier(.4,0,1,1) forwards; }
+    .card-scene.exit-left  { animation: flyLeft  .38s cubic-bezier(.4,0,1,1) forwards; }
+    .card-scene.enter      { animation: enterCard .35s cubic-bezier(.2,.8,.4,1) both; }
+
+    /* ── Results ── */
+    .results-panel {
+      text-align: center; padding: 32px 24px;
+    }
+    .confetti-wrap { position: relative; height: 0; overflow: visible; }
+    .confetti-piece {
+      position: absolute; width: 8px; height: 8px;
+      border-radius: 2px;
+      animation: confettiFall 1.2s ease-out forwards;
+    }
+    @keyframes confettiFall {
+      0%   { transform: translateY(-20px) rotate(0deg);  opacity: 1; }
+      100% { transform: translateY(120px) rotate(720deg); opacity: 0; }
+    }
+
+    .result-icon {
+      font-size: 4rem; margin-bottom: 16px;
+      animation: popIn .5s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .result-title {
+      color: var(--text-h); font-size: 1.6rem; font-weight: 700;
+      margin-bottom: 8px;
+      animation: popIn .5s .1s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .result-sub {
+      color: var(--text-sub); font-size: .9rem; margin-bottom: 28px;
+      animation: popIn .5s .15s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .result-stats {
+      display: flex; gap: 16px; justify-content: center; margin-bottom: 32px;
+      animation: popIn .5s .2s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .stat-box {
+      flex: 1; max-width: 140px;
+      background: var(--input-bg); border: 1px solid var(--card-border);
+      border-radius: 14px; padding: 16px 12px;
+    }
+    .stat-num { font-size: 2rem; font-weight: 800; }
+    .stat-label { font-size: .75rem; color: var(--text-muted); margin-top: 2px; }
+    .stat-sei  .stat-num { color: #34d399; }
+    .stat-nao  .stat-num { color: #f87171; }
+
+    .result-btns {
+      display: flex; flex-direction: column; gap: 10px;
+      animation: popIn .5s .25s cubic-bezier(.34,1.56,.64,1) both;
+    }
+    .btn-retry {
+      background: linear-gradient(135deg, #ef4444, #f97316);
+      border: none; border-radius: 12px; padding: 13px;
+      color: #fff; font-size: .95rem; font-weight: 700; cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-retry:hover { opacity: .9; transform: translateY(-1px); }
+
+    .btn-restart {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none; border-radius: 12px; padding: 13px;
+      color: #fff; font-size: .95rem; font-weight: 700; cursor: pointer;
+      transition: opacity .2s, transform .15s;
+    }
+    .btn-restart:hover { opacity: .9; transform: translateY(-1px); }
+
+    .btn-new {
+      background: none; border: 1px solid var(--card-border);
+      border-radius: 12px; padding: 13px;
+      color: var(--text-sub); font-size: .9rem; cursor: pointer;
+      transition: color .2s;
+    }
+    .btn-new:hover { color: var(--text-h); }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(.7); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .footer { margin-top: 40px; color: var(--footer); font-size: .75rem; text-align: center; }
+  </style>
+</head>
+<body>
+
+  <a class="back-btn" href="https://cesarazevedo.github.io">← Voltar</a>
+  <button class="theme-toggle" onclick="toggleTheme()">
+    <span id="theme-icon">☀️</span>
+    <span id="theme-label">Claro</span>
+  </button>
+
+  <div class="container">
+
+    <div class="header">
+      <div class="icon-wrap" id="header-icon">🃏</div>
+      <h1 id="header-title">Flashcards</h1>
+      <p id="header-sub">Cole suas perguntas e respostas e estude no seu ritmo</p>
+    </div>
+
+    <!-- ── Phase 1: Input ── -->
+    <div class="phase active" id="phase-input">
+      <div class="panel">
+        <div class="panel-title">Seu baralho</div>
+        <textarea id="deck-input"
+          placeholder="O que é RAM? | Memória de acesso aleatório e volátil
+O que é ROM? | Memória somente leitura, não volátil
+Qual comando lista arquivos? | ls
+Qual comando mostra o diretório atual? | pwd
+O que faz o chmod? | Altera permissões de arquivos"
+          oninput="updateCount()"
+        ></textarea>
+        <div class="format-hint">
+          💡 Uma linha por card: <code>Pergunta | Resposta</code> — use o <code>|</code> para separar
+        </div>
+        <div class="card-count" id="card-count">0 cards detectados</div>
+        <button class="btn-start" id="btn-start" onclick="startStudy()" disabled>
+          🃏 Começar estudos
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Phase 2: Study ── -->
+    <div class="phase" id="phase-study">
+
+      <div class="progress-area">
+        <div class="progress-meta">
+          <span class="progress-label" id="prog-label">Card 1 de 10</span>
+          <span class="progress-chips">
+            <span class="chip-sei" id="chip-sei">✓ 0</span>
+            <span class="chip-nao" id="chip-nao">✗ 0</span>
+          </span>
+        </div>
+        <div class="progress-track">
+          <div class="progress-fill" id="prog-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="deck-area" id="deck-area">
+        <div class="card-behind b2" id="behind2"></div>
+        <div class="card-behind b1" id="behind1"></div>
+        <div class="card-scene" id="card-scene" onclick="flipCard()">
+          <div class="card-3d" id="card-3d">
+            <div class="card-face card-front">
+              <div class="card-label">Pergunta</div>
+              <div class="card-text" id="card-q"></div>
+              <div class="flip-hint">Clique ou <kbd>Espaço</kbd> para virar</div>
+            </div>
+            <div class="card-face card-back">
+              <div class="card-label">Resposta</div>
+              <div class="card-text" id="card-a"></div>
+              <div class="flip-hint"><kbd>←</kbd> Revisar &nbsp;·&nbsp; <kbd>→</kbd> Sei</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions" id="actions">
+        <button class="btn-action btn-nao" onclick="markCard(false)">✗ Revisar depois</button>
+        <button class="btn-action btn-sei" onclick="markCard(true)">✓ Sei!</button>
+      </div>
+
+      <div class="key-hint">
+        <span><kbd>Espaço</kbd> virar</span>
+        <span><kbd>→</kbd> sei</span>
+        <span><kbd>←</kbd> revisar</span>
+      </div>
+
+    </div>
+
+    <!-- ── Phase 3: Results ── -->
+    <div class="phase" id="phase-results">
+      <div class="panel results-panel">
+        <div class="confetti-wrap" id="confetti-wrap"></div>
+        <div class="result-icon" id="result-icon">🎉</div>
+        <div class="result-title" id="result-title">Baralho concluído!</div>
+        <div class="result-sub" id="result-sub">Você passou por todos os cards.</div>
+        <div class="result-stats">
+          <div class="stat-box stat-sei">
+            <div class="stat-num" id="stat-sei-num">0</div>
+            <div class="stat-label">Sabia</div>
+          </div>
+          <div class="stat-box stat-nao">
+            <div class="stat-num" id="stat-nao-num">0</div>
+            <div class="stat-label">Para revisar</div>
+          </div>
+        </div>
+        <div class="result-btns">
+          <button class="btn-retry" id="btn-retry" onclick="retryMissed()" style="display:none">
+            🔁 Revisar os erros
+          </button>
+          <button class="btn-restart" onclick="restartAll()">↺ Reiniciar tudo</button>
+          <button class="btn-new" onclick="goToInput()">+ Novo baralho</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <p class="footer">César Azevedo · IFRN · Campus João Câmara</p>
+
+  <script>
+    // ─── Theme ───────────────────────────────────────────────────────────────
+    const saved = localStorage.getItem('theme') || 'dark';
+    setTheme(saved);
+    function toggleTheme() { setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('theme', t);
+      const d = t === 'dark';
+      document.getElementById('theme-icon').textContent  = d ? '☀️' : '🌙';
+      document.getElementById('theme-label').textContent = d ? 'Claro' : 'Escuro';
+    }
+
+    // ─── State ───────────────────────────────────────────────────────────────
+    let deck      = [];   // cards remaining
+    let missed    = [];   // cards marked "não sei"
+    let correct   = 0;
+    let total     = 0;
+    let isFlipped = false;
+    let isAnimating = false;
+    let allCards  = [];   // original deck for restart
+
+    // ─── Input phase ─────────────────────────────────────────────────────────
+    function parseCards(text) {
+      return text.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.includes('|'))
+        .map(l => {
+          const i = l.indexOf('|');
+          return { q: l.slice(0, i).trim(), a: l.slice(i + 1).trim() };
+        })
+        .filter(c => c.q && c.a);
+    }
+
+    function updateCount() {
+      const cards = parseCards(document.getElementById('deck-input').value);
+      const n = cards.length;
+      const el = document.getElementById('card-count');
+      el.innerHTML = n === 0
+        ? '0 cards detectados'
+        : `<strong>${n}</strong> card${n > 1 ? 's' : ''} detectado${n > 1 ? 's' : ''}`;
+      document.getElementById('btn-start').disabled = n === 0;
+    }
+
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function startStudy(cards) {
+      if (!cards) {
+        cards = shuffle(parseCards(document.getElementById('deck-input').value));
+        allCards = [...cards];
+      }
+      deck    = [...cards];
+      missed  = [];
+      correct = 0;
+      total   = cards.length;
+      showPhase('study');
+      loadCard();
+    }
+
+    // ─── Study phase ─────────────────────────────────────────────────────────
+    function loadCard(entering) {
+      const card = deck[0];
+      document.getElementById('card-q').textContent = card.q;
+      document.getElementById('card-a').textContent = card.a;
+      updateProgress();
+      resetCard(entering);
+    }
+
+    function resetCard(entering) {
+      isFlipped = false;
+      const scene = document.getElementById('card-scene');
+      const card3d = document.getElementById('card-3d');
+      card3d.classList.remove('flipped');
+      hideActions();
+
+      // Update behind cards
+      const b1 = document.getElementById('behind1');
+      const b2 = document.getElementById('behind2');
+      b1.style.display = deck.length > 1 ? '' : 'none';
+      b2.style.display = deck.length > 2 ? '' : 'none';
+
+      if (entering) {
+        scene.classList.remove('exit-right', 'exit-left');
+        void scene.offsetWidth; // reflow
+        scene.classList.add('enter');
+        scene.addEventListener('animationend', () => scene.classList.remove('enter'), { once: true });
+      }
+    }
+
+    function flipCard() {
+      if (isAnimating) return;
+      isFlipped = !isFlipped;
+      document.getElementById('card-3d').classList.toggle('flipped', isFlipped);
+      if (isFlipped) showActions();
+      else hideActions();
+    }
+
+    function showActions() {
+      document.getElementById('actions').classList.add('visible');
+    }
+    function hideActions() {
+      document.getElementById('actions').classList.remove('visible');
+    }
+
+    function markCard(knew) {
+      if (isAnimating || !isFlipped) return;
+      isAnimating = true;
+      const card = deck.shift();
+      if (!knew) missed.push(card);
+      else correct++;
+
+      const scene = document.getElementById('card-scene');
+      hideActions();
+      scene.classList.add(knew ? 'exit-right' : 'exit-left');
+
+      scene.addEventListener('animationend', () => {
+        isAnimating = false;
+        if (deck.length === 0) {
+          showResults();
+        } else {
+          loadCard(true);
+        }
+      }, { once: true });
+    }
+
+    function updateProgress() {
+      const done = total - deck.length;
+      document.getElementById('prog-label').textContent = `Card ${done + 1} de ${total}`;
+      document.getElementById('prog-fill').style.width  = (done / total * 100) + '%';
+      document.getElementById('chip-sei').textContent   = `✓ ${correct}`;
+      document.getElementById('chip-nao').textContent   = `✗ ${missed.length}`;
+    }
+
+    // ─── Keyboard ────────────────────────────────────────────────────────────
+    document.addEventListener('keydown', e => {
+      const phase = document.querySelector('.phase.active')?.id;
+      if (phase !== 'phase-study') return;
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flipCard(); }
+      if (e.key === 'ArrowRight') markCard(true);
+      if (e.key === 'ArrowLeft')  markCard(false);
+    });
+
+    // ─── Results phase ────────────────────────────────────────────────────────
+    function showResults() {
+      document.getElementById('stat-sei-num').textContent = correct;
+      document.getElementById('stat-nao-num').textContent = missed.length;
+
+      const pct = Math.round(correct / total * 100);
+      const icon  = pct === 100 ? '🏆' : pct >= 70 ? '🎉' : pct >= 40 ? '💪' : '📚';
+      const title = pct === 100 ? 'Perfeito!' : pct >= 70 ? 'Muito bem!' : pct >= 40 ? 'Continue assim!' : 'Bora revisar!';
+      const sub   = pct === 100
+        ? 'Você acertou todos os cards!'
+        : `${pct}% de aproveitamento — você pode melhorar!`;
+
+      document.getElementById('result-icon').textContent  = icon;
+      document.getElementById('result-title').textContent = title;
+      document.getElementById('result-sub').textContent   = sub;
+      document.getElementById('btn-retry').style.display  = missed.length > 0 ? '' : 'none';
+
+      showPhase('results');
+      if (pct >= 70) launchConfetti();
+    }
+
+    function retryMissed() {
+      startStudy(shuffle(missed));
+    }
+    function restartAll() {
+      startStudy(shuffle(allCards));
+    }
+    function goToInput() {
+      showPhase('input');
+    }
+
+    // ─── Confetti ────────────────────────────────────────────────────────────
+    function launchConfetti() {
+      const wrap = document.getElementById('confetti-wrap');
+      wrap.innerHTML = '';
+      const colors = ['#6366f1','#10b981','#f59e0b','#ef4444','#ec4899','#8b5cf6','#14b8a6','#3b82f6'];
+      for (let i = 0; i < 40; i++) {
+        const el = document.createElement('div');
+        el.className = 'confetti-piece';
+        el.style.cssText = `
+          left: ${Math.random() * 100}%;
+          background: ${colors[i % colors.length]};
+          animation-delay: ${Math.random() * .6}s;
+          animation-duration: ${.8 + Math.random() * .8}s;
+          transform: rotate(${Math.random() * 360}deg);
+        `;
+        wrap.appendChild(el);
+      }
+    }
+
+    // ─── Phase switcher ──────────────────────────────────────────────────────
+    function showPhase(name) {
+      document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+      document.getElementById('phase-' + name).classList.add('active');
+    }
+  </script>
+
+</body>
+</html>
