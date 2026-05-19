@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Anotações Cornell — César Azevedo</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    [data-theme="dark"] {
+      --bg: #0f1117; --card-bg: #1e2130; --card-border: #2a2f45;
+      --text-h: #f1f5f9; --text-sub: #94a3b8; --text-muted: #64748b;
+      --shadow: rgba(0,0,0,.35); --grid-line: rgba(255,255,255,.03);
+      --toggle-bg: #1e2130; --toggle-border: #2a2f45;
+      --input-bg: #131720; --input-border: #2a2f45;
+      --accent: #0d9488; --accent-dim: rgba(13,148,136,.15);
+    }
+    [data-theme="light"] {
+      --bg: #f0f4f8; --card-bg: #ffffff; --card-border: #dde3ec;
+      --text-h: #0f172a; --text-sub: #475569; --text-muted: #94a3b8;
+      --shadow: rgba(0,0,0,.10); --grid-line: rgba(0,0,0,.04);
+      --toggle-bg: #ffffff; --toggle-border: #dde3ec;
+      --input-bg: #f8fafc; --input-border: #dde3ec;
+      --accent: #0d9488; --accent-dim: rgba(13,148,136,.10);
+    }
+
+    body {
+      min-height: 100vh; background: var(--bg);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 40px 16px 60px; transition: background .3s;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(var(--grid-line) 1px,transparent 1px),
+                        linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+      background-size: 40px 40px; pointer-events: none;
+    }
+
+    .fixed-btn {
+      position: fixed; border-radius: 999px; padding: 6px 14px;
+      cursor: pointer; display: flex; align-items: center; gap: 7px;
+      font-size: .82rem; color: var(--text-sub);
+      background: var(--toggle-bg); border: 1px solid var(--toggle-border);
+      transition: color .2s; text-decoration: none;
+      box-shadow: 0 2px 8px var(--shadow); z-index: 20; user-select: none;
+    }
+    .fixed-btn:hover { color: var(--text-h); }
+    .fixed-btn.left  { top: 18px; left: 18px; }
+    .fixed-btn.right { top: 18px; right: 18px; }
+
+    .header { text-align: center; margin: 12px 0 28px; }
+    .header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-h); letter-spacing: -.4px; }
+    .header p  { font-size: .82rem; color: var(--text-muted); margin-top: 5px; }
+
+    .container { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 16px; }
+
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 20px 22px;
+      box-shadow: 0 4px 20px var(--shadow); transition: background .3s, border-color .3s;
+    }
+    .card-title {
+      font-size: .72rem; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px;
+    }
+
+    .form-row { display: flex; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    label { font-size: .8rem; color: var(--text-sub); font-weight: 500; }
+
+    input[type="text"], input[type="date"], input[type="number"], select, textarea {
+      background: var(--input-bg); border: 1px solid var(--input-border);
+      border-radius: 8px; padding: 9px 12px; color: var(--text-h);
+      font-size: .9rem; font-family: inherit; width: 100%;
+      transition: border-color .2s, background .3s;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+    /* ── Slider row ── */
+    .slider-row { display: flex; align-items: center; gap: 10px; }
+    .slider-row input[type="range"] { flex: 1; accent-color: var(--accent); cursor: pointer; }
+    .slider-val {
+      font-size: .82rem; color: var(--accent); font-weight: 600;
+      min-width: 36px; text-align: right;
+    }
+
+    /* ── Options grid ── */
+    .opt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .opt-label {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; font-size: .83rem; color: var(--text-sub);
+      user-select: none; padding: 8px 10px;
+      border: 1px solid var(--input-border); border-radius: 8px;
+      transition: border-color .2s, background .2s;
+    }
+    .opt-label:hover { border-color: var(--accent); background: var(--accent-dim); }
+    .opt-label input[type="checkbox"] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
+
+    /* ── Preview ── */
+    .preview-wrap {
+      display: flex; justify-content: center;
+    }
+    .preview-page {
+      width: 240px;
+      height: 339px; /* A4 ratio 210:297 */
+      background: #fff;
+      border: 1px solid var(--card-border);
+      border-radius: 3px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 2px 12px var(--shadow);
+      position: relative;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    .prev-accent { height: 4px; background: var(--accent); flex-shrink: 0; }
+
+    .prev-header {
+      padding: 6px 10px 5px;
+      border-bottom: 1.5px solid #333;
+      flex-shrink: 0;
+      display: flex; flex-direction: column; gap: 3px;
+    }
+    .prev-title {
+      font-size: 8px; font-weight: 700; color: #1a1a2e;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .prev-meta { font-size: 5.5px; color: #666; display: flex; gap: 8px; }
+
+    .prev-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .prev-main { flex: 1; display: flex; min-height: 0; }
+
+    .prev-cue {
+      flex-shrink: 0;
+      border-right: 1.5px solid #333;
+      position: relative;
+    }
+    .prev-cue-label {
+      position: absolute; top: 3px; left: 0; right: 0;
+      text-align: center; font-size: 4px; color: #999;
+      font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+    }
+
+    .prev-notes { flex: 1; position: relative; }
+    .prev-notes-label {
+      position: absolute; top: 3px; left: 4px;
+      font-size: 4px; color: #bbb; font-weight: 700;
+      letter-spacing: .05em; text-transform: uppercase;
+    }
+
+    .prev-summary {
+      border-top: 1.5px solid #333;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .prev-summary-label {
+      position: absolute; top: 3px; left: 6px;
+      font-size: 4px; color: #999; font-weight: 700;
+      letter-spacing: .05em; text-transform: uppercase;
+    }
+
+    .prev-lines {
+      position: absolute; inset: 0; top: 10px;
+    }
+
+    /* ── Generate button ── */
+    .generate-btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg, #0d9488, #0891b2);
+      border: none; border-radius: 12px; color: #fff;
+      font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: opacity .2s, transform .15s;
+      box-shadow: 0 4px 14px rgba(13,148,136,.4);
+    }
+    .generate-btn:hover { opacity: .9; transform: translateY(-1px); }
+    .generate-btn:active { transform: translateY(0); }
+
+    .footer { margin-top: 36px; color: var(--text-muted); font-size: .75rem; }
+  </style>
+</head>
+<body>
+
+  <a class="fixed-btn left" href="https://cesarazevedo.github.io">← Voltar</a>
+  <button class="fixed-btn right" onclick="toggleTheme()">
+    <span id="theme-icon">☀️</span><span id="theme-label">Claro</span>
+  </button>
+
+  <div class="header">
+    <h1>📝 Anotações Cornell</h1>
+    <p>Gere folhas de anotações no formato Cornell prontas para imprimir</p>
+  </div>
+
+  <div class="container">
+
+    <!-- Identificação -->
+    <div class="card">
+      <div class="card-title">Identificação</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label>Título / Tema da aula</label>
+        <input type="text" id="inp-title" placeholder="Ex.: Revolução Francesa" oninput="updatePreview()" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Disciplina</label>
+          <input type="text" id="inp-subject" placeholder="Ex.: História" oninput="updatePreview()" />
+        </div>
+        <div class="form-group">
+          <label>Professor</label>
+          <input type="text" id="inp-teacher" placeholder="Ex.: Prof. César" oninput="updatePreview()" />
+        </div>
+        <div class="form-group" style="max-width:130px">
+          <label>Data</label>
+          <input type="date" id="inp-date" oninput="updatePreview()" />
+        </div>
+      </div>
+    </div>
+
+    <!-- Layout -->
+    <div class="card">
+      <div class="card-title">Layout</div>
+
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Número de páginas</label>
+        <div class="slider-row">
+          <input type="range" id="sl-pages" min="1" max="10" value="2" oninput="updatePreview()" />
+          <span class="slider-val" id="val-pages">2</span>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:16px">
+        <label>Largura da coluna de perguntas</label>
+        <div class="slider-row">
+          <input type="range" id="sl-cue" min="20" max="42" value="30" oninput="updatePreview()" />
+          <span class="slider-val" id="val-cue">30%</span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Altura do resumo</label>
+        <div class="slider-row">
+          <input type="range" id="sl-sum" min="10" max="30" value="18" oninput="updatePreview()" />
+          <span class="slider-val" id="val-sum">18%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Opções -->
+    <div class="card">
+      <div class="card-title">Opções</div>
+      <div class="opt-grid">
+        <label class="opt-label">
+          <input type="checkbox" id="opt-lines" checked onchange="updatePreview()" />
+          Linhas pautadas
+        </label>
+        <label class="opt-label">
+          <input type="checkbox" id="opt-header" checked onchange="updatePreview()" />
+          Cabeçalho em todas as páginas
+        </label>
+        <label class="opt-label">
+          <input type="checkbox" id="opt-border" checked onchange="updatePreview()" />
+          Borda da página
+        </label>
+        <label class="opt-label">
+          <input type="checkbox" id="opt-accent" checked onchange="updatePreview()" />
+          Faixa colorida no topo
+        </label>
+      </div>
+      <div class="form-row" style="margin-top:12px">
+        <div class="form-group">
+          <label>Espaçamento entre linhas</label>
+          <select id="sel-spacing" onchange="updatePreview()">
+            <option value="6">Estreito (6 mm)</option>
+            <option value="7.5" selected>Normal (7.5 mm)</option>
+            <option value="9">Largo (9 mm)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="card">
+      <div class="card-title">Pré-visualização</div>
+      <div class="preview-wrap">
+        <div class="preview-page" id="preview-page">
+          <div class="prev-accent" id="prev-accent-bar"></div>
+          <div class="prev-header" id="prev-header">
+            <div class="prev-title" id="prev-title">Título da aula</div>
+            <div class="prev-meta" id="prev-meta">
+              <span id="prev-subject">Disciplina</span>
+              <span id="prev-teacher"></span>
+              <span id="prev-date"></span>
+            </div>
+          </div>
+          <div class="prev-body">
+            <div class="prev-main" id="prev-main">
+              <div class="prev-cue" id="prev-cue" style="width:30%">
+                <div class="prev-cue-label">Perguntas</div>
+                <div class="prev-lines" id="prev-cue-lines"></div>
+              </div>
+              <div class="prev-notes">
+                <div class="prev-notes-label">Anotações</div>
+                <div class="prev-lines" id="prev-notes-lines"></div>
+              </div>
+            </div>
+            <div class="prev-summary" id="prev-summary" style="height:18%">
+              <div class="prev-summary-label">Resumo</div>
+              <div class="prev-lines" id="prev-sum-lines"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button class="generate-btn" onclick="generatePDF()">⬇ Gerar PDF</button>
+
+  </div>
+
+  <p class="footer">IFRN · Campus João Câmara</p>
+
+  <script>
+    // ── Preview ──
+    function updatePreview() {
+      const cueW   = document.getElementById('sl-cue').value;
+      const sumH   = document.getElementById('sl-sum').value;
+      const pages  = document.getElementById('sl-pages').value;
+      const lines  = document.getElementById('opt-lines').checked;
+      const accent = document.getElementById('opt-accent').checked;
+      const spacing = parseFloat(document.getElementById('sel-spacing').value);
+      const title   = document.getElementById('inp-title').value   || 'Título da aula';
+      const subject = document.getElementById('inp-subject').value || 'Disciplina';
+      const teacher = document.getElementById('inp-teacher').value;
+      const dateVal = document.getElementById('inp-date').value;
+
+      document.getElementById('val-cue').textContent   = cueW + '%';
+      document.getElementById('val-sum').textContent   = sumH + '%';
+      document.getElementById('val-pages').textContent = pages;
+
+      document.getElementById('prev-cue').style.width     = cueW + '%';
+      document.getElementById('prev-summary').style.height = sumH + '%';
+      document.getElementById('prev-accent-bar').style.display = accent ? '' : 'none';
+
+      document.getElementById('prev-title').textContent   = title;
+      document.getElementById('prev-subject').textContent = subject;
+      document.getElementById('prev-teacher').textContent = teacher ? '· ' + teacher : '';
+      document.getElementById('prev-date').textContent    = dateVal
+        ? '· ' + new Date(dateVal + 'T12:00').toLocaleDateString('pt-BR') : '';
+
+      // Lines as repeating-gradient (scaled: 1mm ≈ 1.14px at preview scale 240/210)
+      const scale = 240 / 210;
+      const lineH = spacing * scale;
+      const lineStyle = lines
+        ? `repeating-linear-gradient(transparent, transparent ${lineH - 0.6}px, rgba(100,116,139,0.2) ${lineH - 0.6}px, rgba(100,116,139,0.2) ${lineH}px)`
+        : 'none';
+
+      ['prev-cue-lines','prev-notes-lines','prev-sum-lines'].forEach(id => {
+        document.getElementById(id).style.backgroundImage = lineStyle;
+        document.getElementById(id).style.backgroundSize = `100% ${lineH}px`;
+      });
+    }
+
+    // ── PDF ──
+    function generatePDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+
+      const PW = 210, PH = 297;
+      const ML = 15, MR = 15, MT = 14, MB = 14;
+      const usableW = PW - ML - MR;
+      const usableH = PH - MT - MB;
+
+      const cueWpct  = parseInt(document.getElementById('sl-cue').value) / 100;
+      const sumHpct  = parseInt(document.getElementById('sl-sum').value) / 100;
+      const nPages   = parseInt(document.getElementById('sl-pages').value);
+      const lined    = document.getElementById('opt-lines').checked;
+      const repeatHdr = document.getElementById('opt-header').checked;
+      const showBorder = document.getElementById('opt-border').checked;
+      const showAccent = document.getElementById('opt-accent').checked;
+      const lineSpacing = parseFloat(document.getElementById('sel-spacing').value);
+
+      const title   = document.getElementById('inp-title').value.trim()   || '';
+      const subject = document.getElementById('inp-subject').value.trim() || '';
+      const teacher = document.getElementById('inp-teacher').value.trim() || '';
+      const dateVal = document.getElementById('inp-date').value;
+      const dateStr = dateVal
+        ? new Date(dateVal + 'T12:00').toLocaleDateString('pt-BR') : '';
+
+      const ACCENT_H = showAccent ? 3 : 0;
+
+      // Header height depends on content
+      const HDR_H = (title || subject || teacher || dateStr) ? 22 : 0;
+
+      const cueW  = usableW * cueWpct;
+      const noteW = usableW - cueW;
+      const sumH  = (usableH - ACCENT_H - HDR_H) * sumHpct;
+      const notesH = usableH - ACCENT_H - HDR_H - sumH;
+
+      // Positions
+      const accentY = MT;
+      const hdrY    = MT + ACCENT_H;
+      const bodyY   = hdrY + HDR_H;
+      const sumY    = bodyY + notesH;
+      const divX    = ML + cueW;    // vertical divider x
+
+      function drawPage(pageNum) {
+        const isFirst = pageNum === 1;
+        const drawHdr = isFirst || repeatHdr;
+
+        // Accent bar
+        if (showAccent) {
+          doc.setFillColor(13, 148, 136);
+          doc.rect(ML, accentY, usableW, ACCENT_H, 'F');
+        }
+
+        // Header
+        if (drawHdr && HDR_H > 0) {
+          doc.setFillColor(248, 250, 252);
+          doc.rect(ML, hdrY, usableW, HDR_H, 'F');
+
+          // Title
+          if (title) {
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(13);
+            doc.setTextColor(20, 20, 30);
+            const titleTrunc = doc.splitTextToSize(title, usableW - 4)[0];
+            doc.text(titleTrunc, ML + 2, hdrY + 9);
+          }
+
+          // Meta row
+          const metaParts = [subject, teacher, dateStr].filter(Boolean);
+          if (metaParts.length > 0) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7.5);
+            doc.setTextColor(90, 100, 120);
+            doc.text(metaParts.join('   ·   '), ML + 2, hdrY + HDR_H - 5);
+          }
+
+          // Page number (top-right of header)
+          if (nPages > 1) {
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(7);
+            doc.setTextColor(160, 160, 170);
+            doc.text(`${pageNum}/${nPages}`, ML + usableW - 2, hdrY + 9, { align: 'right' });
+          }
+
+          // Header bottom border
+          doc.setDrawColor(50, 50, 60);
+          doc.setLineWidth(0.6);
+          doc.line(ML, hdrY + HDR_H, ML + usableW, hdrY + HDR_H);
+        }
+
+        // Section labels
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(5.5);
+        doc.setTextColor(160, 160, 175);
+
+        doc.text('PERGUNTAS / PALAVRAS-CHAVE', ML + 2, bodyY + 5);
+        doc.text('ANOTAÇÕES', divX + 3, bodyY + 5);
+        doc.text('RESUMO / SÍNTESE', ML + 2, sumY + 5);
+
+        // Lines in sections
+        if (lined) {
+          doc.setDrawColor(195, 200, 215);
+          doc.setLineWidth(0.15);
+
+          // Cue column lines
+          const cueLineStart = bodyY + lineSpacing;
+          for (let y = cueLineStart; y < sumY - 1; y += lineSpacing) {
+            doc.line(ML + 1, y, divX - 1, y);
+          }
+
+          // Notes column lines
+          const notesLineStart = bodyY + lineSpacing;
+          for (let y = notesLineStart; y < sumY - 1; y += lineSpacing) {
+            doc.line(divX + 2, y, ML + usableW - 1, y);
+          }
+
+          // Summary lines
+          const sumLineStart = sumY + lineSpacing;
+          for (let y = sumLineStart; y < PH - MB - 1; y += lineSpacing) {
+            doc.line(ML + 1, y, ML + usableW - 1, y);
+          }
+        }
+
+        // Structure borders
+        doc.setDrawColor(50, 50, 60);
+        doc.setLineWidth(0.6);
+
+        // Vertical divider (cue | notes)
+        doc.line(divX, bodyY, divX, sumY);
+
+        // Horizontal divider (notes | summary)
+        doc.line(ML, sumY, ML + usableW, sumY);
+
+        // Outer border
+        if (showBorder) {
+          doc.setDrawColor(80, 80, 95);
+          doc.setLineWidth(0.5);
+          doc.rect(ML, MT, usableW, usableH);
+        }
+      }
+
+      for (let p = 1; p <= nPages; p++) {
+        if (p > 1) doc.addPage();
+        drawPage(p);
+      }
+
+      const safeName = (title || 'cornell').toLowerCase()
+        .replace(/[^a-z0-9À-ÿ ]/gi, '').replace(/\s+/g, '-').substring(0, 40);
+      doc.save(`cornell-${safeName}.pdf`);
+    }
+
+    // ── Theme ──
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute('data-theme');
+      setTheme(cur === 'dark' ? 'light' : 'dark');
+    }
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('theme', t);
+      const dark = t === 'dark';
+      document.getElementById('theme-icon').textContent = dark ? '☀️' : '🌙';
+      document.getElementById('theme-label').textContent = dark ? 'Claro' : 'Escuro';
+    }
+    setTheme(localStorage.getItem('theme') || 'dark');
+
+    // ── Init ──
+    document.getElementById('inp-date').value = new Date().toISOString().split('T')[0];
+    updatePreview();
+  </script>
+
+</body>
+</html>
