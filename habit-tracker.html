@@ -194,6 +194,15 @@
     }
     .remove-btn:hover { color: #ef4444; background: rgba(239,68,68,.1); }
 
+    .move-btns { display: flex; flex-direction: column; gap: 1px; flex-shrink: 0; }
+    .move-btn {
+      background: none; border: none; cursor: pointer; color: var(--text-muted);
+      font-size: .55rem; padding: 1px 4px; border-radius: 3px; line-height: 1.5;
+      transition: color .15s, background .15s;
+    }
+    .move-btn:hover:not([disabled]) { color: #6366f1; background: rgba(99,102,241,.1); }
+    .move-btn[disabled] { opacity: .2; cursor: default; }
+
     .add-habit-btn {
       width: 100%; padding: 8px;
       background: none; border: 1px dashed var(--input-border); border-radius: 8px;
@@ -267,12 +276,12 @@
       <div class="card-title">Mês de referência</div>
       <div class="form-group" style="margin-bottom:10px">
         <label>Nome</label>
-        <input type="text" id="inp-name" placeholder="Seu nome (opcional)" oninput="updatePreview()" />
+        <input type="text" id="inp-name" placeholder="Seu nome (opcional)" oninput="saveState();updatePreview()" />
       </div>
       <div class="form-row">
         <div class="form-group">
           <label>Mês</label>
-          <select id="sel-month" onchange="updatePreview()">
+          <select id="sel-month" onchange="saveState();updatePreview()">
             <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
             <option>Abril</option><option>Maio</option><option>Junho</option>
             <option>Julho</option><option>Agosto</option><option>Setembro</option>
@@ -281,7 +290,7 @@
         </div>
         <div class="form-group" style="max-width:110px">
           <label>Ano</label>
-          <input type="number" id="inp-year" value="2026" min="2020" max="2099" oninput="updatePreview()" />
+          <input type="number" id="inp-year" value="2026" min="2020" max="2099" oninput="saveState();updatePreview()" />
         </div>
       </div>
     </div>
@@ -332,10 +341,10 @@
     <div class="card">
       <div class="card-title">Opções do PDF</div>
       <div class="options-grid">
-        <label class="opt-label"><input type="checkbox" id="opt-fill" onchange="updatePreview()" /> Círculos preenchidos</label>
-        <label class="opt-label"><input type="checkbox" id="opt-weeks" checked onchange="updatePreview()" /> Separar semanas</label>
-        <label class="opt-label"><input type="checkbox" id="opt-weekend" checked onchange="updatePreview()" /> Sombrear fins de semana</label>
-        <label class="opt-label"><input type="checkbox" id="opt-nums" checked onchange="updatePreview()" /> Numerar hábitos</label>
+        <label class="opt-label"><input type="checkbox" id="opt-fill" onchange="saveState();updatePreview()" /> Círculos preenchidos</label>
+        <label class="opt-label"><input type="checkbox" id="opt-weeks" checked onchange="saveState();updatePreview()" /> Separar semanas</label>
+        <label class="opt-label"><input type="checkbox" id="opt-weekend" checked onchange="saveState();updatePreview()" /> Sombrear fins de semana</label>
+        <label class="opt-label"><input type="checkbox" id="opt-nums" checked onchange="saveState();updatePreview()" /> Numerar hábitos</label>
       </div>
     </div>
 
@@ -395,18 +404,31 @@
       const color = PALETTE[colorIdx !== null ? colorIdx : data[section].length % PALETTE.length];
       data[section].push({ name, color });
       renderSection(section);
+      saveState();
       updatePreview();
     }
 
     function addMonthlyItem(name = '') {
       data.monthly.push({ name });
       renderSection('monthly');
+      saveState();
       updatePreview();
     }
 
     function removeItem(section, idx) {
       data[section].splice(idx, 1);
       renderSection(section);
+      saveState();
+      updatePreview();
+    }
+
+    function moveItem(section, idx, dir) {
+      const arr = data[section];
+      const to = idx + dir;
+      if (to < 0 || to >= arr.length) return;
+      [arr[idx], arr[to]] = [arr[to], arr[idx]];
+      renderSection(section);
+      saveState();
       updatePreview();
     }
 
@@ -424,7 +446,11 @@
           row.innerHTML = `
             <span class="habit-num">${i + 1}.</span>
             <input type="text" placeholder="Meta do mês" value="${escH(item.name)}"
-              oninput="data.monthly[${i}].name=this.value;updatePreview()" style="flex:1" />
+              oninput="data.monthly[${i}].name=this.value;saveState();updatePreview()" style="flex:1" />
+            <div class="move-btns">
+              <button class="move-btn" onclick="moveItem('monthly',${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+              <button class="move-btn" onclick="moveItem('monthly',${i},1)" ${i === items.length - 1 ? 'disabled' : ''}>▼</button>
+            </div>
             <button class="remove-btn" onclick="removeItem('monthly',${i})">×</button>
           `;
           list.appendChild(row);
@@ -436,7 +462,7 @@
           row.innerHTML = `
             <span class="habit-num">${i + 1}.</span>
             <input type="text" placeholder="Nome do hábito" value="${escH(h.name)}"
-              oninput="data['${section}'][${i}].name=this.value;updatePreview()" style="flex:1" />
+              oninput="data['${section}'][${i}].name=this.value;saveState();updatePreview()" style="flex:1" />
             <div class="color-wrap" id="cw-${section}-${i}">
               <div class="color-dot" style="background:${h.color}"
                 onclick="togglePalette('${section}',${i},event)" title="Cor"></div>
@@ -446,6 +472,10 @@
                     onclick="setColor('${section}',${i},'${c}',event)"></div>
                 `).join('')}
               </div>
+            </div>
+            <div class="move-btns">
+              <button class="move-btn" onclick="moveItem('${section}',${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+              <button class="move-btn" onclick="moveItem('${section}',${i},1)" ${i === items.length - 1 ? 'disabled' : ''}>▼</button>
             </div>
             <button class="remove-btn" onclick="removeItem('${section}',${i})">×</button>
           `;
@@ -468,6 +498,7 @@
       data[sec][idx].color = color;
       if (openPalette) { openPalette.classList.remove('open'); openPalette = null; }
       renderSection(sec);
+      saveState();
       updatePreview();
     }
     document.addEventListener('click', () => {
@@ -943,6 +974,42 @@
       doc.save(`rastreador-${month.toLowerCase()}-${year}.pdf`);
     }
 
+    // ── Persistence ──
+    function saveState() {
+      localStorage.setItem('habit-tracker', JSON.stringify({
+        data,
+        name:    document.getElementById('inp-name').value,
+        month:   document.getElementById('sel-month').value,
+        year:    document.getElementById('inp-year').value,
+        opts: {
+          fill:    document.getElementById('opt-fill').checked,
+          weeks:   document.getElementById('opt-weeks').checked,
+          weekend: document.getElementById('opt-weekend').checked,
+          nums:    document.getElementById('opt-nums').checked,
+        }
+      }));
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem('habit-tracker');
+      if (!raw) return false;
+      try {
+        const s = JSON.parse(raw);
+        data = s.data || { daily: [], weekly: [], monthly: [] };
+        document.getElementById('inp-name').value  = s.name  || '';
+        document.getElementById('sel-month').value = s.month || MONTHS[new Date().getMonth()];
+        document.getElementById('inp-year').value  = s.year  || new Date().getFullYear();
+        if (s.opts) {
+          document.getElementById('opt-fill').checked    = s.opts.fill    ?? false;
+          document.getElementById('opt-weeks').checked   = s.opts.weeks   ?? true;
+          document.getElementById('opt-weekend').checked = s.opts.weekend ?? true;
+          document.getElementById('opt-nums').checked    = s.opts.nums    ?? true;
+        }
+        ['daily', 'weekly', 'monthly'].forEach(sec => renderSection(sec));
+        return true;
+      } catch { return false; }
+    }
+
     // ── Theme ──
     function toggleTheme() {
       const cur = document.documentElement.getAttribute('data-theme');
@@ -960,20 +1027,23 @@
     // ── Init ──
     document.getElementById('sel-month').selectedIndex = new Date().getMonth();
 
-    ['Acordar às 6h', 'Exercício físico', 'Leitura', 'Beber 2L de água', 'Meditação']
-      .forEach((n, i) => addHabit('daily', n, i));
+    if (!loadState()) {
+      ['Acordar às 6h', 'Exercício físico', 'Leitura', 'Beber 2L de água', 'Meditação']
+        .forEach((n, i) => addHabit('daily', n, i));
 
-    ['Limpar o quarto', 'Planejar a semana']
-      .forEach((n, i) => addHabit('weekly', n, i + 2));
+      ['Limpar o quarto', 'Planejar a semana']
+        .forEach((n, i) => addHabit('weekly', n, i + 2));
 
-    ['Revisar metas do mês', 'Consulta médica (se necessário)', 'Guardar uma quantia']
-      .forEach(n => addMonthlyItem(n));
+      ['Revisar metas do mês', 'Consulta médica (se necessário)', 'Guardar uma quantia']
+        .forEach(n => addMonthlyItem(n));
 
-    // Collapse weekly and monthly by default
-    ['weekly', 'monthly'].forEach(s => {
-      document.getElementById('body-' + s).classList.remove('open');
-      document.getElementById('arr-' + s).classList.remove('open');
-    });
+      ['weekly', 'monthly'].forEach(s => {
+        document.getElementById('body-' + s).classList.remove('open');
+        document.getElementById('arr-' + s).classList.remove('open');
+      });
+    }
+
+    updatePreview();
   </script>
 
 </body>
