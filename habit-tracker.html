@@ -22,7 +22,6 @@
       --toggle-border: #2a2f45;
       --input-bg: #131720;
       --input-border: #2a2f45;
-      --danger: #ef4444;
     }
     [data-theme="light"] {
       --bg: #f0f4f8;
@@ -38,7 +37,6 @@
       --toggle-border: #dde3ec;
       --input-bg: #f8fafc;
       --input-border: #dde3ec;
-      --danger: #ef4444;
     }
 
     body {
@@ -51,23 +49,18 @@
       padding: 40px 16px 60px;
       transition: background .3s;
     }
-
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background-image:
-        linear-gradient(var(--grid-line) 1px, transparent 1px),
-        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-image: linear-gradient(var(--grid-line) 1px,transparent 1px),
+                        linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
       background-size: 40px 40px;
       pointer-events: none;
     }
 
-    .theme-toggle {
+    .fixed-btn {
       position: fixed;
-      top: 18px; right: 18px;
-      background: var(--toggle-bg);
-      border: 1px solid var(--toggle-border);
       border-radius: 999px;
       padding: 6px 14px;
       cursor: pointer;
@@ -80,97 +73,39 @@
       user-select: none;
       box-shadow: 0 2px 8px var(--shadow);
       z-index: 10;
-    }
-    .theme-toggle:hover { color: var(--text-h); }
-
-    .back-btn {
-      position: fixed;
-      top: 18px; left: 18px;
       background: var(--toggle-bg);
       border: 1px solid var(--toggle-border);
-      border-radius: 999px;
-      padding: 6px 14px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-      font-size: .82rem;
-      color: var(--text-sub);
       text-decoration: none;
-      transition: background .3s, border-color .3s, color .2s;
-      box-shadow: 0 2px 8px var(--shadow);
-      z-index: 10;
     }
-    .back-btn:hover { color: var(--text-h); }
+    .fixed-btn:hover { color: var(--text-h); }
+    .fixed-btn.left  { top: 18px; left: 18px; }
+    .fixed-btn.right { top: 18px; right: 18px; }
 
-    .header {
-      text-align: center;
-      margin-bottom: 36px;
-      margin-top: 16px;
-    }
-    .header h1 {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: var(--text-h);
-      letter-spacing: -.5px;
-      transition: color .3s;
-    }
-    .header p {
-      color: var(--text-muted);
-      font-size: .88rem;
-      margin-top: 6px;
-      transition: color .3s;
-    }
+    .header { text-align: center; margin: 16px 0 32px; }
+    .header h1 { font-size: 1.6rem; font-weight: 700; color: var(--text-h); letter-spacing: -.5px; }
+    .header p  { color: var(--text-muted); font-size: .88rem; margin-top: 6px; }
 
-    .container {
-      width: 100%;
-      max-width: 560px;
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+    .container { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 16px; }
 
+    /* ── Cards ── */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 24px;
+      padding: 20px 22px;
       transition: background .3s, border-color .3s;
       box-shadow: 0 4px 20px var(--shadow);
     }
-
     .card-title {
-      font-size: .75rem;
-      font-weight: 700;
-      letter-spacing: .07em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 16px;
-      transition: color .3s;
+      font-size: .72rem; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px;
     }
 
-    .form-row {
-      display: flex;
-      gap: 12px;
-    }
+    .form-row { display: flex; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+    label { font-size: .8rem; color: var(--text-sub); font-weight: 500; }
 
-    .form-group {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      flex: 1;
-    }
-
-    label {
-      font-size: .8rem;
-      color: var(--text-sub);
-      font-weight: 500;
-      transition: color .3s;
-    }
-
-    input[type="text"],
-    input[type="number"],
-    select {
+    input[type="text"], input[type="number"], select {
       background: var(--input-bg);
       border: 1px solid var(--input-border);
       border-radius: 8px;
@@ -181,670 +116,845 @@
       transition: border-color .2s, background .3s;
       width: 100%;
     }
-    input:focus, select:focus {
-      outline: none;
-      border-color: #6366f1;
-    }
+    input:focus, select:focus { outline: none; border-color: #6366f1; }
 
-    .habits-list {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-
-    .habit-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      animation: fadeIn .2s ease;
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
-
-    .habit-row .habit-num {
-      font-size: .75rem;
-      color: var(--text-muted);
-      width: 18px;
-      text-align: right;
-      flex-shrink: 0;
-      transition: color .3s;
-    }
-
-    .habit-row input[type="text"] {
-      flex: 1;
-    }
-
-    .color-picker-wrap {
-      position: relative;
-      flex-shrink: 0;
-    }
-
-    .color-dot {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      border: 2px solid var(--card-border);
-      cursor: pointer;
-      transition: border-color .2s, transform .15s;
-    }
-    .color-dot:hover { transform: scale(1.1); border-color: var(--text-muted); }
-
-    .color-palette {
-      display: none;
-      position: absolute;
-      right: 0;
-      top: 38px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 10px;
-      box-shadow: 0 8px 24px var(--shadow);
-      z-index: 50;
-      display: none;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 6px;
-      width: 160px;
-    }
-    .color-palette.open { display: grid; }
-
-    .pal-color {
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: transform .15s, border-color .15s;
-    }
-    .pal-color:hover { transform: scale(1.15); }
-    .pal-color.selected { border-color: var(--text-h); }
-
-    .remove-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      color: var(--text-muted);
-      font-size: 1.1rem;
-      padding: 4px;
-      border-radius: 6px;
-      line-height: 1;
-      transition: color .2s, background .2s;
-      flex-shrink: 0;
-    }
-    .remove-btn:hover { color: var(--danger); background: rgba(239,68,68,.1); }
-
-    .add-habit-btn {
-      width: 100%;
-      margin-top: 4px;
-      padding: 9px;
-      background: none;
-      border: 1px dashed var(--input-border);
-      border-radius: 8px;
-      color: var(--text-muted);
-      font-size: .85rem;
-      cursor: pointer;
-      transition: border-color .2s, color .2s, background .2s;
-      font-family: inherit;
-    }
-    .add-habit-btn:hover {
-      border-color: #6366f1;
-      color: #6366f1;
-      background: rgba(99,102,241,.05);
-    }
-
-    .options-row {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
-    .checkbox-label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      font-size: .85rem;
-      color: var(--text-sub);
-      transition: color .3s;
-      user-select: none;
-    }
-    .checkbox-label input[type="checkbox"] {
-      width: 16px;
-      height: 16px;
-      accent-color: #6366f1;
-      cursor: pointer;
-    }
-
-    .generate-btn {
-      width: 100%;
-      padding: 14px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      border: none;
-      border-radius: 12px;
-      color: #fff;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      font-family: inherit;
-      transition: opacity .2s, transform .15s, box-shadow .2s;
-      box-shadow: 0 4px 14px rgba(99,102,241,.4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
-    .generate-btn:hover { opacity: .9; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,.5); }
-    .generate-btn:active { transform: translateY(0); }
-    .generate-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
-
-    .preview-card {
+    /* ── Section cards (collapsible) ── */
+    .section-card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 16px;
-      padding: 20px 24px;
-      transition: background .3s, border-color .3s;
-    }
-
-    .preview-title {
-      font-size: .75rem;
-      font-weight: 700;
-      letter-spacing: .07em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      margin-bottom: 14px;
-    }
-
-    .preview-grid {
-      overflow-x: auto;
-      padding-bottom: 8px;
-    }
-
-    .preview-table {
-      border-collapse: collapse;
-      min-width: 100%;
-      font-size: .7rem;
-    }
-
-    .preview-table th {
-      color: var(--text-muted);
-      font-weight: 600;
-      padding: 3px 4px;
-      text-align: center;
-      min-width: 20px;
-    }
-
-    .preview-table th.habit-th {
-      text-align: left;
-      min-width: 120px;
-      padding-left: 0;
-    }
-
-    .preview-table td {
-      text-align: center;
-      padding: 4px;
-    }
-
-    .preview-table td.habit-name {
-      text-align: left;
-      color: var(--text-sub);
-      white-space: nowrap;
       overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 120px;
-      padding-right: 8px;
+      transition: background .3s, border-color .3s;
+      box-shadow: 0 4px 20px var(--shadow);
     }
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 22px;
+      cursor: pointer;
+      user-select: none;
+      transition: background .15s;
+    }
+    .section-head:hover { background: rgba(99,102,241,.04); }
+    .section-badge {
+      font-size: .7rem; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; padding: 3px 10px; border-radius: 999px;
+    }
+    .badge-daily   { background: rgba(99,102,241,.15);  color: #818cf8; }
+    .badge-weekly  { background: rgba(16,185,129,.15);  color: #34d399; }
+    .badge-monthly { background: rgba(245,158,11,.15);  color: #fbbf24; }
 
-    .preview-dot {
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      margin: 0 auto;
-      border: 1.5px solid currentColor;
-    }
+    .section-desc { flex: 1; font-size: .82rem; color: var(--text-muted); }
+    .section-count { font-size: .78rem; color: var(--text-muted); }
+    .section-arrow { font-size: .8rem; color: var(--text-muted); transition: transform .2s; }
+    .section-arrow.open { transform: rotate(180deg); }
 
-    .empty-state {
-      color: var(--text-muted);
-      font-size: .85rem;
-      text-align: center;
-      padding: 12px 0;
-    }
+    .section-body { padding: 0 22px 18px; display: none; }
+    .section-body.open { display: block; }
 
-    .footer {
-      margin-top: 40px;
-      color: var(--footer);
-      font-size: .75rem;
-      transition: color .3s;
+    /* ── Habit rows ── */
+    .habits-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
+
+    .habit-row {
+      display: flex; align-items: center; gap: 8px;
+      animation: fadeIn .18s ease;
     }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(-5px); } to { opacity:1; transform:translateY(0); } }
+
+    .habit-num { font-size:.72rem; color:var(--text-muted); width:18px; text-align:right; flex-shrink:0; }
+
+    .color-wrap { position: relative; flex-shrink: 0; }
+    .color-dot {
+      width: 30px; height: 30px; border-radius: 8px;
+      border: 2px solid var(--card-border); cursor: pointer;
+      transition: transform .15s, border-color .2s;
+    }
+    .color-dot:hover { transform: scale(1.1); border-color: var(--text-muted); }
+
+    .palette {
+      display: none; position: absolute; right: 0; top: 36px;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 12px; padding: 8px; z-index: 50;
+      box-shadow: 0 8px 24px var(--shadow);
+      grid-template-columns: repeat(5,1fr); gap: 5px; width: 150px;
+    }
+    .palette.open { display: grid; }
+    .pal-swatch {
+      width: 22px; height: 22px; border-radius: 6px; cursor: pointer;
+      border: 2px solid transparent; transition: transform .15s, border-color .15s;
+    }
+    .pal-swatch:hover { transform: scale(1.15); }
+    .pal-swatch.sel { border-color: var(--text-h); }
+
+    .remove-btn {
+      background: none; border: none; cursor: pointer; color: var(--text-muted);
+      font-size: 1.1rem; padding: 4px; border-radius: 6px; line-height: 1;
+      transition: color .2s, background .2s; flex-shrink: 0;
+    }
+    .remove-btn:hover { color: #ef4444; background: rgba(239,68,68,.1); }
+
+    .add-habit-btn {
+      width: 100%; padding: 8px;
+      background: none; border: 1px dashed var(--input-border); border-radius: 8px;
+      color: var(--text-muted); font-size: .82rem; cursor: pointer;
+      transition: border-color .2s, color .2s, background .2s; font-family: inherit;
+    }
+    .add-habit-btn:hover { border-color: #6366f1; color: #6366f1; background: rgba(99,102,241,.05); }
+
+    .monthly-row { display: flex; align-items: center; gap: 8px; animation: fadeIn .18s ease; }
+
+    /* ── Options ── */
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .opt-label {
+      display: flex; align-items: center; gap: 8px;
+      cursor: pointer; font-size: .83rem; color: var(--text-sub);
+      user-select: none; padding: 8px 10px;
+      border: 1px solid var(--input-border); border-radius: 8px;
+      transition: border-color .2s, background .2s;
+    }
+    .opt-label:hover { border-color: #6366f1; background: rgba(99,102,241,.04); }
+    .opt-label input[type="checkbox"] { accent-color: #6366f1; width: 15px; height: 15px; cursor: pointer; }
+
+    /* ── Preview ── */
+    .preview-wrap { overflow-x: auto; padding-bottom: 6px; }
+    .preview-table { border-collapse: collapse; font-size: .65rem; }
+    .preview-table th {
+      color: var(--text-muted); font-weight: 600; padding: 2px 3px;
+      text-align: center; min-width: 16px;
+    }
+    .preview-table th.ph { text-align: left; min-width: 100px; }
+    .preview-table td { text-align: center; padding: 3px 2px; }
+    .preview-table td.pn { text-align: left; color: var(--text-sub); white-space: nowrap; padding-right:6px; }
+    .pdot { width:10px; height:10px; border-radius:50%; margin:0 auto; border:1.5px solid; }
+    .psq  { width:10px; height:10px; border-radius:2px; margin:0 auto; border:1.5px solid; }
+    .psec-label { font-size:.65rem; font-weight:700; color:var(--text-muted); letter-spacing:.06em;
+                  text-transform:uppercase; padding:6px 0 2px; }
+    .empty-state { color:var(--text-muted); font-size:.82rem; text-align:center; padding:10px 0; }
+
+    /* ── Generate button ── */
+    .generate-btn {
+      width: 100%; padding: 14px;
+      background: linear-gradient(135deg,#6366f1,#8b5cf6);
+      border: none; border-radius: 12px; color: #fff;
+      font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit;
+      transition: opacity .2s, transform .15s, box-shadow .2s;
+      box-shadow: 0 4px 14px rgba(99,102,241,.4);
+    }
+    .generate-btn:hover  { opacity: .9; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,.5); }
+    .generate-btn:active { transform: translateY(0); }
+    .generate-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+
+    .footer { margin-top: 40px; color: var(--footer); font-size: .75rem; }
   </style>
 </head>
 <body>
 
-  <a class="back-btn" href="https://cesarazevedo.github.io">← Voltar</a>
-
-  <button class="theme-toggle" onclick="toggleTheme()">
-    <span id="theme-icon">☀️</span>
-    <span id="theme-label">Claro</span>
+  <a class="fixed-btn left" href="https://cesarazevedo.github.io">← Voltar</a>
+  <button class="fixed-btn right" onclick="toggleTheme()">
+    <span id="theme-icon">☀️</span><span id="theme-label">Claro</span>
   </button>
 
   <div class="header">
     <h1>📋 Rastreador de Hábitos</h1>
-    <p>Personalize e gere um PDF para imprimir e acompanhar seus hábitos</p>
+    <p>Preencha seus hábitos e gere um PDF mensal para imprimir</p>
   </div>
 
   <div class="container">
 
-    <!-- Configuração do mês -->
+    <!-- Mês -->
     <div class="card">
       <div class="card-title">Mês de referência</div>
       <div class="form-row">
         <div class="form-group">
-          <label for="month-name">Mês</label>
-          <select id="month-name">
-            <option>Janeiro</option>
-            <option>Fevereiro</option>
-            <option>Março</option>
-            <option>Abril</option>
-            <option>Maio</option>
-            <option>Junho</option>
-            <option>Julho</option>
-            <option>Agosto</option>
-            <option>Setembro</option>
-            <option>Outubro</option>
-            <option>Novembro</option>
-            <option>Dezembro</option>
+          <label>Mês</label>
+          <select id="sel-month" onchange="updatePreview()">
+            <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
+            <option>Abril</option><option>Maio</option><option>Junho</option>
+            <option>Julho</option><option>Agosto</option><option>Setembro</option>
+            <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
           </select>
         </div>
         <div class="form-group" style="max-width:110px">
-          <label for="year">Ano</label>
-          <input type="number" id="year" value="2026" min="2020" max="2099" />
+          <label>Ano</label>
+          <input type="number" id="inp-year" value="2026" min="2020" max="2099" oninput="updatePreview()" />
         </div>
       </div>
     </div>
 
-    <!-- Lista de hábitos -->
-    <div class="card">
-      <div class="card-title">Hábitos diários</div>
-      <div class="habits-list" id="habits-list"></div>
-      <button class="add-habit-btn" onclick="addHabit()">+ Adicionar hábito</button>
+    <!-- Hábitos Diários -->
+    <div class="section-card" id="sc-daily">
+      <div class="section-head" onclick="toggleSection('daily')">
+        <span class="section-badge badge-daily">Diário</span>
+        <span class="section-desc">Registrado a cada dia do mês</span>
+        <span class="section-count" id="cnt-daily">0</span>
+        <span class="section-arrow open" id="arr-daily">▼</span>
+      </div>
+      <div class="section-body open" id="body-daily">
+        <div class="habits-list" id="list-daily"></div>
+        <button class="add-habit-btn" onclick="addHabit('daily')">+ Adicionar hábito diário</button>
+      </div>
+    </div>
+
+    <!-- Hábitos Semanais -->
+    <div class="section-card" id="sc-weekly">
+      <div class="section-head" onclick="toggleSection('weekly')">
+        <span class="section-badge badge-weekly">Semanal</span>
+        <span class="section-desc">Registrado por semana (1–5)</span>
+        <span class="section-count" id="cnt-weekly">0</span>
+        <span class="section-arrow" id="arr-weekly">▼</span>
+      </div>
+      <div class="section-body" id="body-weekly">
+        <div class="habits-list" id="list-weekly"></div>
+        <button class="add-habit-btn" onclick="addHabit('weekly')">+ Adicionar hábito semanal</button>
+      </div>
+    </div>
+
+    <!-- Metas Mensais -->
+    <div class="section-card" id="sc-monthly">
+      <div class="section-head" onclick="toggleSection('monthly')">
+        <span class="section-badge badge-monthly">Mensal</span>
+        <span class="section-desc">Metas do mês com caixa de seleção</span>
+        <span class="section-count" id="cnt-monthly">0</span>
+        <span class="section-arrow" id="arr-monthly">▼</span>
+      </div>
+      <div class="section-body" id="body-monthly">
+        <div class="habits-list" id="list-monthly"></div>
+        <button class="add-habit-btn" onclick="addMonthlyItem()">+ Adicionar meta mensal</button>
+      </div>
     </div>
 
     <!-- Opções -->
     <div class="card">
       <div class="card-title">Opções do PDF</div>
-      <div class="options-row">
-        <label class="checkbox-label">
-          <input type="checkbox" id="opt-fill" />
-          Círculos preenchidos
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" id="opt-weeklines" checked />
-          Separar semanas
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" id="opt-numbers" checked />
-          Numeração dos hábitos
-        </label>
+      <div class="options-grid">
+        <label class="opt-label"><input type="checkbox" id="opt-fill" onchange="updatePreview()" /> Círculos preenchidos</label>
+        <label class="opt-label"><input type="checkbox" id="opt-weeks" checked onchange="updatePreview()" /> Separar semanas</label>
+        <label class="opt-label"><input type="checkbox" id="opt-weekend" checked onchange="updatePreview()" /> Sombrear fins de semana</label>
+        <label class="opt-label"><input type="checkbox" id="opt-nums" checked onchange="updatePreview()" /> Numerar hábitos</label>
       </div>
     </div>
 
     <!-- Preview -->
-    <div class="preview-card">
-      <div class="preview-title">Pré-visualização</div>
-      <div class="preview-grid">
-        <div id="preview-content" class="empty-state">Adicione hábitos para visualizar</div>
-      </div>
+    <div class="card">
+      <div class="card-title">Pré-visualização</div>
+      <div class="preview-wrap" id="preview"></div>
     </div>
 
-    <!-- Botão gerar -->
-    <button class="generate-btn" onclick="generatePDF()" id="gen-btn" disabled>
-      ⬇ Gerar PDF
-    </button>
+    <!-- Gerar -->
+    <button class="generate-btn" id="gen-btn" onclick="generatePDF()" disabled>⬇ Gerar PDF</button>
 
   </div>
 
   <p class="footer">IFRN · Campus João Câmara</p>
 
   <script>
+    // ── Data ──
     const PALETTE = [
       '#93c5fd','#86efac','#f9a8d4','#fcd34d','#c4b5fd',
       '#fdba74','#67e8f9','#fca5a5','#a5b4fc','#d9f99d',
     ];
+    const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+                    'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const DAY_LETTERS = ['D','S','T','Q','Q','S','S']; // Sun-Sat
 
-    let habits = [];
+    let data = { daily: [], weekly: [], monthly: [] };
     let openPalette = null;
 
+    // ── Helpers ──
     function hexToRgb(hex) {
-      const r = parseInt(hex.slice(1,3), 16);
-      const g = parseInt(hex.slice(3,5), 16);
-      const b = parseInt(hex.slice(5,7), 16);
-      return { r, g, b };
+      return { r: parseInt(hex.slice(1,3),16), g: parseInt(hex.slice(3,5),16), b: parseInt(hex.slice(5,7),16) };
+    }
+    function escH(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function getDays(month, year) {
+      return new Date(year, MONTHS.indexOf(month) + 1, 0).getDate();
+    }
+    function getFirstDow(month, year) { // 0=Sun
+      return new Date(year, MONTHS.indexOf(month), 1).getDay();
+    }
+    function totalHabits() {
+      return data.daily.length + data.weekly.length + data.monthly.length;
     }
 
-    function addHabit(name = '', colorIdx = null) {
-      const idx = habits.length;
-      const color = PALETTE[colorIdx !== null ? colorIdx : idx % PALETTE.length];
-      habits.push({ name, color });
-      renderHabits();
+    // ── Section toggle ──
+    function toggleSection(id) {
+      const body = document.getElementById('body-' + id);
+      const arr  = document.getElementById('arr-' + id);
+      body.classList.toggle('open');
+      arr.classList.toggle('open');
+    }
+
+    // ── Add / remove ──
+    function addHabit(section, name = '', colorIdx = null) {
+      const color = PALETTE[colorIdx !== null ? colorIdx : data[section].length % PALETTE.length];
+      data[section].push({ name, color });
+      renderSection(section);
       updatePreview();
     }
 
-    function removeHabit(idx) {
-      habits.splice(idx, 1);
-      renderHabits();
+    function addMonthlyItem(name = '') {
+      data.monthly.push({ name });
+      renderSection('monthly');
       updatePreview();
     }
 
-    function renderHabits() {
-      const list = document.getElementById('habits-list');
+    function removeItem(section, idx) {
+      data[section].splice(idx, 1);
+      renderSection(section);
+      updatePreview();
+    }
+
+    function renderSection(section) {
+      const list = document.getElementById('list-' + section);
+      const cnt  = document.getElementById('cnt-' + section);
+      const items = data[section];
+      cnt.textContent = items.length || '';
       list.innerHTML = '';
-      habits.forEach((h, i) => {
-        const row = document.createElement('div');
-        row.className = 'habit-row';
-        row.innerHTML = `
-          <span class="habit-num">${i + 1}.</span>
-          <input type="text" placeholder="Nome do hábito" value="${escHtml(h.name)}"
-            oninput="habits[${i}].name = this.value; updatePreview()" />
-          <div class="color-picker-wrap" id="cpw-${i}">
-            <div class="color-dot" style="background:${h.color}" onclick="togglePalette(${i}, event)" title="Escolher cor"></div>
-            <div class="color-palette" id="pal-${i}">
-              ${PALETTE.map((c, pi) => `
-                <div class="pal-color ${c === h.color ? 'selected' : ''}"
-                  style="background:${c}"
-                  onclick="setColor(${i}, '${c}', event)"></div>
-              `).join('')}
+
+      if (section === 'monthly') {
+        items.forEach((item, i) => {
+          const row = document.createElement('div');
+          row.className = 'monthly-row';
+          row.innerHTML = `
+            <span class="habit-num">${i + 1}.</span>
+            <input type="text" placeholder="Meta do mês" value="${escH(item.name)}"
+              oninput="data.monthly[${i}].name=this.value;updatePreview()" style="flex:1" />
+            <button class="remove-btn" onclick="removeItem('monthly',${i})">×</button>
+          `;
+          list.appendChild(row);
+        });
+      } else {
+        items.forEach((h, i) => {
+          const row = document.createElement('div');
+          row.className = 'habit-row';
+          row.innerHTML = `
+            <span class="habit-num">${i + 1}.</span>
+            <input type="text" placeholder="Nome do hábito" value="${escH(h.name)}"
+              oninput="data['${section}'][${i}].name=this.value;updatePreview()" style="flex:1" />
+            <div class="color-wrap" id="cw-${section}-${i}">
+              <div class="color-dot" style="background:${h.color}"
+                onclick="togglePalette('${section}',${i},event)" title="Cor"></div>
+              <div class="palette" id="pal-${section}-${i}">
+                ${PALETTE.map((c,pi) => `
+                  <div class="pal-swatch ${c===h.color?'sel':''}" style="background:${c}"
+                    onclick="setColor('${section}',${i},'${c}',event)"></div>
+                `).join('')}
+              </div>
             </div>
-          </div>
-          <button class="remove-btn" onclick="removeHabit(${i})" title="Remover">×</button>
-        `;
-        list.appendChild(row);
-      });
+            <button class="remove-btn" onclick="removeItem('${section}',${i})">×</button>
+          `;
+          list.appendChild(row);
+        });
+      }
 
-      document.getElementById('gen-btn').disabled = habits.length === 0;
+      document.getElementById('gen-btn').disabled = totalHabits() === 0;
     }
 
-    function escHtml(s) {
-      return s.replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    }
-
-    function togglePalette(idx, e) {
+    function togglePalette(sec, idx, e) {
       e.stopPropagation();
-      const pal = document.getElementById(`pal-${idx}`);
+      const pal = document.getElementById(`pal-${sec}-${idx}`);
       if (openPalette && openPalette !== pal) openPalette.classList.remove('open');
       pal.classList.toggle('open');
       openPalette = pal.classList.contains('open') ? pal : null;
     }
-
-    function setColor(idx, color, e) {
+    function setColor(sec, idx, color, e) {
       e.stopPropagation();
-      habits[idx].color = color;
+      data[sec][idx].color = color;
       if (openPalette) { openPalette.classList.remove('open'); openPalette = null; }
-      renderHabits();
+      renderSection(sec);
       updatePreview();
     }
-
     document.addEventListener('click', () => {
       if (openPalette) { openPalette.classList.remove('open'); openPalette = null; }
     });
 
+    // ── Preview ──
     function updatePreview() {
-      const container = document.getElementById('preview-content');
-      if (habits.length === 0) {
-        container.className = 'empty-state';
-        container.innerHTML = 'Adicione hábitos para visualizar';
+      const el = document.getElementById('preview');
+      if (totalHabits() === 0) {
+        el.innerHTML = '<div class="empty-state">Adicione hábitos para visualizar</div>';
         return;
       }
-      container.className = '';
+      const month  = document.getElementById('sel-month').value;
+      const year   = parseInt(document.getElementById('inp-year').value);
+      const nDays  = getDays(month, year);
+      const firstDow = getFirstDow(month, year);
+      const fill   = document.getElementById('opt-fill').checked;
+      const weeks  = document.getElementById('opt-weeks').checked;
+      const wkend  = document.getElementById('opt-weekend').checked;
+      const nums   = document.getElementById('opt-nums').checked;
 
-      const showFill = document.getElementById('opt-fill').checked;
-      const showWeeks = document.getElementById('opt-weeklines').checked;
-      const showNums = document.getElementById('opt-numbers').checked;
+      const days = Array.from({length: nDays}, (_,i) => i + 1);
 
-      const days = Array.from({length: 31}, (_, i) => i + 1);
+      function dayStyle(d) {
+        const dow = (firstDow + d - 1) % 7;
+        const isWkend = wkend && (dow === 0 || dow === 6);
+        const isWeekSep = weeks && d > 1 && (d - 1) % 7 === 0;
+        let s = '';
+        if (isWkend) s += 'background:rgba(100,116,139,.08);';
+        if (isWeekSep) s += 'border-left:1.5px solid var(--card-border);';
+        return s;
+      }
 
-      let html = `<table class="preview-table">
-        <thead><tr>
-          <th class="habit-th">Hábito</th>
-          ${days.map(d => `<th style="${showWeeks && (d===8||d===15||d===22||d===29) ? 'border-left:1.5px solid var(--card-border)' : ''}">${d}</th>`).join('')}
-        </tr></thead>
-        <tbody>`;
+      let html = '';
 
-      habits.forEach((h, i) => {
-        const rgb = hexToRgb(h.color);
-        const dimColor = `rgba(${rgb.r},${rgb.g},${rgb.b},0.25)`;
-        const fullColor = h.color;
-        html += `<tr>
-          <td class="habit-name">${showNums ? `${i+1}. ` : ''}${escHtml(h.name) || `Hábito ${i+1}`}</td>
-          ${days.map(d => {
-            const sep = showWeeks && (d===8||d===15||d===22||d===29) ? 'border-left:1.5px solid var(--card-border);' : '';
-            const bg = showFill ? fullColor : 'transparent';
-            const border = h.color;
-            return `<td style="${sep}"><div class="preview-dot" style="background:${bg};border-color:${border}"></div></td>`;
-          }).join('')}
-        </tr>`;
-      });
+      // Daily
+      if (data.daily.length > 0) {
+        html += `<div class="psec-label">Diário</div>`;
+        html += `<table class="preview-table"><thead><tr>
+          <th class="ph">Hábito</th>
+          ${days.map(d => `<th style="${dayStyle(d)}">${d}</th>`).join('')}
+        </tr></thead><tbody>`;
+        data.daily.forEach((h,i) => {
+          html += `<tr><td class="pn">${nums?`${i+1}. `:''}${escH(h.name)||`Hábito ${i+1}`}</td>
+            ${days.map(d => {
+              const bg = fill ? h.color : 'transparent';
+              return `<td style="${dayStyle(d)}"><div class="pdot" style="background:${bg};border-color:${h.color}"></div></td>`;
+            }).join('')}
+          </tr>`;
+        });
+        html += '</tbody></table>';
+      }
 
-      html += '</tbody></table>';
-      container.innerHTML = html;
+      // Weekly
+      if (data.weekly.length > 0) {
+        html += `<div class="psec-label" style="margin-top:8px">Semanal</div>`;
+        html += `<table class="preview-table"><thead><tr>
+          <th class="ph">Hábito</th>
+          ${[1,2,3,4,5].map(w => `<th style="min-width:36px">Sem ${w}</th>`).join('')}
+        </tr></thead><tbody>`;
+        data.weekly.forEach((h,i) => {
+          html += `<tr><td class="pn">${nums?`${i+1}. `:''}${escH(h.name)||`Hábito ${i+1}`}</td>
+            ${[0,1,2,3,4].map(() => {
+              const bg = fill ? h.color : 'transparent';
+              return `<td><div class="psq" style="background:${bg};border-color:${h.color}"></div></td>`;
+            }).join('')}
+          </tr>`;
+        });
+        html += '</tbody></table>';
+      }
+
+      // Monthly
+      if (data.monthly.length > 0) {
+        html += `<div class="psec-label" style="margin-top:8px">Mensal</div>`;
+        html += `<table class="preview-table"><thead><tr>
+          <th class="ph">Meta</th><th>✓</th>
+        </tr></thead><tbody>`;
+        data.monthly.forEach((item,i) => {
+          html += `<tr><td class="pn">${escH(item.name)||`Meta ${i+1}`}</td>
+            <td><div class="psq" style="border-color:#94a3b8;background:transparent;width:12px;height:12px;border-radius:3px"></div></td>
+          </tr>`;
+        });
+        html += '</tbody></table>';
+      }
+
+      el.innerHTML = html;
     }
 
-    document.getElementById('opt-fill').addEventListener('change', updatePreview);
-    document.getElementById('opt-weeklines').addEventListener('change', updatePreview);
-    document.getElementById('opt-numbers').addEventListener('change', updatePreview);
-
-    function getDaysInMonth(monthName, year) {
-      const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-                      'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-      const m = months.indexOf(monthName);
-      return new Date(year, m + 1, 0).getDate();
-    }
-
+    // ── PDF Generation ──
     function generatePDF() {
-      if (habits.length === 0) return;
+      if (totalHabits() === 0) return;
 
       const { jsPDF } = window.jspdf;
-      const monthName = document.getElementById('month-name').value;
-      const year = document.getElementById('year').value;
-      const showFill = document.getElementById('opt-fill').checked;
-      const showWeeks = document.getElementById('opt-weeklines').checked;
-      const showNums = document.getElementById('opt-numbers').checked;
-      const totalDays = getDaysInMonth(monthName, year);
-
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+      const month   = document.getElementById('sel-month').value;
+      const year    = parseInt(document.getElementById('inp-year').value);
+      const nDays   = getDays(month, year);
+      const firstDow = getFirstDow(month, year);
+      const fill    = document.getElementById('opt-fill').checked;
+      const weeksep = document.getElementById('opt-weeks').checked;
+      const wkend   = document.getElementById('opt-weekend').checked;
+      const nums    = document.getElementById('opt-nums').checked;
+
+      const hasDly = data.daily.length > 0;
+      const hasWkl = data.weekly.length > 0;
+      const hasMly = data.monthly.length > 0;
+      const hasBot = hasWkl || hasMly;
+
+      // ── Layout constants ──
       const PW = 297, PH = 210;
+      const ML = 10, MR = 10, MT = 10, MB = 10;
+      const LBL_W = 13;    // rotated section label column
+      const NAME_W = 58;   // habit name column
 
-      // Layout constants
-      const marginL = 10, marginT = 12, marginR = 10, marginB = 10;
-      const labelW = 12;        // "DAILY" rotated label area
-      const nameColW = 60;      // habit name column
-      const daysAreaW = PW - marginL - labelW - nameColW - marginR;
-      const colW = daysAreaW / totalDays;
-      const rowH = Math.min(10, (PH - marginT - 40) / Math.max(habits.length, 1));
-      const headerH = 14;
-      const startY = marginT + 22;  // where habits start (after title + day headers)
-      const gridTop = startY;
+      // Accent bar at top
+      doc.setFillColor(99, 102, 241);
+      doc.rect(0, 0, PW, 3, 'F');
 
-      // ── Background decoration: top-right botanical-style accent ──
-      doc.setFillColor(245, 250, 245);
-      doc.setDrawColor(220, 240, 220);
-
-      // ── Month title ──
+      // Month title (top-right)
       doc.setFont('helvetica', 'italic');
-      doc.setFontSize(16);
-      doc.setTextColor(80, 80, 80);
-      doc.text(`${monthName} ${year}`, PW - marginR, marginT + 6, { align: 'right' });
+      doc.setFontSize(17);
+      doc.setTextColor(70, 70, 80);
+      doc.text(`${month} ${year}`, PW - MR, MT + 10, { align: 'right' });
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(6);
-      doc.setTextColor(160, 160, 160);
-      doc.text('MÊS', PW - marginR, marginT + 11, { align: 'right' });
+      doc.setTextColor(160, 160, 170);
+      doc.text('MÊS', PW - MR, MT + 15, { align: 'right' });
 
-      // ── "DAILY" rotated label ──
-      const labelX = marginL + labelW / 2;
-      const labelY = gridTop + (habits.length * rowH) / 2;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7);
-      doc.setTextColor(100, 100, 100);
-      doc.text('DIÁRIO', labelX, labelY, { angle: 90, align: 'center' });
+      // Content vertical bounds
+      const contentTop = MT + 19;  // y=29
+      const contentBot = PH - MB;  // y=200
 
-      // ── Day number headers ──
-      const gridLeft = marginL + labelW + nameColW;
-      const dayHeaderY = gridTop - 3;
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6);
-      doc.setTextColor(120, 120, 120);
-
-      for (let d = 1; d <= totalDays; d++) {
-        const cx = gridLeft + (d - 1) * colW + colW / 2;
-        doc.text(String(d), cx, dayHeaderY, { align: 'center' });
+      // Split between daily and bottom sections
+      let dailyBot, botTop;
+      if (hasBot) {
+        dailyBot = contentTop + (contentBot - contentTop) * 0.63;
+        botTop   = dailyBot + 4;
+      } else {
+        dailyBot = contentBot;
+        botTop   = null;
       }
 
-      // Week labels below day numbers
-      const weekLabels = ['SEM 1','SEM 2','SEM 3','SEM 4','SEM 5'];
-      const weekStarts = [1, 8, 15, 22, 29];
-      doc.setFontSize(5);
-      doc.setTextColor(180, 180, 180);
-      weekStarts.forEach((ws, wi) => {
-        if (ws > totalDays) return;
-        const we = Math.min(ws + 6, totalDays);
-        const cx = gridLeft + (ws - 1) * colW + ((we - ws + 1) * colW) / 2;
-        doc.text(weekLabels[wi], cx, dayHeaderY + 4, { align: 'center' });
-      });
+      // ── Grid helpers ──
+      const gridLeft = ML + LBL_W + NAME_W; // x where day columns start
+      const gridW    = PW - gridLeft - MR;
+      const colW     = gridW / nDays;
 
-      // ── Habit rows ──
-      habits.forEach((h, i) => {
-        const y = gridTop + i * rowH;
-        const rgb = hexToRgb(h.color);
+      function dayDow(d) { return (firstDow + d - 1) % 7; }
+      function isWeekend(d) { const dow = dayDow(d); return dow === 0 || dow === 6; }
+      function isWeekSep(d) { return weeksep && d > 1 && (d - 1) % 7 === 0; }
 
-        // Alternating row background
-        if (i % 2 === 0) {
-          doc.setFillColor(250, 250, 252);
-          doc.rect(marginL + labelW, y, nameColW + daysAreaW, rowH, 'F');
-        }
+      // Shade a day column in the grid (x = gridLeft + (d-1)*colW)
+      function shadeCol(d, y1, h, rgba) {
+        const x = gridLeft + (d - 1) * colW;
+        doc.setFillColor(rgba[0], rgba[1], rgba[2]);
+        doc.setGState(doc.GState({ opacity: rgba[3] }));
+        doc.rect(x, y1, colW, h, 'F');
+        doc.setGState(doc.GState({ opacity: 1 }));
+      }
 
-        // Habit name column border
-        doc.setDrawColor(220, 220, 225);
-        doc.setLineWidth(0.15);
-        doc.rect(marginL + labelW, y, nameColW, rowH);
-
-        // Habit name text
-        const label = (showNums ? `${i + 1}. ` : '') + (h.name.trim() || `Hábito ${i + 1}`);
-        const truncated = doc.splitTextToSize(label, nameColW - 6)[0];
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7);
-        doc.setTextColor(60, 60, 60);
-        doc.text(truncated, marginL + labelW + 3, y + rowH / 2 + 1.2);
-
-        // Circles for each day
-        const cr = Math.min(2.8, rowH * 0.28);
-        for (let d = 0; d < totalDays; d++) {
-          const cx = gridLeft + d * colW + colW / 2;
-          const cy = y + rowH / 2;
-
-          if (showFill) {
-            doc.setFillColor(rgb.r, rgb.g, rgb.b);
-            doc.setDrawColor(rgb.r, rgb.g, rgb.b);
-            doc.circle(cx, cy, cr, 'FD');
-          } else {
-            // Soft fill + colored stroke
-            const lr = Math.min(255, rgb.r + 60);
-            const lg = Math.min(255, rgb.g + 60);
-            const lb = Math.min(255, rgb.b + 60);
-            doc.setFillColor(lr, lg, lb);
-            doc.setDrawColor(rgb.r, rgb.g, rgb.b);
-            doc.setLineWidth(0.4);
-            doc.circle(cx, cy, cr, 'FD');
-          }
-        }
-
-        // Row separator
-        doc.setDrawColor(220, 220, 225);
-        doc.setLineWidth(0.1);
-        doc.line(marginL + labelW + nameColW, y + rowH, gridLeft + daysAreaW, y + rowH);
-        doc.line(marginL + labelW + nameColW, y, gridLeft + daysAreaW, y);
-      });
-
-      // ── Grid outer border ──
-      const gridH = habits.length * rowH;
-      doc.setDrawColor(180, 180, 190);
-      doc.setLineWidth(0.4);
-      doc.rect(marginL + labelW + nameColW, gridTop, daysAreaW, gridH);
-
-      // ── Vertical day separators ──
-      doc.setDrawColor(220, 220, 225);
-      doc.setLineWidth(0.1);
-      for (let d = 1; d < totalDays; d++) {
-        const x = gridLeft + d * colW;
-        const isWeekSep = showWeeks && (d === 7 || d === 14 || d === 21 || d === 28);
-        if (isWeekSep) {
-          doc.setDrawColor(160, 160, 175);
-          doc.setLineWidth(0.5);
+      // Draw a circle or square at (cx, cy)
+      function drawCircle(cx, cy, r, color, filled) {
+        const { r: cr, g: cg, b: cb } = hexToRgb(color);
+        if (filled) {
+          doc.setFillColor(cr, cg, cb);
+          doc.setDrawColor(cr, cg, cb);
+          doc.circle(cx, cy, r, 'FD');
         } else {
-          doc.setDrawColor(220, 220, 225);
-          doc.setLineWidth(0.1);
+          // Light tint fill + colored stroke
+          doc.setFillColor(Math.min(255,cr+70), Math.min(255,cg+70), Math.min(255,cb+70));
+          doc.setDrawColor(cr, cg, cb);
+          doc.setLineWidth(0.35);
+          doc.circle(cx, cy, r, 'FD');
         }
-        doc.line(x, gridTop, x, gridTop + gridH);
       }
 
-      // ── Habit name column outer border ──
-      doc.setDrawColor(180, 180, 190);
-      doc.setLineWidth(0.4);
-      doc.rect(marginL + labelW, gridTop, nameColW, gridH);
+      function drawSquare(cx, cy, s, color, filled) {
+        const { r: cr, g: cg, b: cb } = hexToRgb(color);
+        if (filled) {
+          doc.setFillColor(cr, cg, cb);
+          doc.setDrawColor(cr, cg, cb);
+        } else {
+          doc.setFillColor(Math.min(255,cr+70), Math.min(255,cg+70), Math.min(255,cb+70));
+          doc.setDrawColor(cr, cg, cb);
+        }
+        doc.setLineWidth(0.35);
+        doc.roundedRect(cx - s, cy - s, s * 2, s * 2, 0.5, 0.5, filled ? 'FD' : 'FD');
+      }
 
-      // ── Color legend ──
-      if (habits.length > 0) {
-        const legendY = gridTop + gridH + 8;
-        if (legendY + 8 < PH - marginB) {
+      // ── DAILY SECTION ──
+      if (hasDly) {
+        const n = data.daily.length;
+        const availH = dailyBot - contentTop;
+
+        // Day header height
+        const DHDR = 12;
+        const rowH = Math.min(10, (availH - DHDR) / Math.max(n, 1));
+        const rowsH = rowH * n;
+        const gridTop = contentTop + DHDR;
+
+        // "DIÁRIO" rotated label
+        const lx = ML + LBL_W / 2;
+        const ly = gridTop + rowsH / 2;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(120, 120, 130);
+        doc.text('DIÁRIO', lx, ly, { angle: 90, align: 'center' });
+
+        // Day numbers + DOW letters header
+        for (let d = 1; d <= nDays; d++) {
+          const cx = gridLeft + (d - 1) * colW + colW / 2;
+          const dow = dayDow(d);
+          const isWknd = isWeekend(d);
+
+          // Header bg for weekends
+          if (wkend && isWknd) {
+            doc.setFillColor(235, 238, 245);
+            doc.rect(gridLeft + (d-1)*colW, contentTop, colW, DHDR, 'F');
+          }
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6.5);
+          doc.setTextColor(isWknd && wkend ? 130 : 100, isWknd && wkend ? 130 : 110, isWknd && wkend ? 150 : 120);
+          doc.text(String(d), cx, contentTop + 5, { align: 'center' });
+
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(5.5);
-          doc.setTextColor(140, 140, 140);
-          let lx = marginL + labelW;
-          habits.forEach((h, i) => {
-            const rgb = hexToRgb(h.color);
-            doc.setFillColor(rgb.r, rgb.g, rgb.b);
-            doc.circle(lx + 2, legendY + 2, 2, 'F');
-            doc.setTextColor(100, 100, 100);
-            const label = (h.name.trim() || `Hábito ${i+1}`);
-            doc.text(label.substring(0, 20), lx + 6, legendY + 3.5);
-            lx += Math.min(label.length * 1.7 + 14, 55);
-            if (lx > PW - marginR - 40) { lx = marginL + labelW; }
-          });
+          doc.setTextColor(isWknd && wkend ? 140 : 160, 160, 175);
+          doc.text(DAY_LETTERS[dow], cx, contentTop + 10, { align: 'center' });
         }
+
+        // Habit rows
+        data.daily.forEach((h, i) => {
+          const y = gridTop + i * rowH;
+
+          // Row background
+          if (i % 2 === 0) {
+            doc.setFillColor(249, 249, 252);
+            doc.rect(ML + LBL_W, y, NAME_W + gridW, rowH, 'F');
+          }
+
+          // Weekend column shading over rows
+          if (wkend) {
+            for (let d = 1; d <= nDays; d++) {
+              if (isWeekend(d)) {
+                doc.setFillColor(230, 233, 243);
+                doc.setGState(doc.GState({ opacity: 0.4 }));
+                doc.rect(gridLeft + (d-1)*colW, y, colW, rowH, 'F');
+                doc.setGState(doc.GState({ opacity: 1 }));
+              }
+            }
+          }
+
+          // Name cell
+          doc.setDrawColor(215, 215, 225);
+          doc.setLineWidth(0.1);
+          doc.rect(ML + LBL_W, y, NAME_W, rowH);
+
+          // Color stripe on left of name cell
+          const { r: sr, g: sg, b: sb } = hexToRgb(h.color);
+          doc.setFillColor(sr, sg, sb);
+          doc.rect(ML + LBL_W, y, 2.5, rowH, 'F');
+
+          // Habit name
+          const label = (nums ? `${i+1}. ` : '') + (h.name.trim() || `Hábito ${i+1}`);
+          const truncated = doc.splitTextToSize(label, NAME_W - 7)[0];
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(55, 55, 65);
+          doc.text(truncated, ML + LBL_W + 5, y + rowH / 2 + 1.3);
+
+          // Circles
+          const cr2 = Math.min(2.7, rowH * 0.27);
+          for (let d = 1; d <= nDays; d++) {
+            const cx = gridLeft + (d - 1) * colW + colW / 2;
+            const cy = y + rowH / 2;
+            drawCircle(cx, cy, cr2, h.color, fill);
+          }
+
+          // Row lines
+          doc.setDrawColor(215, 215, 225);
+          doc.setLineWidth(0.08);
+          doc.line(gridLeft, y, gridLeft + gridW, y);
+          doc.line(gridLeft, y + rowH, gridLeft + gridW, y + rowH);
+        });
+
+        // Vertical separators
+        for (let d = 1; d < nDays; d++) {
+          const x = gridLeft + d * colW;
+          if (isWeekSep(d + 1)) {
+            doc.setDrawColor(160, 160, 180);
+            doc.setLineWidth(0.5);
+          } else {
+            doc.setDrawColor(215, 215, 225);
+            doc.setLineWidth(0.08);
+          }
+          doc.line(x, gridTop, x, gridTop + rowsH);
+        }
+
+        // Outer borders
+        doc.setDrawColor(170, 170, 185);
+        doc.setLineWidth(0.4);
+        doc.rect(ML + LBL_W, gridTop, NAME_W + gridW, rowsH);
+        doc.rect(ML + LBL_W, contentTop, NAME_W + gridW, DHDR);
+
+        // Day header outer border
+        doc.setDrawColor(170, 170, 185);
+        doc.setLineWidth(0.3);
+        doc.rect(gridLeft, contentTop, gridW, DHDR);
       }
 
-      // ── Watermark / footer ──
+      // ── WEEKLY SECTION ──
+      if (hasWkl && botTop) {
+        const n = data.weekly.length;
+        const botH = contentBot - botTop;
+        const WHDR = 10;
+        const rowH = Math.min(9, (botH - WHDR) / Math.max(n, 1));
+        const rowsH = rowH * n;
+        const gridTop = botTop + WHDR;
+
+        // Area width (left 60% if monthly exists, else full)
+        const areaW = hasMly ? (PW - ML - MR) * 0.57 : (PW - ML - MR);
+        const wGridLeft = ML + LBL_W + NAME_W;
+        const wGridW = ML + areaW - wGridLeft;
+        const WEEKS = 5;
+        const wColW = wGridW / WEEKS;
+
+        // "SEMANAL" label
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7);
+        doc.setTextColor(120, 120, 130);
+        doc.text('SEMANAL', ML + LBL_W / 2, gridTop + rowsH / 2, { angle: 90, align: 'center' });
+
+        // Week headers
+        for (let w = 1; w <= WEEKS; w++) {
+          const cx = wGridLeft + (w - 1) * wColW + wColW / 2;
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(6);
+          doc.setTextColor(120, 120, 130);
+          doc.text(`SEM ${w}`, cx, botTop + 7, { align: 'center' });
+        }
+
+        data.weekly.forEach((h, i) => {
+          const y = gridTop + i * rowH;
+          if (i % 2 === 0) {
+            doc.setFillColor(249, 249, 252);
+            doc.rect(ML + LBL_W, y, NAME_W + wGridW, rowH, 'F');
+          }
+
+          // Color stripe
+          const { r: sr, g: sg, b: sb } = hexToRgb(h.color);
+          doc.setFillColor(sr, sg, sb);
+          doc.rect(ML + LBL_W, y, 2.5, rowH, 'F');
+
+          doc.setDrawColor(215, 215, 225);
+          doc.setLineWidth(0.1);
+          doc.rect(ML + LBL_W, y, NAME_W, rowH);
+
+          const label = (nums ? `${i+1}. ` : '') + (h.name.trim() || `Hábito ${i+1}`);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(55, 55, 65);
+          doc.text(doc.splitTextToSize(label, NAME_W - 7)[0], ML + LBL_W + 5, y + rowH / 2 + 1.3);
+
+          const sq = Math.min(2.3, rowH * 0.25);
+          for (let w = 0; w < WEEKS; w++) {
+            const cx = wGridLeft + w * wColW + wColW / 2;
+            const cy = y + rowH / 2;
+            drawSquare(cx, cy, sq, h.color, fill);
+          }
+
+          doc.setDrawColor(215, 215, 225);
+          doc.setLineWidth(0.08);
+          doc.line(wGridLeft, y, wGridLeft + wGridW, y);
+          doc.line(wGridLeft, y + rowH, wGridLeft + wGridW, y + rowH);
+        });
+
+        // Week column separators
+        for (let w = 1; w < WEEKS; w++) {
+          const x = wGridLeft + w * wColW;
+          doc.setDrawColor(215, 215, 225);
+          doc.setLineWidth(0.1);
+          doc.line(x, gridTop, x, gridTop + rowsH);
+        }
+
+        doc.setDrawColor(170, 170, 185);
+        doc.setLineWidth(0.4);
+        doc.rect(ML + LBL_W, gridTop, NAME_W + wGridW, rowsH);
+        doc.rect(ML + LBL_W, botTop, NAME_W + wGridW, WHDR);
+      }
+
+      // ── MONTHLY SECTION ──
+      if (hasMly && botTop) {
+        const n = data.monthly.length;
+        const botH = contentBot - botTop;
+        const MHDR = 10;
+        const rowH = Math.min(9, (botH - MHDR) / Math.max(n, 1));
+        const rowsH = rowH * n;
+        const gridTop = botTop + MHDR;
+
+        const mX = hasWkl ? ML + (PW - ML - MR) * 0.60 : ML;
+        const mW = PW - mX - MR;
+        const CHK_W = 12;  // checkbox column
+        const mNameW = mW - CHK_W;
+        const mGridLeft = mX + mNameW;
+
+        // "MENSAL" label (inside the box since it's smaller)
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6);
+        doc.setTextColor(120, 120, 130);
+        doc.text('MENSAL', mX + mNameW / 2, botTop + 7, { align: 'center' });
+        doc.text('✓', mGridLeft + CHK_W / 2, botTop + 7, { align: 'center' });
+
+        data.monthly.forEach((item, i) => {
+          const y = gridTop + i * rowH;
+          if (i % 2 === 0) {
+            doc.setFillColor(249, 249, 252);
+            doc.rect(mX, y, mW, rowH, 'F');
+          }
+
+          // Left gold stripe
+          doc.setFillColor(245, 158, 11);
+          doc.rect(mX, y, 2.5, rowH, 'F');
+
+          const label = (item.name.trim() || `Meta ${i+1}`);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(55, 55, 65);
+          doc.text(doc.splitTextToSize(label, mNameW - 7)[0], mX + 5, y + rowH / 2 + 1.3);
+
+          // Checkbox
+          doc.setDrawColor(160, 160, 175);
+          doc.setLineWidth(0.35);
+          const sq = 2.2;
+          doc.roundedRect(mGridLeft + CHK_W/2 - sq, y + rowH/2 - sq, sq*2, sq*2, 0.4, 0.4, 'S');
+
+          doc.setDrawColor(215, 215, 225);
+          doc.setLineWidth(0.08);
+          doc.line(mX, y, mX + mW, y);
+          doc.line(mX, y + rowH, mX + mW, y + rowH);
+        });
+
+        doc.setDrawColor(170, 170, 185);
+        doc.setLineWidth(0.4);
+        doc.rect(mX, gridTop, mW, rowsH);
+        doc.rect(mX, botTop, mW, MHDR);
+      }
+
+      // ── Footer ──
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(5);
-      doc.setTextColor(200, 200, 200);
-      doc.text('Gerado em cesarazevedo.github.io', PW - marginR, PH - marginB, { align: 'right' });
+      doc.setTextColor(200, 200, 205);
+      doc.text('cesarazevedo.github.io', PW - MR, PH - MB + 4, { align: 'right' });
 
-      doc.save(`rastreador-${monthName.toLowerCase()}-${year}.pdf`);
+      doc.save(`rastreador-${month.toLowerCase()}-${year}.pdf`);
     }
 
     // ── Theme ──
-    const saved = localStorage.getItem('theme') || 'dark';
-    setTheme(saved);
-
     function toggleTheme() {
       const cur = document.documentElement.getAttribute('data-theme');
       setTheme(cur === 'dark' ? 'light' : 'dark');
     }
-
-    function setTheme(theme) {
-      document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('theme', theme);
-      const isDark = theme === 'dark';
-      document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
-      document.getElementById('theme-label').textContent = isDark ? 'Claro' : 'Escuro';
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('theme', t);
+      const dark = t === 'dark';
+      document.getElementById('theme-icon').textContent = dark ? '☀️' : '🌙';
+      document.getElementById('theme-label').textContent = dark ? 'Claro' : 'Escuro';
     }
+    setTheme(localStorage.getItem('theme') || 'dark');
 
-    // ── Init: pre-populate with example habits ──
-    const currentMonth = new Date().toLocaleString('pt-BR', { month: 'long' });
-    const months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
-                    'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-    const sel = document.getElementById('month-name');
-    const curIdx = new Date().getMonth();
-    sel.selectedIndex = curIdx;
+    // ── Init ──
+    document.getElementById('sel-month').selectedIndex = new Date().getMonth();
 
-    ['Acordar cedo', 'Exercício físico', 'Leitura', 'Beber água'].forEach((name, i) => addHabit(name, i));
+    ['Acordar às 6h', 'Exercício físico', 'Leitura', 'Beber 2L de água', 'Meditação']
+      .forEach((n, i) => addHabit('daily', n, i));
+
+    ['Limpar o quarto', 'Planejar a semana']
+      .forEach((n, i) => addHabit('weekly', n, i + 2));
+
+    ['Revisar metas do mês', 'Consulta médica (se necessário)', 'Guardar uma quantia']
+      .forEach(n => addMonthlyItem(n));
+
+    // Collapse weekly and monthly by default
+    ['weekly', 'monthly'].forEach(s => {
+      document.getElementById('body-' + s).classList.remove('open');
+      document.getElementById('arr-' + s).classList.remove('open');
+    });
   </script>
 
 </body>
