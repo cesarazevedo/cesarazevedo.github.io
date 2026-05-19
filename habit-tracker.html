@@ -917,16 +917,12 @@
 
       // ── Footer ──
       doc.setFont('helvetica', 'italic');
-      doc.setFontSize(8);
-      doc.setTextColor(140, 140, 155);
+      doc.setFontSize(10);
+      doc.setTextColor(130, 130, 145);
       doc.text(
         '"Nós somos o que fazemos repetidamente. A excelência, portanto, não é um ato, mas um hábito." — Aristóteles',
         ML, PH - MB + 5
       );
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(5);
-      doc.setTextColor(200, 200, 205);
-      doc.text('cesarazevedo.github.io', PW - MR, PH - MB + 4, { align: 'right' });
 
       doc.save(`rastreador-${month.toLowerCase()}-${year}.pdf`);
     }
