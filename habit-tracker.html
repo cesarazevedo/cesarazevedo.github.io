@@ -203,6 +203,41 @@
     .move-btn:hover:not([disabled]) { color: #6366f1; background: rgba(99,102,241,.1); }
     .move-btn[disabled] { opacity: .2; cursor: default; }
 
+    /* ── Mode tabs ── */
+    .mode-tabs { display: flex; gap: 4px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 4px; box-shadow: 0 4px 20px var(--shadow); }
+    .mode-tab  { flex: 1; padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-size: .88rem; font-weight: 600; font-family: inherit; transition: background .2s, color .2s; color: var(--text-muted); background: transparent; }
+    .mode-tab.active { background: linear-gradient(135deg,#6366f1,#8b5cf6); color: #fff; box-shadow: 0 2px 8px rgba(99,102,241,.35); }
+
+    /* ── Fill mode ── */
+    .fill-nav  { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .fill-nav-btn { background: var(--toggle-bg); border: 1px solid var(--toggle-border); border-radius: 8px; padding: 6px 16px; cursor: pointer; font-size: 1.1rem; color: var(--text-sub); transition: background .2s, color .2s; font-family: inherit; }
+    .fill-nav-btn:hover { color: var(--text-h); }
+    .fill-month-title { font-size: 1rem; font-weight: 700; color: var(--text-h); }
+
+    .fill-section-label { font-size: .72rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+    .fill-scroll { overflow-x: auto; padding-bottom: 4px; }
+    .fill-table { border-collapse: collapse; font-size: .75rem; }
+    .fill-table th { color: var(--text-muted); font-weight: 600; padding: 3px 1px; text-align: center; font-size: .65rem; min-width: 22px; }
+    .fill-name-th { text-align: left; min-width: 130px; padding-left: 8px; }
+    .fill-stat-th { min-width: 64px; padding-left: 6px; }
+    .fill-wknd { background: rgba(100,116,139,.08); }
+    .fill-dow  { font-size: .5rem; color: var(--text-muted); }
+    .fill-name-td { padding: 3px 8px 3px 10px; white-space: nowrap; max-width: 160px; overflow: hidden; text-overflow: ellipsis; color: var(--text-sub); position: relative; }
+    .fill-stripe { position: absolute; left: 0; top: 2px; bottom: 2px; width: 3px; border-radius: 2px; }
+    .fill-cell { width: 22px; height: 22px; cursor: pointer; display: flex; align-items: center; justify-content: center; border-radius: 4px; margin: 0 auto; transition: transform .1s; }
+    .fill-cell:hover { transform: scale(1.18); background: rgba(99,102,241,.07); }
+    .fill-dot { width: 13px; height: 13px; border-radius: 50%; border: 1.5px solid; transition: background .12s; }
+    .fill-sq  { width: 11px; height: 11px; border-radius: 3px; border: 1.5px solid; transition: background .12s; }
+    .fill-stat { padding: 2px 4px; }
+    .fill-bar  { height: 4px; background: var(--card-border); border-radius: 2px; margin-bottom: 2px; overflow: hidden; }
+    .fill-bar-inner { height: 100%; border-radius: 2px; transition: width .3s; }
+    .fill-stat span { font-size: .6rem; color: var(--text-muted); }
+    .fill-monthly-list { display: flex; flex-direction: column; gap: 8px; }
+    .fill-monthly-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--input-border); border-radius: 8px; cursor: pointer; transition: border-color .2s, background .2s; color: var(--text-sub); font-size: .88rem; }
+    .fill-monthly-item:hover { border-color: #6366f1; background: rgba(99,102,241,.04); }
+    .fill-monthly-item.checked { color: var(--text-h); text-decoration: line-through; opacity: .7; }
+    .fill-monthly-check { width: 18px; height: 18px; border-radius: 5px; border: 2px solid; display: flex; align-items: center; justify-content: center; font-size: .7rem; color: #fff; font-weight: 700; flex-shrink: 0; transition: background .15s, border-color .15s; }
+
     .add-habit-btn {
       width: 100%; padding: 8px;
       background: none; border: 1px dashed var(--input-border); border-radius: 8px;
@@ -270,6 +305,13 @@
   </div>
 
   <div class="container">
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tab-config" onclick="setMode('config')">⚙ Configurar</button>
+      <button class="mode-tab" id="tab-fill" onclick="setMode('fill')">✏ Preencher</button>
+    </div>
+
+    <div id="mode-config">
 
     <!-- Mês -->
     <div class="card">
@@ -356,6 +398,19 @@
 
     <!-- Gerar -->
     <button class="generate-btn" id="gen-btn" onclick="generatePDF()" disabled>⬇ Gerar PDF</button>
+
+    </div><!-- /mode-config -->
+
+    <div id="mode-fill" style="display:none">
+      <div class="card">
+        <div class="fill-nav">
+          <button class="fill-nav-btn" onclick="navigateFillMonth(-1)">‹</button>
+          <span class="fill-month-title" id="fill-month-label"></span>
+          <button class="fill-nav-btn" onclick="navigateFillMonth(1)">›</button>
+        </div>
+        <div id="fill-table-wrap"></div>
+      </div>
+    </div>
 
   </div>
 
@@ -1008,6 +1063,132 @@
         ['daily', 'weekly', 'monthly'].forEach(sec => renderSection(sec));
         return true;
       } catch { return false; }
+    }
+
+    // ── Fill mode ──
+    let fillMonth = MONTHS[new Date().getMonth()];
+    let fillYear  = new Date().getFullYear();
+
+    function getChecksKey(m, y) { return `habit-tracker-checks-${m}-${y}`; }
+    function loadChecks(m, y) {
+      try { return JSON.parse(localStorage.getItem(getChecksKey(m, y))) || {}; } catch { return {}; }
+    }
+    function saveChecks(m, y, ch) {
+      localStorage.setItem(getChecksKey(m, y), JSON.stringify(ch));
+    }
+
+    function toggleCheck(type, hIdx, key) {
+      const ch = loadChecks(fillMonth, fillYear);
+      if (type === 'monthly') {
+        if (!ch.monthly) ch.monthly = {};
+        ch.monthly[hIdx] = !ch.monthly[hIdx];
+      } else {
+        if (!ch[type]) ch[type] = {};
+        if (!ch[type][hIdx]) ch[type][hIdx] = {};
+        ch[type][hIdx][key] = !ch[type][hIdx][key];
+      }
+      saveChecks(fillMonth, fillYear, ch);
+      renderFillTable();
+    }
+
+    function navigateFillMonth(dir) {
+      let idx = MONTHS.indexOf(fillMonth) + dir;
+      if (idx < 0)  { idx = 11; fillYear--; }
+      if (idx > 11) { idx = 0;  fillYear++; }
+      fillMonth = MONTHS[idx];
+      document.getElementById('fill-month-label').textContent = `${fillMonth} ${fillYear}`;
+      renderFillTable();
+    }
+
+    function setMode(mode) {
+      document.getElementById('mode-config').style.display = mode === 'config' ? '' : 'none';
+      document.getElementById('mode-fill').style.display   = mode === 'fill'   ? '' : 'none';
+      document.getElementById('tab-config').classList.toggle('active', mode === 'config');
+      document.getElementById('tab-fill').classList.toggle('active', mode === 'fill');
+      if (mode === 'fill') {
+        document.getElementById('fill-month-label').textContent = `${fillMonth} ${fillYear}`;
+        renderFillTable();
+      }
+    }
+
+    function renderFillTable() {
+      const el = document.getElementById('fill-table-wrap');
+      if (!el) return;
+      const nDays    = getDays(fillMonth, fillYear);
+      const firstDow = getFirstDow(fillMonth, fillYear);
+      const ch       = loadChecks(fillMonth, fillYear);
+      const days     = Array.from({length: nDays}, (_, i) => i + 1);
+
+      if (data.daily.length + data.weekly.length + data.monthly.length === 0) {
+        el.innerHTML = '<div class="empty-state">Configure hábitos primeiro</div>';
+        return;
+      }
+
+      let html = '';
+
+      if (data.daily.length > 0) {
+        const dc = ch.daily || {};
+        html += `<div class="fill-section-label">Diário</div>`;
+        html += `<div class="fill-scroll"><table class="fill-table"><thead><tr>`;
+        html += `<th class="fill-name-th">Hábito</th>`;
+        days.forEach(d => {
+          const dow = (firstDow + d - 1) % 7;
+          const w   = dow === 0 || dow === 6;
+          html += `<th class="${w ? 'fill-wknd' : ''}">${d}<br><span class="fill-dow">${DAY_LETTERS[dow]}</span></th>`;
+        });
+        html += `<th class="fill-stat-th">%</th></tr></thead><tbody>`;
+        data.daily.forEach((h, i) => {
+          const hc  = dc[i] || {};
+          const cnt = Object.values(hc).filter(Boolean).length;
+          const pct = Math.round(cnt / nDays * 100);
+          html += `<tr><td class="fill-name-td"><span class="fill-stripe" style="background:${h.color}"></span>${escH(h.name || `Hábito ${i+1}`)}</td>`;
+          days.forEach(d => {
+            const dow = (firstDow + d - 1) % 7;
+            const w   = dow === 0 || dow === 6;
+            const bg  = hc[d] ? h.color : 'transparent';
+            html += `<td class="${w ? 'fill-wknd' : ''}"><div class="fill-cell" onclick="toggleCheck('daily',${i},${d})"><div class="fill-dot" style="background:${bg};border-color:${h.color}"></div></div></td>`;
+          });
+          html += `<td class="fill-stat"><div class="fill-bar"><div class="fill-bar-inner" style="width:${pct}%;background:${h.color}"></div></div><span>${pct}%</span></td></tr>`;
+        });
+        html += `</tbody></table></div>`;
+      }
+
+      if (data.weekly.length > 0) {
+        const wc = ch.weekly || {};
+        html += `<div class="fill-section-label" style="margin-top:16px">Semanal</div>`;
+        html += `<table class="fill-table" style="max-width:440px"><thead><tr>`;
+        html += `<th class="fill-name-th">Hábito</th>`;
+        [1,2,3,4,5].forEach(w => html += `<th style="min-width:52px">Sem ${w}</th>`);
+        html += `<th class="fill-stat-th">%</th></tr></thead><tbody>`;
+        data.weekly.forEach((h, i) => {
+          const hc  = wc[i] || {};
+          const cnt = Object.values(hc).filter(Boolean).length;
+          const pct = Math.round(cnt / 5 * 100);
+          html += `<tr><td class="fill-name-td"><span class="fill-stripe" style="background:${h.color}"></span>${escH(h.name || `Hábito ${i+1}`)}</td>`;
+          [0,1,2,3,4].forEach(w => {
+            const bg = hc[w] ? h.color : 'transparent';
+            html += `<td><div class="fill-cell" onclick="toggleCheck('weekly',${i},${w})"><div class="fill-sq" style="background:${bg};border-color:${h.color}"></div></div></td>`;
+          });
+          html += `<td class="fill-stat"><div class="fill-bar"><div class="fill-bar-inner" style="width:${pct}%;background:${h.color}"></div></div><span>${pct}%</span></td></tr>`;
+        });
+        html += `</tbody></table>`;
+      }
+
+      if (data.monthly.length > 0) {
+        const mc = ch.monthly || {};
+        html += `<div class="fill-section-label" style="margin-top:16px">Metas mensais</div>`;
+        html += `<div class="fill-monthly-list">`;
+        data.monthly.forEach((item, i) => {
+          const checked = !!mc[i];
+          html += `<div class="fill-monthly-item${checked ? ' checked' : ''}" onclick="toggleCheck('monthly',${i},0)">
+            <div class="fill-monthly-check" style="border-color:${checked ? '#6366f1' : 'var(--text-muted)'};background:${checked ? '#6366f1' : 'transparent'}">${checked ? '✓' : ''}</div>
+            <span>${escH(item.name || `Meta ${i+1}`)}</span>
+          </div>`;
+        });
+        html += `</div>`;
+      }
+
+      el.innerHTML = html;
     }
 
     // ── Theme ──
