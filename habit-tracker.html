@@ -265,6 +265,10 @@
     <!-- Mês -->
     <div class="card">
       <div class="card-title">Mês de referência</div>
+      <div class="form-group" style="margin-bottom:10px">
+        <label>Nome</label>
+        <input type="text" id="inp-name" placeholder="Seu nome (opcional)" oninput="updatePreview()" />
+      </div>
       <div class="form-row">
         <div class="form-group">
           <label>Mês</label>
@@ -562,6 +566,7 @@
 
       const month   = document.getElementById('sel-month').value;
       const year    = parseInt(document.getElementById('inp-year').value);
+      const userName = document.getElementById('inp-name').value.trim();
       const nDays   = getDays(month, year);
       const firstDow = getFirstDow(month, year);
       const fill    = document.getElementById('opt-fill').checked;
@@ -594,6 +599,17 @@
       doc.setFontSize(6);
       doc.setTextColor(160, 160, 170);
       doc.text('MÊS', PW - MR, MT + 15, { align: 'right' });
+
+      if (userName) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(70, 70, 80);
+        doc.text(userName, ML, MT + 10);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(6);
+        doc.setTextColor(160, 160, 170);
+        doc.text('NOME', ML, MT + 15);
+      }
 
       // Content vertical bounds
       const contentTop = MT + 19;  // y=29
