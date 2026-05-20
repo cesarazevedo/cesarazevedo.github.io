@@ -191,7 +191,15 @@
       text-transform: uppercase; color: var(--text-muted);
       margin-bottom: 10px; text-align: center;
     }
-    .match-col { display: flex; flex-direction: column; gap: 8px; }
+    .match-col {
+      display: flex; flex-direction: column; gap: 8px;
+      max-height: 65vh;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+    .match-col::-webkit-scrollbar { width: 4px; }
+    .match-col::-webkit-scrollbar-track { background: transparent; }
+    .match-col::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
 
     .match-item {
       background: var(--card-bg);
