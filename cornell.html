@@ -178,6 +178,33 @@
       position: absolute; inset: 0; top: 10px;
     }
 
+    .prev-example-cue {
+      position: absolute; inset: 0; top: 12px;
+      padding: 0 4px; display: flex; flex-direction: column; gap: 9px;
+      pointer-events: none;
+    }
+    .prev-example-cue p {
+      font-size: 4px; color: #555; line-height: 1.4; font-style: italic;
+    }
+
+    .prev-example-notes {
+      position: absolute; inset: 0; top: 12px;
+      padding: 0 5px; display: flex; flex-direction: column; gap: 7px;
+      pointer-events: none;
+    }
+    .prev-example-notes p {
+      font-size: 4px; color: #444; line-height: 1.45;
+    }
+    .prev-example-notes strong { font-weight: 700; color: #222; }
+    .prev-example-notes em { font-style: italic; color: #555; }
+
+    .prev-example-sum {
+      position: absolute; inset: 0; top: 10px;
+      padding: 2px 6px;
+      font-size: 4px; color: #444; line-height: 1.5; font-style: italic;
+      pointer-events: none;
+    }
+
     /* ── Generate button ── */
     .generate-btn {
       width: 100%; padding: 14px;
@@ -349,15 +376,29 @@
               <div class="prev-cue" id="prev-cue" style="width:30%">
                 <div class="prev-cue-label">Perguntas</div>
                 <div class="prev-lines" id="prev-cue-lines"></div>
+                <div class="prev-example-cue">
+                  <p>O que é POO?</p>
+                  <p>4 pilares?</p>
+                  <p>Herança vs.<br>Composição?</p>
+                  <p>Para que serve<br>o encapsulamento?</p>
+                </div>
               </div>
               <div class="prev-notes">
                 <div class="prev-notes-label">Anotações</div>
                 <div class="prev-lines" id="prev-notes-lines"></div>
+                <div class="prev-example-notes">
+                  <p><strong>POO</strong> — paradigma que organiza o código em <em>objetos</em> que combinam dados e comportamentos.</p>
+                  <p><strong>4 pilares:</strong> Encapsulamento · Herança · Polimorfismo · Abstração</p>
+                  <p><strong>Classe</strong> = molde &nbsp;|&nbsp; <strong>Objeto</strong> = instância da classe</p>
+                  <p><strong>Herança:</strong> subclasse herda atributos e métodos da superclasse. Ex: <em>Gato extends Animal</em></p>
+                  <p><strong>Encapsulamento:</strong> oculta detalhes internos; acesso via getters/setters</p>
+                </div>
               </div>
             </div>
             <div class="prev-summary" id="prev-summary" style="height:18%">
               <div class="prev-summary-label">Resumo</div>
               <div class="prev-lines" id="prev-sum-lines"></div>
+              <div class="prev-example-sum">POO organiza código em objetos com 4 pilares: encapsulamento, herança, polimorfismo e abstração. Classes são moldes; objetos são instâncias.</div>
             </div>
           </div>
         </div>
