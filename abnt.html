@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de Referências ABNT — César Azevedo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    [data-theme="dark"] {
+      --bg: #0f1117; --card-bg: #1e2130; --card-border: #2a2f45;
+      --text-h: #f1f5f9; --text-sub: #94a3b8; --text-muted: #64748b;
+      --shadow: rgba(0,0,0,.35); --grid-line: rgba(255,255,255,.03);
+      --toggle-bg: #1e2130; --toggle-border: #2a2f45;
+      --input-bg: #131720; --input-border: #2a2f45;
+      --accent: #6366f1; --accent-dim: rgba(99,102,241,.15);
+      --result-bg: #131720; --result-border: #2a2f45;
+    }
+    [data-theme="light"] {
+      --bg: #f0f4f8; --card-bg: #ffffff; --card-border: #dde3ec;
+      --text-h: #0f172a; --text-sub: #475569; --text-muted: #94a3b8;
+      --shadow: rgba(0,0,0,.10); --grid-line: rgba(0,0,0,.04);
+      --toggle-bg: #ffffff; --toggle-border: #dde3ec;
+      --input-bg: #f8fafc; --input-border: #dde3ec;
+      --accent: #6366f1; --accent-dim: rgba(99,102,241,.10);
+      --result-bg: #f8fafc; --result-border: #dde3ec;
+    }
+
+    body {
+      min-height: 100vh; background: var(--bg);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 40px 16px 60px; transition: background .3s;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(var(--grid-line) 1px,transparent 1px),
+                        linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);
+      background-size: 40px 40px; pointer-events: none;
+    }
+
+    .fixed-btn {
+      position: fixed; border-radius: 999px; padding: 6px 14px;
+      cursor: pointer; display: flex; align-items: center; gap: 7px;
+      font-size: .82rem; color: var(--text-sub);
+      background: var(--toggle-bg); border: 1px solid var(--toggle-border);
+      transition: color .2s; text-decoration: none;
+      box-shadow: 0 2px 8px var(--shadow); z-index: 20; user-select: none;
+    }
+    .fixed-btn:hover { color: var(--text-h); }
+    .fixed-btn.left  { top: 18px; left: 18px; }
+    .fixed-btn.right { top: 18px; right: 18px; }
+
+    .header { text-align: center; margin: 12px 0 28px; }
+    .header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-h); letter-spacing: -.4px; }
+    .header p  { font-size: .82rem; color: var(--text-muted); margin-top: 5px; }
+
+    .container { width: 100%; max-width: 620px; display: flex; flex-direction: column; gap: 16px; }
+
+    .card {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 20px 22px;
+      box-shadow: 0 4px 20px var(--shadow); transition: background .3s, border-color .3s;
+    }
+    .card-title {
+      font-size: .72rem; font-weight: 700; letter-spacing: .07em;
+      text-transform: uppercase; color: var(--text-muted); margin-bottom: 14px;
+    }
+
+    /* Tipo selector */
+    .type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .type-btn {
+      padding: 10px 8px; border-radius: 10px; border: 1px solid var(--card-border);
+      background: var(--input-bg); color: var(--text-sub); font-size: .8rem;
+      cursor: pointer; text-align: center; transition: all .18s; line-height: 1.3;
+    }
+    .type-btn:hover { border-color: var(--accent); color: var(--text-h); }
+    .type-btn.active { border-color: var(--accent); background: var(--accent-dim); color: var(--text-h); font-weight: 600; }
+    .type-btn .t-icon { font-size: 1.1rem; display: block; margin-bottom: 3px; }
+
+    /* Form fields */
+    .fields { display: flex; flex-direction: column; gap: 12px; }
+    .form-row { display: flex; gap: 12px; }
+    .form-group { display: flex; flex-direction: column; gap: 5px; flex: 1; }
+    label { font-size: .8rem; color: var(--text-sub); font-weight: 500; }
+    .hint { font-size: .72rem; color: var(--text-muted); margin-top: 1px; }
+
+    input[type="text"], input[type="number"], select, textarea {
+      background: var(--input-bg); border: 1px solid var(--input-border);
+      border-radius: 8px; padding: 9px 12px; color: var(--text-h);
+      font-size: .88rem; font-family: inherit; width: 100%;
+      transition: border-color .2s, background .3s;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+    /* Result */
+    .result-box {
+      background: var(--result-bg); border: 1px solid var(--result-border);
+      border-radius: 12px; padding: 16px 18px;
+      font-size: .88rem; line-height: 1.8; color: var(--text-h);
+      font-family: 'Times New Roman', Times, serif;
+      white-space: pre-wrap; word-break: break-word;
+      min-height: 64px;
+    }
+    .result-empty { color: var(--text-muted); font-family: inherit; font-size: .82rem; font-style: italic; }
+
+    .result-actions { display: flex; gap: 10px; margin-top: 10px; }
+    .action-btn {
+      flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--card-border);
+      background: var(--input-bg); color: var(--text-sub); font-size: .82rem;
+      cursor: pointer; transition: all .18s; font-family: inherit;
+    }
+    .action-btn:hover { border-color: var(--accent); color: var(--text-h); background: var(--accent-dim); }
+    .action-btn.primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-color: transparent; color: #fff; font-weight: 600;
+    }
+    .action-btn.primary:hover { opacity: .9; }
+
+    .list-section { display: flex; flex-direction: column; gap: 10px; }
+    .ref-item {
+      background: var(--result-bg); border: 1px solid var(--result-border);
+      border-radius: 10px; padding: 12px 14px;
+      font-family: 'Times New Roman', Times, serif;
+      font-size: .82rem; line-height: 1.7; color: var(--text-h);
+      position: relative;
+    }
+    .ref-item-actions { display: flex; gap: 6px; margin-top: 8px; }
+    .ref-mini-btn {
+      padding: 4px 10px; border-radius: 6px; border: 1px solid var(--card-border);
+      background: transparent; color: var(--text-muted); font-size: .72rem;
+      cursor: pointer; transition: all .15s; font-family: inherit;
+    }
+    .ref-mini-btn:hover { border-color: var(--accent); color: var(--text-h); }
+    .ref-mini-btn.danger:hover { border-color: #ef4444; color: #ef4444; }
+
+    .list-empty { color: var(--text-muted); font-size: .82rem; font-style: italic; text-align: center; padding: 20px 0; }
+
+    .copy-all-btn {
+      width: 100%; padding: 12px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border: none; border-radius: 12px; color: #fff;
+      font-size: .9rem; font-weight: 700; cursor: pointer;
+      transition: opacity .2s; font-family: inherit;
+    }
+    .copy-all-btn:hover { opacity: .88; }
+
+    .tag {
+      display: inline-block; font-size: .65rem; font-weight: 700; letter-spacing: .06em;
+      text-transform: uppercase; padding: 2px 7px; border-radius: 999px;
+      background: var(--accent-dim); color: var(--accent); margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <a class="fixed-btn left" href="https://cesarazevedo.github.io">← Voltar</a>
+  <button class="fixed-btn right" onclick="toggleTheme()">
+    <span id="theme-icon">☀️</span><span id="theme-label">Claro</span>
+  </button>
+
+  <div class="header">
+    <h1>📖 Referências ABNT</h1>
+    <p>Gerador de referências conforme NBR 6023:2018</p>
+  </div>
+
+  <div class="container">
+
+    <!-- Tipo -->
+    <div class="card">
+      <div class="card-title">Tipo de fonte</div>
+      <div class="type-grid">
+        <button class="type-btn active" data-type="livro" onclick="setType('livro', this)">
+          <span class="t-icon">📕</span>Livro
+        </button>
+        <button class="type-btn" data-type="capitulo" onclick="setType('capitulo', this)">
+          <span class="t-icon">📑</span>Capítulo de livro
+        </button>
+        <button class="type-btn" data-type="artigo" onclick="setType('artigo', this)">
+          <span class="t-icon">📰</span>Artigo de periódico
+        </button>
+        <button class="type-btn" data-type="site" onclick="setType('site', this)">
+          <span class="t-icon">🌐</span>Site / Página web
+        </button>
+        <button class="type-btn" data-type="tcc" onclick="setType('tcc', this)">
+          <span class="t-icon">🎓</span>TCC / Dissertação / Tese
+        </button>
+        <button class="type-btn" data-type="video" onclick="setType('video', this)">
+          <span class="t-icon">▶️</span>Vídeo (YouTube etc.)
+        </button>
+      </div>
+    </div>
+
+    <!-- Campos -->
+    <div class="card" id="fields-card">
+      <div class="card-title" id="fields-title">Dados do livro</div>
+      <div class="fields" id="fields"></div>
+    </div>
+
+    <!-- Preview -->
+    <div class="card">
+      <div class="card-title">Referência gerada</div>
+      <div class="result-box" id="result"><span class="result-empty">Preencha os campos acima para gerar a referência.</span></div>
+      <div class="result-actions">
+        <button class="action-btn" onclick="copyRef()">📋 Copiar</button>
+        <button class="action-btn primary" onclick="addToList()">+ Adicionar à lista</button>
+      </div>
+    </div>
+
+    <!-- Lista -->
+    <div class="card">
+      <div class="card-title">Lista de referências</div>
+      <div class="list-section" id="ref-list">
+        <div class="list-empty" id="list-empty">Nenhuma referência adicionada ainda.</div>
+      </div>
+      <button class="copy-all-btn" style="margin-top:14px" onclick="copyAll()">📋 Copiar todas as referências</button>
+    </div>
+
+  </div>
+
+  <script>
+    /* ── Theme ── */
+    const saved = localStorage.getItem('theme') || 'dark';
+    setTheme(saved);
+    function toggleTheme() { setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      localStorage.setItem('theme', t);
+      document.getElementById('theme-icon').textContent = t === 'dark' ? '☀️' : '🌙';
+      document.getElementById('theme-label').textContent = t === 'dark' ? 'Claro' : 'Escuro';
+    }
+
+    /* ── State ── */
+    let currentType = 'livro';
+    const refs = [];
+
+    /* ── Field definitions per type ── */
+    const typeDefs = {
+      livro: {
+        label: 'Dados do livro',
+        fields: [
+          { id: 'autor',      label: 'Autor(es)',      hint: 'SOBRENOME, Nome. Para múltiplos: SILVA, João; COSTA, Maria.', type: 'text', placeholder: 'Ex.: FREIRE, Paulo' },
+          { id: 'titulo',     label: 'Título',         hint: 'Apenas o título principal (sem subtítulo aqui)',             type: 'text', placeholder: 'Ex.: Pedagogia do Oprimido' },
+          { id: 'subtitulo',  label: 'Subtítulo',      hint: 'Opcional',                                                   type: 'text', placeholder: 'Ex.: uma abordagem crítica' },
+          { id: 'edicao',     label: 'Edição',         hint: 'Opcional. Ex.: 2 (escreva só o número)',                     type: 'text', placeholder: 'Ex.: 50' },
+          { id: 'local',      label: 'Local',          hint: '',                                                            type: 'text', placeholder: 'Ex.: São Paulo' },
+          { id: 'editora',    label: 'Editora',        hint: '',                                                            type: 'text', placeholder: 'Ex.: Paz e Terra' },
+          { id: 'ano',        label: 'Ano',            hint: '',                                                            type: 'text', placeholder: 'Ex.: 2019' },
+        ]
+      },
+      capitulo: {
+        label: 'Dados do capítulo de livro',
+        fields: [
+          { id: 'autor',        label: 'Autor(es) do capítulo', hint: 'SOBRENOME, Nome.',                  type: 'text', placeholder: 'Ex.: SILVA, Ana' },
+          { id: 'titulo_cap',   label: 'Título do capítulo',    hint: '',                                   type: 'text', placeholder: 'Ex.: A educação popular' },
+          { id: 'org',          label: 'Org./Coord. do livro',  hint: 'Organizador(es)',                    type: 'text', placeholder: 'Ex.: FREIRE, Paulo (org.)' },
+          { id: 'titulo_livro', label: 'Título do livro',       hint: '',                                   type: 'text', placeholder: 'Ex.: Pedagogia da Esperança' },
+          { id: 'edicao',       label: 'Edição',                hint: 'Opcional',                           type: 'text', placeholder: 'Ex.: 3' },
+          { id: 'local',        label: 'Local',                 hint: '',                                   type: 'text', placeholder: 'Ex.: Rio de Janeiro' },
+          { id: 'editora',      label: 'Editora',               hint: '',                                   type: 'text', placeholder: 'Ex.: Paz e Terra' },
+          { id: 'ano',          label: 'Ano',                   hint: '',                                   type: 'text', placeholder: 'Ex.: 2014' },
+          { id: 'paginas',      label: 'Páginas',               hint: 'Ex.: 45-67',                        type: 'text', placeholder: 'Ex.: 45-67' },
+        ]
+      },
+      artigo: {
+        label: 'Dados do artigo de periódico',
+        fields: [
+          { id: 'autor',      label: 'Autor(es)',           hint: 'SOBRENOME, Nome.',                          type: 'text', placeholder: 'Ex.: SANTOS, Maria' },
+          { id: 'titulo_art', label: 'Título do artigo',   hint: '',                                            type: 'text', placeholder: 'Ex.: Aprendizagem ativa no ensino médio' },
+          { id: 'periodico',  label: 'Nome do periódico',  hint: 'Nome da revista/journal',                    type: 'text', placeholder: 'Ex.: Revista Brasileira de Educação' },
+          { id: 'local',      label: 'Local',              hint: 'Cidade',                                     type: 'text', placeholder: 'Ex.: Brasília' },
+          { id: 'volume',     label: 'Volume',             hint: 'v. Ex.: 12',                                type: 'text', placeholder: 'Ex.: 12' },
+          { id: 'numero',     label: 'Número',             hint: 'n. Ex.: 3',                                 type: 'text', placeholder: 'Ex.: 3' },
+          { id: 'paginas',    label: 'Páginas',            hint: 'p. Ex.: 45-67',                             type: 'text', placeholder: 'Ex.: 45-67' },
+          { id: 'mes',        label: 'Mês/período',        hint: 'Opcional. Ex.: jan./mar.',                  type: 'text', placeholder: 'Ex.: jan./mar.' },
+          { id: 'ano',        label: 'Ano',                hint: '',                                            type: 'text', placeholder: 'Ex.: 2022' },
+          { id: 'doi',        label: 'DOI / URL',          hint: 'Opcional. Se online, informe o DOI ou URL', type: 'text', placeholder: 'Ex.: https://doi.org/10.xxxx' },
+        ]
+      },
+      site: {
+        label: 'Dados da página web',
+        fields: [
+          { id: 'autor',   label: 'Autor(es) / Organização', hint: 'Pessoa ou instituição responsável. Ex.: BRASIL. Ministério da Educação.', type: 'text', placeholder: 'Ex.: IBGE' },
+          { id: 'titulo',  label: 'Título da página',        hint: '',                                                                          type: 'text', placeholder: 'Ex.: Censo Demográfico 2022' },
+          { id: 'site',    label: 'Nome do site',            hint: 'Ex.: Portal IBGE',                                                         type: 'text', placeholder: 'Ex.: Portal IBGE' },
+          { id: 'url',     label: 'URL',                     hint: 'Endereço completo',                                                         type: 'text', placeholder: 'Ex.: https://ibge.gov.br/censo2022' },
+          { id: 'acesso',  label: 'Data de acesso',          hint: 'Ex.: 10 maio 2025',                                                        type: 'text', placeholder: 'Ex.: 10 maio 2025' },
+          { id: 'ano',     label: 'Ano de publicação',       hint: 'Opcional. Coloque c.a. se aproximado',                                     type: 'text', placeholder: 'Ex.: 2023' },
+        ]
+      },
+      tcc: {
+        label: 'Dados do TCC / Dissertação / Tese',
+        fields: [
+          { id: 'autor',       label: 'Autor',              hint: 'SOBRENOME, Nome.',                               type: 'text', placeholder: 'Ex.: OLIVEIRA, João' },
+          { id: 'titulo',      label: 'Título',             hint: '',                                                type: 'text', placeholder: 'Ex.: Redes neurais aplicadas ao ensino' },
+          { id: 'subtitulo',   label: 'Subtítulo',         hint: 'Opcional',                                        type: 'text', placeholder: '' },
+          { id: 'tipo',        label: 'Tipo do trabalho',  hint: '',                                                type: 'text', placeholder: 'Ex.: Trabalho de Conclusão de Curso' },
+          { id: 'grau',        label: 'Grau / Área',       hint: 'Ex.: Especialização em Redes de Computadores',   type: 'text', placeholder: 'Ex.: Bacharelado em Ciência da Computação' },
+          { id: 'instituicao', label: 'Instituição',       hint: '',                                                type: 'text', placeholder: 'Ex.: IFRN — Campus João Câmara' },
+          { id: 'local',       label: 'Local',             hint: '',                                                type: 'text', placeholder: 'Ex.: João Câmara' },
+          { id: 'ano',         label: 'Ano',               hint: '',                                                type: 'text', placeholder: 'Ex.: 2024' },
+          { id: 'url',         label: 'URL',               hint: 'Opcional, se disponível online',                 type: 'text', placeholder: '' },
+          { id: 'acesso',      label: 'Data de acesso',    hint: 'Obrigatório se informar URL',                    type: 'text', placeholder: 'Ex.: 5 jan. 2025' },
+        ]
+      },
+      video: {
+        label: 'Dados do vídeo',
+        fields: [
+          { id: 'autor',    label: 'Autor / Canal',      hint: 'SOBRENOME, Nome. ou Nome do Canal',  type: 'text', placeholder: 'Ex.: CORTELLA, Mario Sergio' },
+          { id: 'titulo',   label: 'Título do vídeo',   hint: '',                                     type: 'text', placeholder: 'Ex.: Por que estudar?' },
+          { id: 'plataforma', label: 'Plataforma',      hint: 'Ex.: YouTube',                         type: 'text', placeholder: 'Ex.: YouTube' },
+          { id: 'duracao',  label: 'Duração',           hint: 'Opcional. Ex.: 12 min',               type: 'text', placeholder: 'Ex.: 12 min' },
+          { id: 'url',      label: 'URL',               hint: 'Link completo do vídeo',              type: 'text', placeholder: 'Ex.: https://www.youtube.com/watch?v=...' },
+          { id: 'acesso',   label: 'Data de acesso',    hint: 'Ex.: 20 abr. 2025',                  type: 'text', placeholder: 'Ex.: 20 abr. 2025' },
+          { id: 'ano',      label: 'Ano de publicação', hint: '',                                     type: 'text', placeholder: 'Ex.: 2023' },
+        ]
+      }
+    };
+
+    /* ── Render fields ── */
+    function setType(type, btn) {
+      currentType = type;
+      document.querySelectorAll('.type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderFields();
+      generate();
+    }
+
+    function renderFields() {
+      const def = typeDefs[currentType];
+      document.getElementById('fields-title').textContent = def.label;
+      const container = document.getElementById('fields');
+      container.innerHTML = '';
+      def.fields.forEach(f => {
+        const g = document.createElement('div');
+        g.className = 'form-group';
+        g.innerHTML = `<label for="f_${f.id}">${f.label}</label>
+          <input type="${f.type}" id="f_${f.id}" placeholder="${f.placeholder}" oninput="generate()">
+          ${f.hint ? `<span class="hint">${f.hint}</span>` : ''}`;
+        container.appendChild(g);
+      });
+    }
+
+    /* ── Get field value ── */
+    function v(id) {
+      const el = document.getElementById('f_' + id);
+      return el ? el.value.trim() : '';
+    }
+
+    /* ── Formatters ── */
+    function fmtAutores(raw) {
+      if (!raw) return '';
+      const parts = raw.split(';').map(s => s.trim()).filter(Boolean);
+      if (parts.length > 3) return parts[0] + ' et al.';
+      return parts.join('; ') + '.';
+    }
+
+    function fmtTitulo(titulo, subtitulo) {
+      let t = titulo ? `**${titulo}**` : '';
+      if (subtitulo) t += `: ${subtitulo}`;
+      return t ? t + '.' : '';
+    }
+
+    /* ── Generators ── */
+    const generators = {
+      livro() {
+        const autor = fmtAutores(v('autor'));
+        const titulo = fmtTitulo(v('titulo'), v('subtitulo'));
+        const ed = v('edicao') ? `${v('edicao')}. ed. ` : '';
+        const local = v('local') || '[s. l.]';
+        const editora = v('editora') || '[s. n.]';
+        const ano = v('ano') || '[s. d.]';
+        return [autor, titulo, ed + local + ': ' + editora + ', ' + ano + '.'].filter(Boolean).join(' ');
+      },
+      capitulo() {
+        const autor = fmtAutores(v('autor'));
+        const tCap = v('titulo_cap') ? v('titulo_cap') + '.' : '';
+        const org = v('org') ? `In: ${v('org')}` : 'In:';
+        const tLivro = v('titulo_livro') ? `**${v('titulo_livro')}**.` : '';
+        const ed = v('edicao') ? `${v('edicao')}. ed. ` : '';
+        const local = v('local') || '[s. l.]';
+        const editora = v('editora') || '[s. n.]';
+        const ano = v('ano') || '[s. d.]';
+        const pag = v('paginas') ? `p. ${v('paginas')}.` : '';
+        return [autor, tCap, org, tLivro, ed + local + ': ' + editora + ', ' + ano + '.', pag].filter(Boolean).join(' ');
+      },
+      artigo() {
+        const autor = fmtAutores(v('autor'));
+        const tArt = v('titulo_art') ? v('titulo_art') + '.' : '';
+        const per = v('periodico') ? `**${v('periodico')}**,` : '';
+        const local = v('local') ? v('local') + ',' : '';
+        const vol = v('volume') ? `v. ${v('volume')},` : '';
+        const num = v('numero') ? `n. ${v('numero')},` : '';
+        const pag = v('paginas') ? `p. ${v('paginas')},` : '';
+        const mes = v('mes') ? v('mes') + '.' : '';
+        const ano = v('ano') ? v('ano') + '.' : '';
+        const doi = v('doi') ? `Disponível em: ${v('doi')}.` : '';
+        return [autor, tArt, [per, local, vol, num, pag, mes, ano].filter(Boolean).join(' '), doi].filter(Boolean).join(' ');
+      },
+      site() {
+        const autor = v('autor') ? v('autor') + '.' : '';
+        const titulo = v('titulo') ? `**${v('titulo')}**.` : '';
+        const site = v('site') ? v('site') + ',' : '';
+        const ano = v('ano') ? v('ano') + '.' : '';
+        const url = v('url') ? `Disponível em: ${v('url')}.` : '';
+        const acesso = v('acesso') ? `Acesso em: ${v('acesso')}.` : '';
+        return [autor, titulo, [site, ano].filter(Boolean).join(' '), url, acesso].filter(Boolean).join(' ');
+      },
+      tcc() {
+        const autor = fmtAutores(v('autor'));
+        const titulo = fmtTitulo(v('titulo'), v('subtitulo'));
+        const ano = v('ano') || '[s. d.]';
+        const tipo = v('tipo') || 'Trabalho de Conclusão de Curso';
+        const grau = v('grau') ? `(${v('grau')})` : '';
+        const inst = v('instituicao') ? `${v('instituicao')},` : '';
+        const local = v('local') || '[s. l.]';
+        const url = v('url') ? `Disponível em: ${v('url')}.` : '';
+        const acesso = v('acesso') ? `Acesso em: ${v('acesso')}.` : '';
+        return [autor, titulo, ano + '.', tipo, grau + '.', inst, local + '.', url, acesso].filter(Boolean).join(' ');
+      },
+      video() {
+        const autor = v('autor') ? v('autor') + '.' : '';
+        const titulo = v('titulo') ? `**${v('titulo')}**.` : '';
+        const plat = v('plataforma') || '';
+        const dur = v('duracao') ? `${v('duracao')}.` : '';
+        const url = v('url') ? `Disponível em: ${v('url')}.` : '';
+        const acesso = v('acesso') ? `Acesso em: ${v('acesso')}.` : '';
+        const ano = v('ano') ? v('ano') + '.' : '';
+        return [autor, titulo, [plat, dur, ano].filter(Boolean).join(' '), url, acesso].filter(Boolean).join(' ');
+      }
+    };
+
+    /* ── Generate & render ── */
+    function generate() {
+      const raw = generators[currentType]();
+      const el = document.getElementById('result');
+      if (!raw.replace(/\*\*/g, '').trim()) {
+        el.innerHTML = '<span class="result-empty">Preencha os campos acima para gerar a referência.</span>';
+        return;
+      }
+      el.innerHTML = renderRef(raw);
+    }
+
+    function renderRef(raw) {
+      return raw.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    }
+
+    function getRawRef() {
+      return generators[currentType]();
+    }
+
+    function plainText(raw) {
+      return raw.replace(/\*\*/g, '');
+    }
+
+    /* ── Actions ── */
+    function copyRef() {
+      const raw = getRawRef();
+      if (!raw.replace(/\*\*/g, '').trim()) return;
+      navigator.clipboard.writeText(plainText(raw));
+      showToast('Referência copiada!');
+    }
+
+    function addToList() {
+      const raw = getRawRef();
+      if (!raw.replace(/\*\*/g, '').trim()) return;
+      refs.push({ raw, type: currentType });
+      renderList();
+      showToast('Adicionada à lista!');
+    }
+
+    function renderList() {
+      const container = document.getElementById('ref-list');
+      const empty = document.getElementById('list-empty');
+      if (refs.length === 0) {
+        empty.style.display = 'block';
+        container.querySelectorAll('.ref-item').forEach(e => e.remove());
+        return;
+      }
+      empty.style.display = 'none';
+      container.querySelectorAll('.ref-item').forEach(e => e.remove());
+      const sorted = [...refs].sort((a, b) => plainText(a.raw).localeCompare(plainText(b.raw)));
+      sorted.forEach((r, i) => {
+        const div = document.createElement('div');
+        div.className = 'ref-item';
+        div.innerHTML = `<div>${renderRef(r.raw)}</div>
+          <div class="ref-item-actions">
+            <button class="ref-mini-btn" onclick="copyOne(${refs.indexOf(r)})">📋 Copiar</button>
+            <button class="ref-mini-btn danger" onclick="removeRef(${refs.indexOf(r)})">✕ Remover</button>
+          </div>`;
+        container.insertBefore(div, document.getElementById('list-empty'));
+      });
+    }
+
+    function copyOne(i) {
+      navigator.clipboard.writeText(plainText(refs[i].raw));
+      showToast('Copiada!');
+    }
+
+    function removeRef(i) {
+      refs.splice(i, 1);
+      renderList();
+    }
+
+    function copyAll() {
+      if (refs.length === 0) return;
+      const sorted = [...refs].sort((a, b) => plainText(a.raw).localeCompare(plainText(b.raw)));
+      const text = sorted.map(r => plainText(r.raw)).join('\n\n');
+      navigator.clipboard.writeText(text);
+      showToast('Todas as referências copiadas!');
+    }
+
+    /* ── Toast ── */
+    function showToast(msg) {
+      let t = document.getElementById('toast');
+      if (!t) {
+        t = document.createElement('div');
+        t.id = 'toast';
+        t.style.cssText = 'position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:#1e2130;border:1px solid #2a2f45;color:#f1f5f9;padding:8px 20px;border-radius:999px;font-size:.82rem;z-index:99;box-shadow:0 4px 20px rgba(0,0,0,.4);transition:opacity .3s;';
+        document.body.appendChild(t);
+      }
+      t.textContent = msg; t.style.opacity = '1';
+      clearTimeout(t._to);
+      t._to = setTimeout(() => t.style.opacity = '0', 2000);
+    }
+
+    /* ── Init ── */
+    renderFields();
+  </script>
+
+</body>
+</html>
