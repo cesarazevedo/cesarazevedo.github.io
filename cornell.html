@@ -54,6 +54,18 @@
     .header h1 { font-size: 1.5rem; font-weight: 700; color: var(--text-h); letter-spacing: -.4px; }
     .header p  { font-size: .82rem; color: var(--text-muted); margin-top: 5px; }
 
+    .info-section {
+      width: 100%; max-width: 560px; margin: 0 0 24px;
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 16px; padding: 20px 22px;
+    }
+    .info-section h2 { font-size: 1rem; font-weight: 700; color: var(--text-h); margin-bottom: 10px; }
+    .info-section > p { font-size: .82rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 16px; }
+    .info-benefits { display: flex; flex-direction: column; gap: 12px; }
+    .benefit-item { display: flex; gap: 12px; align-items: flex-start; }
+    .benefit-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+    .benefit-item strong { font-size: .82rem; color: var(--text-h); display: block; margin-bottom: 2px; }
+    .benefit-item p { font-size: .78rem; color: var(--text-muted); line-height: 1.5; margin: 0; }
     .container { width: 100%; max-width: 560px; display: flex; flex-direction: column; gap: 16px; }
 
     .card {
@@ -193,6 +205,44 @@
     <p>Gere folhas de anotações no formato Cornell prontas para imprimir</p>
   </div>
 
+  <div class="info-section">
+    <h2>O que é o método Cornell?</h2>
+    <p>
+      O método Cornell é uma técnica de anotação desenvolvida na Universidade Cornell (EUA) nos anos 1950 pelo professor Walter Pauk.
+      A folha é dividida em três áreas: uma coluna lateral para <strong>perguntas e palavras-chave</strong>, o espaço principal para
+      <strong>anotações durante a aula</strong> e um rodapé para o <strong>resumo</strong> — tudo pensado para facilitar revisão e memorização.
+    </p>
+    <div class="info-benefits">
+      <div class="benefit-item">
+        <span class="benefit-icon">🎯</span>
+        <div>
+          <strong>Foco durante a aula</strong>
+          <p>A estrutura guia o aluno a registrar só o essencial, evitando anotações longas e confusas.</p>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <span class="benefit-icon">🔄</span>
+        <div>
+          <strong>Revisão mais eficiente</strong>
+          <p>A coluna de perguntas permite se auto-testar cobrindo a área de anotações, reforçando o aprendizado ativo.</p>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <span class="benefit-icon">🧠</span>
+        <div>
+          <strong>Fixação do conteúdo</strong>
+          <p>O resumo no rodapé obriga o aluno a sintetizar as ideias principais logo após a aula, consolidando a memória.</p>
+        </div>
+      </div>
+      <div class="benefit-item">
+        <span class="benefit-icon">📂</span>
+        <div>
+          <strong>Organização por disciplina</strong>
+          <p>Cada folha contém tema, disciplina, professor e data — facilitando encontrar qualquer anotação depois.</p>
+        </div>
+      </div>
+    </div>
+  </div>
   <div class="container">
 
     <!-- Identificação -->
