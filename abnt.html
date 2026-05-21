@@ -150,6 +150,37 @@
       text-transform: uppercase; padding: 2px 7px; border-radius: 999px;
       background: var(--accent-dim); color: var(--accent); margin-bottom: 6px;
     }
+
+    /* ── Mode tabs ── */
+    .mode-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .mode-tab {
+      flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--card-border);
+      background: var(--input-bg); color: var(--text-sub); font-size: .88rem; font-weight: 600;
+      cursor: pointer; text-align: center; transition: all .18s; font-family: inherit;
+    }
+    .mode-tab.active { border-color: var(--accent); background: var(--accent-dim); color: var(--text-h); }
+
+    /* ── Citation card ── */
+    .cit-type-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 16px; }
+    .cit-info {
+      background: var(--accent-dim); border: 1px solid var(--accent);
+      border-radius: 10px; padding: 11px 14px; margin-bottom: 14px;
+      font-size: .8rem; color: var(--text-sub); line-height: 1.6;
+    }
+    .cit-info strong { color: var(--text-h); }
+    .cit-result {
+      background: var(--result-bg); border: 1px solid var(--result-border);
+      border-radius: 12px; padding: 16px 18px;
+      font-size: .92rem; line-height: 1.9; color: var(--text-h);
+      min-height: 56px; word-break: break-word;
+    }
+    .cit-result em { font-style: italic; }
+    .cit-result .cit-block {
+      display: block; margin: 8px 0 8px 40px;
+      font-size: .84rem; line-height: 1.8; color: var(--text-sub);
+      border-left: 3px solid var(--accent); padding-left: 12px;
+    }
+    .cit-empty { color: var(--text-muted); font-size: .82rem; font-style: italic; }
   </style>
 </head>
 <body>
@@ -165,6 +196,15 @@
   </div>
 
   <div class="container">
+
+    <!-- Abas modo -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tab-ref" onclick="setMode('ref')">📖 Referências</button>
+      <button class="mode-tab" id="tab-cit" onclick="setMode('cit')">💬 Citações</button>
+    </div>
+
+    <!-- ══ REFERÊNCIAS ══ -->
+    <div id="section-ref">
 
     <!-- Tipo -->
     <div class="card">
@@ -215,6 +255,42 @@
       </div>
       <button class="copy-all-btn" style="margin-top:14px" onclick="copyAll()">📋 Copiar todas as referências</button>
     </div>
+
+    </div><!-- /section-ref -->
+
+    <!-- ══ CITAÇÕES ══ -->
+    <div id="section-cit" style="display:none; flex-direction:column; gap:16px;">
+
+      <div class="card">
+        <div class="card-title">Tipo de citação</div>
+        <div class="cit-type-grid">
+          <button class="type-btn active" data-cit="direta_curta" onclick="setCitType('direta_curta', this)">
+            <span class="t-icon">✏️</span>Direta curta
+          </button>
+          <button class="type-btn" data-cit="direta_longa" onclick="setCitType('direta_longa', this)">
+            <span class="t-icon">📄</span>Direta longa
+          </button>
+          <button class="type-btn" data-cit="indireta" onclick="setCitType('indireta', this)">
+            <span class="t-icon">💭</span>Indireta
+          </button>
+        </div>
+        <div class="cit-info" id="cit-info"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Dados da citação</div>
+        <div class="fields" id="cit-fields"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Citação gerada</div>
+        <div class="cit-result" id="cit-result"><span class="cit-empty">Preencha os campos acima.</span></div>
+        <div class="result-actions" style="margin-top:10px">
+          <button class="action-btn primary" onclick="copyCit()">📋 Copiar citação</button>
+        </div>
+      </div>
+
+    </div><!-- /section-cit -->
 
   </div>
 
@@ -526,6 +602,133 @@
 
     /* ── Init ── */
     renderFields();
+
+    /* ══ MODE TABS ══ */
+    function setMode(mode) {
+      document.getElementById('section-ref').style.display = mode === 'ref' ? 'contents' : 'none';
+      document.getElementById('section-cit').style.display = mode === 'cit' ? 'flex' : 'none';
+      document.getElementById('tab-ref').classList.toggle('active', mode === 'ref');
+      document.getElementById('tab-cit').classList.toggle('active', mode === 'cit');
+    }
+
+    /* ══ CITAÇÕES ══ */
+    let currentCitType = 'direta_curta';
+
+    const citDefs = {
+      direta_curta: {
+        info: '<strong>Citação direta curta</strong> (até 3 linhas) — NBR 10520:2023<br>Transcrita entre aspas duplas, integrada ao parágrafo. Indica-se autor, ano e página.',
+        fields: [
+          { id: 'texto',    label: 'Trecho citado',          placeholder: 'Ex.: a educação é um ato de amor' },
+          { id: 'sobrenome',label: 'Sobrenome do autor',     placeholder: 'Ex.: FREIRE' },
+          { id: 'ano',      label: 'Ano',                    placeholder: 'Ex.: 2019' },
+          { id: 'pagina',   label: 'Página(s)',              placeholder: 'Ex.: 45 ou 45-46' },
+        ],
+        generate({ texto, sobrenome, ano, pagina }) {
+          const chamada = [sobrenome, ano, pagina ? `p. ${pagina}` : ''].filter(Boolean).join(', ');
+          const aspas = texto ? `"${texto}"` : '"[texto citado]"';
+          return `${aspas} (${chamada})`;
+        }
+      },
+      direta_longa: {
+        info: '<strong>Citação direta longa</strong> (mais de 3 linhas) — NBR 10520:2023<br>Destacada em bloco com recuo de 4 cm, fonte menor, sem aspas.',
+        fields: [
+          { id: 'texto',    label: 'Trecho citado',          placeholder: 'Cole o trecho completo aqui' },
+          { id: 'sobrenome',label: 'Sobrenome do autor',     placeholder: 'Ex.: FREIRE' },
+          { id: 'ano',      label: 'Ano',                    placeholder: 'Ex.: 2019' },
+          { id: 'pagina',   label: 'Página(s)',              placeholder: 'Ex.: 78' },
+        ],
+        generate({ texto, sobrenome, ano, pagina }) {
+          const chamada = [sobrenome, ano, pagina ? `p. ${pagina}` : ''].filter(Boolean).join(', ');
+          const bloco = texto || '[texto citado]';
+          return `__BLOCO__${bloco} (${chamada})`;
+        }
+      },
+      indireta: {
+        info: '<strong>Citação indireta (paráfrase)</strong> — NBR 10520:2023<br>Ideia do autor com suas próprias palavras. Não exige página, mas é recomendada.',
+        fields: [
+          { id: 'sobrenome',label: 'Sobrenome do autor',     placeholder: 'Ex.: FREIRE' },
+          { id: 'ano',      label: 'Ano',                    placeholder: 'Ex.: 2019' },
+          { id: 'pagina',   label: 'Página (opcional)',      placeholder: 'Ex.: 32' },
+          { id: 'posicao',  label: 'Posição na frase',       placeholder: '', type: 'select',
+            options: [
+              { value: 'fim',    label: 'No fim do trecho — (SILVA, 2020)' },
+              { value: 'inicio', label: 'No início — Silva (2020) afirma que…' },
+            ]
+          },
+        ],
+        generate({ sobrenome, ano, pagina, posicao }) {
+          const pag = pagina ? `, p. ${pagina}` : '';
+          if (posicao === 'inicio') {
+            const nome = sobrenome ? sobrenome.charAt(0) + sobrenome.slice(1).toLowerCase() : 'Autor';
+            return `${nome} (${ano || 'ano'}${pag}) [sua paráfrase aqui]`;
+          }
+          const chamada = [sobrenome, ano].filter(Boolean).join(', ');
+          return `[Sua paráfrase aqui] (${chamada}${pag})`;
+        }
+      }
+    };
+
+    function setCitType(type, btn) {
+      currentCitType = type;
+      document.querySelectorAll('[data-cit]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderCitFields();
+      generateCit();
+    }
+
+    function renderCitFields() {
+      const def = citDefs[currentCitType];
+      document.getElementById('cit-info').innerHTML = def.info;
+      const container = document.getElementById('cit-fields');
+      container.innerHTML = '';
+      def.fields.forEach(f => {
+        const g = document.createElement('div');
+        g.className = 'form-group';
+        if (f.type === 'select') {
+          g.innerHTML = `<label>${f.label}</label>
+            <select id="cf_${f.id}" onchange="generateCit()">
+              ${f.options.map(o => `<option value="${o.value}">${o.label}</option>`).join('')}
+            </select>`;
+        } else {
+          g.innerHTML = `<label>${f.label}</label>
+            <input type="text" id="cf_${f.id}" placeholder="${f.placeholder}" oninput="generateCit()">`;
+        }
+        container.appendChild(g);
+      });
+    }
+
+    function cv(id) {
+      const el = document.getElementById('cf_' + id);
+      return el ? el.value.trim() : '';
+    }
+
+    function generateCit() {
+      const def = citDefs[currentCitType];
+      const data = {};
+      def.fields.forEach(f => data[f.id] = cv(f.id));
+      const raw = def.generate(data);
+      const el = document.getElementById('cit-result');
+      if (!raw.trim()) { el.innerHTML = '<span class="cit-empty">Preencha os campos acima.</span>'; return; }
+      if (raw.startsWith('__BLOCO__')) {
+        const content = raw.replace('__BLOCO__', '');
+        el.innerHTML = `<span class="cit-block">${content}</span>`;
+      } else {
+        el.innerHTML = raw;
+      }
+    }
+
+    function copyCit() {
+      const def = citDefs[currentCitType];
+      const data = {};
+      def.fields.forEach(f => data[f.id] = cv(f.id));
+      const raw = def.generate(data).replace('__BLOCO__', '');
+      navigator.clipboard.writeText(raw);
+      showToast('Citação copiada!');
+    }
+
+    /* ── Init citações ── */
+    renderCitFields();
+    generateCit();
   </script>
 
 </body>

@@ -180,28 +180,31 @@
 
     .prev-example-cue {
       position: absolute; inset: 0; top: 12px;
-      padding: 0 4px; display: flex; flex-direction: column; gap: 9px;
+      padding: 0 5px; display: flex; flex-direction: column; gap: 10px;
       pointer-events: none;
     }
     .prev-example-cue p {
-      font-size: 4px; color: #555; line-height: 1.4; font-style: italic;
+      font-size: 5.2px; color: #3a3a3a; line-height: 1.5; font-style: italic;
+      font-family: 'Georgia', serif;
     }
 
     .prev-example-notes {
       position: absolute; inset: 0; top: 12px;
-      padding: 0 5px; display: flex; flex-direction: column; gap: 7px;
+      padding: 0 6px; display: flex; flex-direction: column; gap: 8px;
       pointer-events: none;
     }
     .prev-example-notes p {
-      font-size: 4px; color: #444; line-height: 1.45;
+      font-size: 5.2px; color: #2a2a2a; line-height: 1.55;
+      font-family: 'Georgia', serif;
     }
-    .prev-example-notes strong { font-weight: 700; color: #222; }
-    .prev-example-notes em { font-style: italic; color: #555; }
+    .prev-example-notes strong { font-weight: 700; color: #111; }
+    .prev-example-notes em { font-style: italic; color: #444; }
 
     .prev-example-sum {
       position: absolute; inset: 0; top: 10px;
-      padding: 2px 6px;
-      font-size: 4px; color: #444; line-height: 1.5; font-style: italic;
+      padding: 3px 7px;
+      font-size: 5px; color: #2a2a2a; line-height: 1.55;
+      font-family: 'Georgia', serif;
       pointer-events: none;
     }
 
@@ -286,7 +289,7 @@
         </div>
         <div class="form-group">
           <label>Professor</label>
-          <input type="text" id="inp-teacher" placeholder="Ex.: Prof. César" oninput="updatePreview()" />
+          <input type="text" id="inp-teacher" placeholder="Ex.: Prof. Silva" oninput="updatePreview()" />
         </div>
         <div class="form-group" style="max-width:130px">
           <label>Data</label>
