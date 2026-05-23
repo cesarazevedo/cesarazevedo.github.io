@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comunicação Anônima — César Azevedo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    [data-theme="dark"] {
+      --bg: #0f1117;
+      --card-bg: #1e2130;
+      --card-border: #2a2f45;
+      --text-h: #f1f5f9;
+      --text-sub: #94a3b8;
+      --text-muted: #64748b;
+      --footer: #2a2f45;
+      --grid-line: rgba(255,255,255,.03);
+      --shadow: rgba(0,0,0,.35);
+      --toggle-bg: #1e2130;
+      --toggle-border: #2a2f45;
+      --input-bg: #151824;
+      --input-border: #2a2f45;
+      --input-focus: #3b82f6;
+      --chip-bg: #1e2130;
+      --chip-border: #2a2f45;
+      --chip-active-bg: color-mix(in srgb, var(--accent, #8b5cf6) 20%, transparent);
+      --chip-active-border: var(--accent, #8b5cf6);
+    }
+    [data-theme="light"] {
+      --bg: #f0f4f8;
+      --card-bg: #ffffff;
+      --card-border: #dde3ec;
+      --text-h: #0f172a;
+      --text-sub: #475569;
+      --text-muted: #94a3b8;
+      --footer: #94a3b8;
+      --grid-line: rgba(0,0,0,.04);
+      --shadow: rgba(0,0,0,.10);
+      --toggle-bg: #ffffff;
+      --toggle-border: #dde3ec;
+      --input-bg: #f8fafc;
+      --input-border: #dde3ec;
+      --input-focus: #3b82f6;
+      --chip-bg: #f8fafc;
+      --chip-border: #dde3ec;
+      --chip-active-bg: color-mix(in srgb, var(--accent, #8b5cf6) 12%, transparent);
+      --chip-active-border: var(--accent, #8b5cf6);
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 40px 16px 60px;
+      transition: background .3s;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 18px; right: 18px;
+      background: var(--toggle-bg);
+      border: 1px solid var(--toggle-border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .82rem;
+      color: var(--text-sub);
+      transition: background .3s, border-color .3s, color .2s;
+      user-select: none;
+      box-shadow: 0 2px 8px var(--shadow);
+      z-index: 10;
+    }
+    .theme-toggle:hover { color: var(--text-h); }
+
+    .back-btn {
+      position: fixed;
+      top: 18px; left: 18px;
+      background: var(--toggle-bg);
+      border: 1px solid var(--toggle-border);
+      border-radius: 999px;
+      padding: 6px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: .82rem;
+      color: var(--text-sub);
+      text-decoration: none;
+      transition: background .3s, border-color .3s, color .2s;
+      box-shadow: 0 2px 8px var(--shadow);
+      z-index: 10;
+    }
+    .back-btn:hover { color: var(--text-h); }
+
+    .container {
+      width: 100%;
+      max-width: 480px;
+      position: relative;
+      z-index: 1;
+      margin-top: 24px;
+    }
+
+    .header {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .header-icon {
+      width: 64px; height: 64px;
+      border-radius: 18px;
+      background: color-mix(in srgb, #8b5cf6 18%, transparent);
+      border: 1px solid color-mix(in srgb, #8b5cf6 30%, transparent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+    }
+
+    .header h1 {
+      color: var(--text-h);
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -.3px;
+    }
+
+    .header p {
+      color: var(--text-sub);
+      font-size: .88rem;
+      line-height: 1.5;
+      max-width: 360px;
+    }
+
+    .anon-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: color-mix(in srgb, #10b981 15%, transparent);
+      border: 1px solid color-mix(in srgb, #10b981 30%, transparent);
+      color: #10b981;
+      font-size: .75rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      letter-spacing: .03em;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 28px 24px;
+      box-shadow: 0 4px 24px var(--shadow);
+      transition: background .3s, border-color .3s;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    .field label {
+      display: block;
+      color: var(--text-sub);
+      font-size: .82rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      letter-spacing: .02em;
+      text-transform: uppercase;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      padding: 6px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--chip-border);
+      background: var(--chip-bg);
+      color: var(--text-sub);
+      font-size: .83rem;
+      cursor: pointer;
+      transition: all .18s;
+      user-select: none;
+    }
+
+    .chip:hover {
+      border-color: var(--text-muted);
+      color: var(--text-h);
+    }
+
+    .chip.active {
+      background: var(--chip-active-bg);
+      border-color: var(--chip-active-border);
+      color: var(--text-h);
+    }
+
+    .chip[data-type="opinião"]    { --accent: #3b82f6; }
+    .chip[data-type="sugestão"]   { --accent: #10b981; }
+    .chip[data-type="reclamação"] { --accent: #ef4444; }
+    .chip[data-type="elogio"]     { --accent: #f59e0b; }
+    .chip[data-type="dúvida"]     { --accent: #8b5cf6; }
+    .chip[data-type="outro"]      { --accent: #64748b; }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: var(--text-h);
+      font-family: inherit;
+      font-size: .93rem;
+      resize: vertical;
+      transition: border-color .2s, background .3s;
+      outline: none;
+    }
+
+    textarea:focus {
+      border-color: var(--input-focus);
+    }
+
+    textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    .char-count {
+      text-align: right;
+      font-size: .75rem;
+      color: var(--text-muted);
+      margin-top: 5px;
+      transition: color .2s;
+    }
+
+    .char-count.warn { color: #f59e0b; }
+    .char-count.over { color: #ef4444; }
+
+    .submit-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      color: #fff;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .submit-btn:hover:not(:disabled) { opacity: .9; transform: translateY(-1px); }
+    .submit-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    .privacy-note {
+      margin-top: 14px;
+      font-size: .78rem;
+      color: var(--text-muted);
+      text-align: center;
+      line-height: 1.5;
+    }
+
+    /* Success state */
+    .success-box {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      text-align: center;
+      padding: 32px 0 8px;
+    }
+
+    .success-box.show { display: flex; }
+
+    .success-icon {
+      font-size: 3rem;
+    }
+
+    .success-box h2 {
+      color: var(--text-h);
+      font-size: 1.1rem;
+      font-weight: 700;
+    }
+
+    .success-box p {
+      color: var(--text-sub);
+      font-size: .88rem;
+      max-width: 300px;
+      line-height: 1.5;
+    }
+
+    .new-msg-btn {
+      padding: 9px 22px;
+      border-radius: 8px;
+      border: 1px solid var(--card-border);
+      background: none;
+      color: var(--text-sub);
+      font-size: .85rem;
+      cursor: pointer;
+      transition: color .2s, border-color .2s;
+      margin-top: 6px;
+    }
+    .new-msg-btn:hover { color: var(--text-h); border-color: var(--text-muted); }
+
+    .form-inner { transition: opacity .2s; }
+    .form-inner.hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <a class="back-btn" href="https://cesarazevedo.github.io/">← Voltar</a>
+
+  <button class="theme-toggle" onclick="toggleTheme()">
+    <span id="theme-icon">☀️</span>
+    <span id="theme-label">Claro</span>
+  </button>
+
+  <div class="container">
+
+    <div class="header">
+      <div class="header-icon">💬</div>
+      <h1>Comunicação Anônima</h1>
+      <p>Envie opiniões, sugestões, reclamações ou elogios. Sua identidade não é registrada.</p>
+      <span class="anon-badge">🔒 100% anônimo</span>
+    </div>
+
+    <div class="card">
+
+      <div class="success-box" id="success-box">
+        <div class="success-icon">✅</div>
+        <h2>Mensagem enviada!</h2>
+        <p>Obrigado pelo retorno. Lerei com atenção.</p>
+        <button class="new-msg-btn" onclick="resetForm()">Enviar outra mensagem</button>
+      </div>
+
+      <div class="form-inner" id="form-inner">
+        <form id="feedback-form" action="https://formspree.io/f/xpqnldrz" method="POST">
+
+          <!-- Campo oculto para identificar a categoria -->
+          <input type="hidden" name="categoria" id="categoria-input" value="" />
+          <!-- Impede que o Formspree redirecione a página -->
+          <input type="hidden" name="_next" value="" />
+
+          <div class="field">
+            <label>Tipo de mensagem</label>
+            <div class="chips">
+              <span class="chip" data-type="opinião"    onclick="selectChip(this)">💭 Opinião</span>
+              <span class="chip" data-type="sugestão"   onclick="selectChip(this)">💡 Sugestão</span>
+              <span class="chip" data-type="reclamação" onclick="selectChip(this)">⚠️ Reclamação</span>
+              <span class="chip" data-type="elogio"     onclick="selectChip(this)">👏 Elogio</span>
+              <span class="chip" data-type="dúvida"     onclick="selectChip(this)">❓ Dúvida</span>
+              <span class="chip" data-type="outro"      onclick="selectChip(this)">📌 Outro</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Mensagem</label>
+            <textarea
+              name="mensagem"
+              id="mensagem"
+              placeholder="Escreva aqui sua mensagem..."
+              maxlength="1000"
+              oninput="updateCount()"
+              required
+            ></textarea>
+            <div class="char-count" id="char-count">0 / 1000</div>
+          </div>
+
+          <button type="submit" class="submit-btn" id="submit-btn">
+            <span id="btn-label">📨 Enviar anonimamente</span>
+          </button>
+
+          <p class="privacy-note">
+            Nenhum dado pessoal, IP ou identificador é coletado.<br>
+            Sua mensagem chega somente ao professor.
+          </p>
+
+        </form>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    // Tema
+    const saved = localStorage.getItem('theme') || 'dark';
+    setTheme(saved);
+
+    function toggleTheme() {
+      const cur = document.documentElement.getAttribute('data-theme');
+      setTheme(cur === 'dark' ? 'light' : 'dark');
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      const isDark = theme === 'dark';
+      document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+      document.getElementById('theme-label').textContent = isDark ? 'Claro' : 'Escuro';
+    }
+
+    // Chips de categoria
+    function selectChip(chip) {
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      document.getElementById('categoria-input').value = chip.dataset.type;
+    }
+
+    // Contador de caracteres
+    function updateCount() {
+      const ta = document.getElementById('mensagem');
+      const count = document.getElementById('char-count');
+      const len = ta.value.length;
+      count.textContent = `${len} / 1000`;
+      count.className = 'char-count' + (len > 950 ? ' over' : len > 800 ? ' warn' : '');
+    }
+
+    // Envio via fetch (sem redirecionar)
+    document.getElementById('feedback-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const btn = document.getElementById('submit-btn');
+      const label = document.getElementById('btn-label');
+
+      btn.disabled = true;
+      label.textContent = '⏳ Enviando...';
+
+      try {
+        const res = await fetch(this.action, {
+          method: 'POST',
+          body: new FormData(this),
+          headers: { Accept: 'application/json' }
+        });
+
+        if (res.ok) {
+          document.getElementById('form-inner').classList.add('hidden');
+          document.getElementById('success-box').classList.add('show');
+        } else {
+          label.textContent = '❌ Erro ao enviar. Tente novamente.';
+          btn.disabled = false;
+        }
+      } catch {
+        label.textContent = '❌ Sem conexão. Tente novamente.';
+        btn.disabled = false;
+      }
+    });
+
+    function resetForm() {
+      document.getElementById('feedback-form').reset();
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      document.getElementById('categoria-input').value = '';
+      document.getElementById('char-count').textContent = '0 / 1000';
+      document.getElementById('btn-label').textContent = '📨 Enviar anonimamente';
+      document.getElementById('submit-btn').disabled = false;
+      document.getElementById('success-box').classList.remove('show');
+      document.getElementById('form-inner').classList.remove('hidden');
+    }
+  </script>
+
+</body>
+</html>
