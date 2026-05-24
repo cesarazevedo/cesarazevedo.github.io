@@ -10,7 +10,7 @@
     [data-theme="dark"] {
       --bg: #0f1117;
       --card-bg: #1e2130;
-      --card-border:#2a2f45;
+      --card-border: #2a2f45;
       --text-h: #f1f5f9;
       --text-sub: #94a3b8;
       --text-muted: #64748b;
@@ -20,11 +20,12 @@
       --shadow: rgba(0,0,0,.35);
       --toggle-bg: #1e2130;
       --toggle-border: #2a2f45;
+      --divider: rgba(255,255,255,.06);
     }
     [data-theme="light"] {
       --bg: #f0f4f8;
       --card-bg: #ffffff;
-      --card-border:#dde3ec;
+      --card-border: #dde3ec;
       --text-h: #0f172a;
       --text-sub: #475569;
       --text-muted: #94a3b8;
@@ -34,6 +35,7 @@
       --shadow: rgba(0,0,0,.10);
       --toggle-bg: #ffffff;
       --toggle-border: #dde3ec;
+      --divider: rgba(0,0,0,.08);
     }
 
     body {
@@ -42,9 +44,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
       font-family: 'Segoe UI', system-ui, sans-serif;
-      padding: 40px 16px;
+      padding: 48px 16px 60px;
       transition: background .3s;
     }
 
@@ -59,6 +60,7 @@
       pointer-events: none;
     }
 
+    /* ── TOGGLE TEMA ── */
     .theme-toggle {
       position: fixed;
       top: 18px; right: 18px;
@@ -75,16 +77,18 @@
       transition: background .3s, border-color .3s, color .2s;
       user-select: none;
       box-shadow: 0 2px 8px var(--shadow);
+      z-index: 10;
     }
     .theme-toggle:hover { color: var(--text-h); }
-    .theme-toggle .icon { font-size: 1rem; }
 
+    /* ── PERFIL ── */
     .profile {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 12px;
-      margin-bottom: 36px;
+      gap: 10px;
+      margin-bottom: 40px;
+      text-align: center;
     }
 
     .avatar {
@@ -95,33 +99,26 @@
       align-items: center;
       justify-content: center;
       font-size: 2rem;
-      font-weight: 700;
       color: #fff;
-      letter-spacing: -1px;
       box-shadow: 0 0 0 3px rgba(139,92,246,.3);
       overflow: hidden;
+      margin-bottom: 4px;
     }
-
-    .avatar img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
+    .avatar img { width: 100%; height: 100%; object-fit: cover; }
 
     .profile h1 {
       color: var(--text-h);
       font-size: 1.4rem;
-      font-weight: 600;
+      font-weight: 700;
       letter-spacing: -.3px;
       transition: color .3s;
     }
-
     .profile .role {
       color: var(--text-sub);
       font-size: .9rem;
       transition: color .3s;
     }
-
+    .email-wrap { display: flex; align-items: center; gap: 6px; }
     .profile .email {
       color: var(--text-muted);
       font-size: .82rem;
@@ -130,93 +127,6 @@
     }
     .profile .email:hover { color: var(--text-sub); }
 
-    .profile .motto {
-      color: var(--text-muted);
-      font-size: .82rem;
-      font-style: italic;
-      margin-top: 4px;
-      transition: color .3s;
-    }
-
-    .links {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      width: 100%;
-      max-width: 420px;
-    }
-
-    .card {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 16px 20px;
-      border-radius: 14px;
-      text-decoration: none;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      transition: transform .18s, border-color .18s, box-shadow .18s, background .3s;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 4px;
-      background: var(--accent);
-      border-radius: 14px 0 0 14px;
-    }
-
-    .card:hover {
-      transform: translateY(-2px);
-      border-color: var(--accent);
-      box-shadow: 0 8px 24px var(--shadow);
-    }
-
-    .card-icon {
-      font-size: 1.6rem;
-      width: 44px; height: 44px;
-      border-radius: 10px;
-      background: color-mix(in srgb, var(--accent) 15%, transparent);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .card-text { flex: 1; }
-
-    .card-title {
-      color: var(--text-h);
-      font-size: .97rem;
-      font-weight: 600;
-      transition: color .3s;
-    }
-
-    .card-sub {
-      color: var(--text-muted);
-      font-size: .8rem;
-      margin-top: 2px;
-      transition: color .3s;
-    }
-
-    .card-arrow {
-      color: var(--arrow);
-      font-size: 1rem;
-      transition: color .18s, transform .18s;
-    }
-    .card:hover .card-arrow {
-      color: var(--accent);
-      transform: translateX(3px);
-    }
-
-    .email-wrap {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
     .copy-btn {
       background: none;
       border: none;
@@ -226,7 +136,6 @@
       padding: 2px 4px;
       border-radius: 4px;
       transition: color .2s, background .2s;
-      line-height: 1;
     }
     .copy-btn:hover { color: var(--text-sub); background: var(--card-border); }
 
@@ -234,7 +143,7 @@
       background: var(--toggle-bg);
       border: 1px solid var(--toggle-border);
       border-radius: 999px;
-      padding: 6px 14px;
+      padding: 6px 16px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -243,60 +152,241 @@
       color: var(--text-sub);
       transition: background .3s, border-color .3s, color .2s;
       box-shadow: 0 2px 8px var(--shadow);
-      margin-top: 10px;
+      margin-top: 6px;
     }
     .qr-btn:hover { color: var(--text-h); }
 
+    /* ── LISTA DE LINKS ── */
+    .links {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      width: 100%;
+      max-width: 440px;
+    }
+
+    /* ── DIVISOR VISUAL ── */
+    .divider {
+      width: 100%;
+      height: 1px;
+      background: var(--divider);
+      margin: 8px 0 4px;
+    }
+
+    /* ── LABEL DE SEÇÃO ── */
+    .section-label {
+      width: 100%;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 2px 0;
+      margin-top: 4px;
+    }
+
+    /* ── CARD PADRÃO ── */
+    .card {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 14px 18px;
+      border-radius: 14px;
+      text-decoration: none;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      transition: transform .18s, border-color .18s, box-shadow .18s, background .3s;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      background: var(--accent, #8b5cf6);
+      border-radius: 14px 0 0 14px;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      border-color: color-mix(in srgb, var(--accent, #8b5cf6) 60%, transparent);
+      box-shadow: 0 8px 24px var(--shadow);
+    }
+
+    .card-icon {
+      font-size: 1.5rem;
+      width: 42px; height: 42px;
+      border-radius: 10px;
+      background: color-mix(in srgb, var(--accent, #8b5cf6) 15%, transparent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .card-text { flex: 1; min-width: 0; }
+    .card-title {
+      color: var(--text-h);
+      font-size: .95rem;
+      font-weight: 600;
+      transition: color .3s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-sub {
+      color: var(--text-muted);
+      font-size: .78rem;
+      margin-top: 2px;
+      transition: color .3s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .card-arrow {
+      color: var(--arrow);
+      font-size: .95rem;
+      flex-shrink: 0;
+      transition: color .18s, transform .18s;
+    }
+    .card:hover .card-arrow {
+      color: var(--accent, #8b5cf6);
+      transform: translateX(3px);
+    }
+
+    /* ── CARD CTA (Fale com o Professor) ── */
+    .card-cta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      text-decoration: none;
+      background: linear-gradient(135deg, #7c3aed, #4f46e5);
+      border: 1px solid rgba(139,92,246,.4);
+      transition: transform .18s, box-shadow .18s, opacity .18s;
+      position: relative;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .card-cta::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,.08), transparent);
+      pointer-events: none;
+    }
+    .card-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(124,58,237,.4);
+      opacity: .95;
+    }
+    .card-cta .card-icon {
+      background: rgba(255,255,255,.15);
+      font-size: 1.4rem;
+      width: 42px; height: 42px;
+    }
+    .card-cta .card-title {
+      color: #fff;
+      font-size: .97rem;
+      font-weight: 700;
+    }
+    .card-cta .card-sub {
+      color: rgba(255,255,255,.7);
+      font-size: .78rem;
+    }
+    .card-cta .cta-badge {
+      background: rgba(255,255,255,.18);
+      color: #fff;
+      font-size: .7rem;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 999px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      letter-spacing: .02em;
+    }
+
+    /* ── "VER MAIS" FERRAMENTAS ── */
+    .tools-toggle {
+      width: 100%;
+      background: none;
+      border: 1px dashed var(--card-border);
+      border-radius: 10px;
+      padding: 10px;
+      color: var(--text-muted);
+      font-size: .82rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: color .2s, border-color .2s;
+      margin-top: 2px;
+    }
+    .tools-toggle:hover { color: var(--text-sub); border-color: var(--text-muted); }
+    .tools-toggle .chevron { transition: transform .25s; display: inline-block; }
+    .tools-toggle.open .chevron { transform: rotate(180deg); }
+
+    .tools-extra {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      overflow: hidden;
+      max-height: 0;
+      transition: max-height .35s ease, opacity .3s;
+      opacity: 0;
+    }
+    .tools-extra.open {
+      max-height: 2000px;
+      opacity: 1;
+    }
+
+    /* ── QR MODAL ── */
     .qr-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.6);
+      background: rgba(0,0,0,.65);
       backdrop-filter: blur(4px);
       z-index: 100;
       align-items: center;
       justify-content: center;
+      padding: 16px;
     }
     .qr-overlay.open { display: flex; }
-
     .qr-box {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 20px;
-      padding: 32px;
+      padding: 28px;
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 16px;
       box-shadow: 0 20px 60px rgba(0,0,0,.4);
+      max-width: 100%;
     }
     .qr-box p { color: var(--text-sub); font-size: .85rem; }
-    .qr-box img { border-radius: 10px; width: 400px; height: 400px; }
+    .qr-box img {
+      border-radius: 10px;
+      width: min(400px, calc(100vw - 80px));
+      height: min(400px, calc(100vw - 80px));
+    }
     .qr-close {
       background: none;
       border: 1px solid var(--card-border);
       border-radius: 8px;
-      padding: 6px 18px;
+      padding: 7px 20px;
       color: var(--text-muted);
       cursor: pointer;
       font-size: .82rem;
-      transition: color .2s;
+      transition: color .2s, border-color .2s;
     }
-    .qr-close:hover { color: var(--text-h); }
+    .qr-close:hover { color: var(--text-h); border-color: var(--text-muted); }
 
-    .section-label {
-      width: 100%;
-      font-size: .7rem;
-      font-weight: 700;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--text-muted);
-      padding: 4px 0 2px;
-      margin-top: 6px;
-    }
-
+    /* ── FOOTER ── */
     .footer {
-      margin-top: 40px;
+      margin-top: 44px;
       color: var(--footer);
       font-size: .75rem;
       transition: color .3s;
@@ -306,10 +396,11 @@
 <body>
 
   <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema">
-    <span class="icon" id="theme-icon">☀️</span>
+    <span id="theme-icon">☀️</span>
     <span id="theme-label">Claro</span>
   </button>
 
+  <!-- PERFIL -->
   <div class="profile">
     <div class="avatar"><img src="foto.jpeg" alt="César Azevedo"></div>
     <h1>César Azevedo</h1>
@@ -323,7 +414,8 @@
 
   <div class="links">
 
-    <div class="section-label">Disciplinas regulares</div>
+    <!-- DISCIPLINAS -->
+    <div class="section-label">Disciplinas</div>
 
     <a class="card" href="https://cesarazevedo.github.io/infodigitais" target="_blank"
        style="--accent: #3b82f6;">
@@ -375,30 +467,24 @@
       <span class="card-arrow">→</span>
     </a>
 
-    <a class="card" href="https://cesarazevedo.github.io/feedback" target="_blank"
-       style="--accent: #8b5cf6; border-style: dashed;">
+    <!-- CTA: FALE COM O PROFESSOR -->
+    <a class="card-cta" href="https://cesarazevedo.github.io/feedback" target="_blank">
       <div class="card-icon">💬</div>
       <div class="card-text">
         <div class="card-title">Fale com o Professor</div>
-        <div class="card-sub">Opiniões, sugestões, reclamações ou elogios · 100% anônimo</div>
+        <div class="card-sub">Opiniões, sugestões, reclamações ou elogios</div>
       </div>
-      <span class="card-arrow">↗</span>
+      <span class="cta-badge">🔒 Anônimo</span>
     </a>
 
-    <div class="section-label">Recursos</div>
+    <!-- DIVISOR -->
+    <div class="divider"></div>
 
-    <a class="card" href="https://cesarazevedo.github.io/dicas" target="_blank"
-       style="--accent: #f59e0b; border-style: dashed;">
-      <div class="card-icon">📚</div>
-      <div class="card-text">
-        <div class="card-title">Dicas de Estudo</div>
-        <div class="card-sub">15 técnicas · Pomodoro, Rep. Espaçada, Feynman e mais</div>
-      </div>
-      <span class="card-arrow">↗</span>
-    </a>
+    <!-- FERRAMENTAS DE SALA -->
+    <div class="section-label">Ferramentas de Sala</div>
 
-<a class="card" href="https://cesarazevedo.github.io/calculadora" target="_blank"
-       style="--accent: #10b981; border-style: dashed;">
+    <a class="card" href="https://cesarazevedo.github.io/calculadora" target="_blank"
+       style="--accent: #10b981;">
       <div class="card-icon">🧮</div>
       <div class="card-text">
         <div class="card-title">Calculadora de Notas</div>
@@ -408,7 +494,7 @@
     </a>
 
     <a class="card" href="https://cesarazevedo.github.io/sorteio" target="_blank"
-       style="--accent: #6366f1; border-style: dashed;">
+       style="--accent: #6366f1;">
       <div class="card-icon">🎲</div>
       <div class="card-text">
         <div class="card-title">Sorteio de Grupos</div>
@@ -417,28 +503,18 @@
       <span class="card-arrow">↗</span>
     </a>
 
-    <a class="card" href="https://cesarazevedo.github.io/cheatsheet-linux" target="_blank"
-       style="--accent: #10b981; border-style: dashed;">
-      <div class="card-icon">🐧</div>
+    <a class="card" href="https://cesarazevedo.github.io/quiz" target="_blank"
+       style="--accent: #8b5cf6;">
+      <div class="card-icon">🧪</div>
       <div class="card-text">
-        <div class="card-title">Linux Cheat Sheet</div>
-        <div class="card-sub">+100 comandos · busca e filtro por categoria</div>
-      </div>
-      <span class="card-arrow">↗</span>
-    </a>
-
-    <a class="card" href="https://cesarazevedo.github.io/cheatsheet-linux-services" target="_blank"
-       style="--accent: #6366f1; border-style: dashed;">
-      <div class="card-icon">🌐</div>
-      <div class="card-text">
-        <div class="card-title">Serviços de Rede Linux — Cheat Sheet</div>
-        <div class="card-sub">DHCP · DNS · Proxy · SSH · FTP · NFS · Samba · Web · Firewall · VPN</div>
+        <div class="card-title">Quiz / Simulado</div>
+        <div class="card-sub">Cole perguntas e respostas · múltipla escolha ou discursivo</div>
       </div>
       <span class="card-arrow">↗</span>
     </a>
 
     <a class="card" href="https://cesarazevedo.github.io/flashcards" target="_blank"
-       style="--accent: #8b5cf6; border-style: dashed;">
+       style="--accent: #8b5cf6;">
       <div class="card-icon">🃏</div>
       <div class="card-text">
         <div class="card-title">Flashcards</div>
@@ -448,66 +524,100 @@
     </a>
 
     <a class="card" href="https://cesarazevedo.github.io/associacao" target="_blank"
-       style="--accent: #10b981; border-style: dashed;">
+       style="--accent: #10b981;">
       <div class="card-icon">🧩</div>
       <div class="card-text">
         <div class="card-title">Jogo de Associação</div>
-        <div class="card-sub">Cole os pares · clique ou arraste para associar termos e definições</div>
+        <div class="card-sub">Cole os pares · clique ou arraste para associar</div>
       </div>
       <span class="card-arrow">↗</span>
     </a>
 
-    <a class="card" href="https://cesarazevedo.github.io/habit-tracker" target="_blank"
-       style="--accent: #ec4899; border-style: dashed;">
-      <div class="card-icon">📋</div>
-      <div class="card-text">
-        <div class="card-title">Rastreador de Hábitos</div>
-        <div class="card-sub">Personalize seus hábitos · gere e imprima seu tracker mensal</div>
-      </div>
-      <span class="card-arrow">↗</span>
-    </a>
+    <!-- FERRAMENTAS DE ESTUDO (ocultas por padrão) -->
+    <button class="tools-toggle" id="tools-toggle" onclick="toggleTools()">
+      <span>Mais ferramentas</span>
+      <span class="chevron">▾</span>
+    </button>
 
-    <a class="card" href="https://cesarazevedo.github.io/pomodoro" target="_blank"
-       style="--accent: #dc6150; border-style: dashed;">
-      <div class="card-icon">🍅</div>
-      <div class="card-text">
-        <div class="card-title">Pomodoro</div>
-        <div class="card-sub">Timer Pomodoro · lista de tarefas · pausas automáticas</div>
-      </div>
-      <span class="card-arrow">↗</span>
-    </a>
+    <div class="tools-extra" id="tools-extra">
 
-    <a class="card" href="https://cesarazevedo.github.io/cornell" target="_blank"
-       style="--accent: #0d9488; border-style: dashed;">
-      <div class="card-icon">📝</div>
-      <div class="card-text">
-        <div class="card-title">Anotações Cornell</div>
-        <div class="card-sub">Gere folhas Cornell personalizadas · coluna, notas e resumo</div>
-      </div>
-      <span class="card-arrow">↗</span>
-    </a>
+      <div class="section-label" style="margin-top:6px;">Produtividade</div>
 
-    <a class="card" href="https://cesarazevedo.github.io/abnt" target="_blank"
-       style="--accent: #6366f1; border-style: dashed;">
-      <div class="card-icon">📖</div>
-      <div class="card-text">
-        <div class="card-title">Referências ABNT</div>
-        <div class="card-sub">Referências NBR 6023:2018 · Citações NBR 10520:2023 · livro, artigo, site, TCC e mais</div>
-      </div>
-      <span class="card-arrow">↗</span>
-    </a>
+      <a class="card" href="https://cesarazevedo.github.io/dicas" target="_blank"
+         style="--accent: #f59e0b;">
+        <div class="card-icon">📚</div>
+        <div class="card-text">
+          <div class="card-title">Dicas de Estudo</div>
+          <div class="card-sub">15 técnicas · Pomodoro, Rep. Espaçada, Feynman e mais</div>
+        </div>
+        <span class="card-arrow">↗</span>
+      </a>
 
-    <a class="card" href="https://cesarazevedo.github.io/quiz" target="_blank"
-       style="--accent: #8b5cf6; border-style: dashed;">
-      <div class="card-icon">🧪</div>
-      <div class="card-text">
-        <div class="card-title">Quiz / Simulado</div>
-        <div class="card-sub">Cole perguntas e respostas · múltipla escolha ou discursivo</div>
-      </div>
-      <span class="card-arrow">↗</span>
-    </a>
+      <a class="card" href="https://cesarazevedo.github.io/pomodoro" target="_blank"
+         style="--accent: #dc6150;">
+        <div class="card-icon">🍅</div>
+        <div class="card-text">
+          <div class="card-title">Pomodoro</div>
+          <div class="card-sub">Timer · lista de tarefas · pausas automáticas</div>
+        </div>
+        <span class="card-arrow">↗</span>
+      </a>
 
-  </div>
+      <a class="card" href="https://cesarazevedo.github.io/habit-tracker" target="_blank"
+         style="--accent: #ec4899;">
+        <div class="card-icon">📋</div>
+        <div class="card-text">
+          <div class="card-title">Rastreador de Hábitos</div>
+          <div class="card-sub">Personalize seus hábitos · gere e imprima seu tracker mensal</div>
+        </div>
+        <span class="card-arrow">↗</span>
+      </a>
+
+      <a class="card" href="https://cesarazevedo.github.io/cornell" target="_blank"
+         style="--accent: #0d9488;">
+        <div class="card-icon">📝</div>
+        <div class="card-text">
+          <div class="card-title">Anotações Cornell</div>
+          <div class="card-sub">Gere folhas Cornell personalizadas</div>
+        </div>
+        <span class="card-arrow">↗</span>
+      </a>
+
+      <div class="section-label" style="margin-top:6px;">Referências</div>
+
+      <a class="card" href="https://cesarazevedo.github.io/cheatsheet-linux" target="_blank"
+         style="--accent: #10b981;">
+        <div class="card-icon">🐧</div>
+        <div class="card-text">
+          <div class="card-title">Linux Cheat Sheet</div>
+          <div class="card-sub">+100 comandos · busca e filtro por categoria</div>
+        </div>
+        <span class="card-arrow">↗</span>
+      </a>
+
+      <a class="card" href="https://cesarazevedo.github.io/cheatsheet-linux-services" target="_blank"
+         style="--accent: #6366f1;">
+        <div class="card-icon">🌐</div>
+        <div class="card-text">
+          <div class="card-title">Serviços de Rede Linux</div>
+          <div class="card-sub">DHCP · DNS · SSH · FTP · Samba · Web · Firewall · VPN</div>
+        </div>
+        <span class="card-arrow">↗</span>
+      </a>
+
+      <a class="card" href="https://cesarazevedo.github.io/abnt" target="_blank"
+         style="--accent: #6366f1;">
+        <div class="card-icon">📖</div>
+        <div class="card-text">
+          <div class="card-title">Referências ABNT</div>
+          <div class="card-sub">NBR 6023:2018 · livro, artigo, site, TCC e mais</div>
+        </div>
+        <span class="card-arrow">↗</span>
+      </a>
+
+    </div><!-- /tools-extra -->
+
+  </div><!-- /links -->
 
   <p class="footer">IFRN · Campus João Câmara</p>
 
@@ -521,33 +631,20 @@
   </div>
 
   <script>
-    const mottos = [
-      'Estudar é desconfortável.',
-      'Demora muito pra se conseguir as coisas na vida.',
-      'Ninguém se importa tanto quanto você imagina.',
-      'Disciplina ganha da motivação quase sempre.',
-      'Você não vai ter vontade na maioria dos dias — mesmo assim tem que fazer.',
-      'Resultados pequenos repetidos vencem talento preguiçoso.',
-      'Tempo perdido não volta, só acumula arrependimento.',
-      'Reclamar não muda absolutamente nada.',
-      'Se você não define prioridades, alguém define por você.',
-      'Descanso demais vira estagnação.',
-      'Errar faz parte — repetir o mesmo erro é escolha.',
-      'Conforto constante cobra um preço alto depois.',
-      'Você não precisa de mais informação, precisa agir com o que já sabe.',
-      'Comparação só serve pra te atrasar ou te frustrar.',
-      'A maioria desiste antes de ficar bom.',
-      'Ninguém vai "te salvar" — é responsabilidade sua.',
-      'Fazer o básico bem feito já te coloca na frente de muita gente.',
-    ];
-    document.getElementById('motto').textContent = mottos[Math.floor(Math.random() * mottos.length)];
-
     const saved = localStorage.getItem('theme') || 'dark';
     setTheme(saved);
 
     function toggleTheme() {
       const current = document.documentElement.getAttribute('data-theme');
       setTheme(current === 'dark' ? 'light' : 'dark');
+    }
+
+    function setTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('theme', theme);
+      const isDark = theme === 'dark';
+      document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
+      document.getElementById('theme-label').textContent = isDark ? 'Claro' : 'Escuro';
     }
 
     function copyEmail(btn) {
@@ -565,17 +662,18 @@
       img.src = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://cesarazevedo.github.io&color=${fg}&bgcolor=${bg}&margin=10`;
       overlay.classList.add('open');
     }
+
     function closeQR(e) {
       if (!e || e.target === document.getElementById('qr-overlay') || !e.target.closest)
         document.getElementById('qr-overlay').classList.remove('open');
     }
 
-    function setTheme(theme) {
-      document.documentElement.setAttribute('data-theme', theme);
-      localStorage.setItem('theme', theme);
-      const isDark = theme === 'dark';
-      document.getElementById('theme-icon').textContent = isDark ? '☀️' : '🌙';
-      document.getElementById('theme-label').textContent = isDark ? 'Claro' : 'Escuro';
+    function toggleTools() {
+      const btn = document.getElementById('tools-toggle');
+      const extra = document.getElementById('tools-extra');
+      const isOpen = extra.classList.toggle('open');
+      btn.classList.toggle('open', isOpen);
+      btn.querySelector('span:first-child').textContent = isOpen ? 'Menos ferramentas' : 'Mais ferramentas';
     }
   </script>
 
