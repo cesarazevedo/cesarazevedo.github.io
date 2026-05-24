@@ -271,7 +271,7 @@
       box-shadow: 0 20px 60px rgba(0,0,0,.4);
     }
     .qr-box p { color: var(--text-sub); font-size: .85rem; }
-    .qr-box img { border-radius: 10px; width: 200px; height: 200px; }
+    .qr-box img { border-radius: 10px; width: 400px; height: 400px; }
     .qr-close {
       background: none;
       border: 1px solid var(--card-border);
@@ -318,7 +318,6 @@
       <a class="email" href="mailto:cesar.augusto@ifrn.edu.br">✉ cesar.augusto@ifrn.edu.br</a>
       <button class="copy-btn" onclick="copyEmail(this)" title="Copiar e-mail">⧉</button>
     </div>
-    <span class="motto" id="motto"></span>
     <button class="qr-btn" onclick="openQR()">⬛ QR Code da página</button>
   </div>
 
@@ -565,7 +564,7 @@
       const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
       const fg = isDark ? 'f1f5f9' : '0f172a';
       const bg = isDark ? '1e2130' : 'ffffff';
-      img.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=https://cesarazevedo.github.io&color=${fg}&bgcolor=${bg}&margin=10`;
+      img.src = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=https://cesarazevedo.github.io&color=${fg}&bgcolor=${bg}&margin=10`;
       overlay.classList.add('open');
     }
     function closeQR(e) {
