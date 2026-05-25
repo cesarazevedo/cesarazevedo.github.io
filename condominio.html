@@ -21,8 +21,6 @@
       --divider: rgba(255,255,255,.06);
       --tag-bg: rgba(59,130,246,.15);
       --tag-color: #93c5fd;
-      --input-bg: #0f1117;
-      --input-border: #2a2f45;
     }
     [data-theme="light"] {
       --bg: #f0f4f8;
@@ -38,17 +36,13 @@
       --divider: rgba(0,0,0,.08);
       --tag-bg: #dbeafe;
       --tag-color: #1d4ed8;
-      --input-bg: #ffffff;
-      --input-border: #cbd5e1;
     }
 
     body {
       min-height: 100vh;
       background: var(--bg);
       font-family: 'Segoe UI', system-ui, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      display: flex; flex-direction: column; align-items: center;
       padding: 48px 16px 60px;
       transition: background .3s;
     }
@@ -66,22 +60,15 @@
       position: fixed; top: 18px; right: 18px;
       background: var(--toggle-bg);
       border: 1px solid var(--toggle-border);
-      border-radius: 999px;
-      padding: 6px 14px;
-      cursor: pointer;
-      display: flex; align-items: center; gap: 7px;
+      border-radius: 999px; padding: 6px 14px;
+      cursor: pointer; display: flex; align-items: center; gap: 7px;
       font-size: .82rem; color: var(--text-sub);
       transition: background .3s, border-color .3s, color .2s;
-      user-select: none;
-      box-shadow: 0 2px 8px var(--shadow);
-      z-index: 10;
+      user-select: none; box-shadow: 0 2px 8px var(--shadow); z-index: 10;
     }
     .theme-toggle:hover { color: var(--text-h); }
 
-    .page-wrap {
-      width: 100%; max-width: 520px;
-      display: flex; flex-direction: column; gap: 20px;
-    }
+    .page-wrap { width: 100%; max-width: 520px; display: flex; flex-direction: column; gap: 20px; }
 
     .header {
       display: flex; flex-direction: column; align-items: center;
@@ -91,18 +78,15 @@
     .header h1 { color: var(--text-h); font-size: 1.4rem; font-weight: 700; letter-spacing: -.3px; }
     .header p { color: var(--text-muted); font-size: .85rem; }
 
-    /* ── SECTION ── */
     .section {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
+      background: var(--card-bg); border: 1px solid var(--card-border);
       border-radius: 16px; overflow: hidden;
       box-shadow: 0 4px 20px var(--shadow);
       transition: background .3s, border-color .3s;
     }
     .section-head {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 16px 20px 14px;
-      border-bottom: 1px solid var(--divider);
+      padding: 16px 20px 14px; border-bottom: 1px solid var(--divider);
     }
     .section-title {
       color: var(--text-h); font-size: .95rem; font-weight: 700;
@@ -110,126 +94,54 @@
     }
     .section-count {
       background: var(--tag-bg); color: var(--tag-color);
-      font-size: .72rem; font-weight: 700;
-      padding: 2px 8px; border-radius: 999px;
+      font-size: .72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;
     }
     .section-body { padding: 4px 0; }
 
-    /* ── COMUNICADO ── */
     .comunicado {
       display: flex; align-items: flex-start; gap: 14px;
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--divider);
+      padding: 14px 20px; border-bottom: 1px solid var(--divider);
       transition: background .15s;
     }
     .comunicado:last-child { border-bottom: none; }
     .comunicado:hover { background: color-mix(in srgb, var(--card-border) 30%, transparent); }
     .comunicado-icon {
-      font-size: 1.35rem; width: 40px; height: 40px;
-      border-radius: 10px;
+      font-size: 1.35rem; width: 40px; height: 40px; border-radius: 10px;
       background: color-mix(in srgb, #3b82f6 12%, transparent);
       display: flex; align-items: center; justify-content: center;
       flex-shrink: 0; margin-top: 1px;
     }
     .comunicado-body { flex: 1; min-width: 0; }
-    .comunicado-titulo {
-      color: var(--text-h); font-size: .92rem; font-weight: 600;
-      margin-bottom: 4px; line-height: 1.3;
-    }
-    .comunicado-texto {
-      color: var(--text-sub); font-size: .82rem;
-      line-height: 1.5; margin-bottom: 6px;
-    }
+    .comunicado-titulo { color: var(--text-h); font-size: .92rem; font-weight: 600; margin-bottom: 4px; line-height: 1.3; }
+    .comunicado-texto { color: var(--text-sub); font-size: .82rem; line-height: 1.5; margin-bottom: 6px; }
     .comunicado-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .meta-tag { font-size: .7rem; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+    .meta-tag { font-size: .7rem; color: var(--text-muted); }
     .badge-val {
       background: rgba(234,179,8,.15); color: #fbbf24;
-      font-size: .68rem; font-weight: 600;
-      padding: 2px 8px; border-radius: 999px;
+      font-size: .68rem; font-weight: 600; padding: 2px 8px; border-radius: 999px;
     }
     [data-theme="light"] .badge-val { background: #fef9c3; color: #92400e; }
 
-    /* ── ESTADOS ── */
     .empty {
-      padding: 36px 20px; text-align: center;
-      color: var(--text-muted); font-size: .85rem;
+      padding: 36px 20px; text-align: center; color: var(--text-muted); font-size: .85rem;
       display: flex; flex-direction: column; align-items: center; gap: 8px;
     }
     .empty-icon { font-size: 2rem; opacity: .4; }
     .loading {
-      padding: 32px 20px; text-align: center;
-      color: var(--text-muted); font-size: .85rem;
+      padding: 32px 20px; text-align: center; color: var(--text-muted); font-size: .85rem;
       display: flex; align-items: center; justify-content: center; gap: 10px;
     }
     .spinner {
-      width: 18px; height: 18px;
-      border: 2px solid var(--card-border);
-      border-top-color: #3b82f6;
-      border-radius: 50%;
+      width: 18px; height: 18px; border: 2px solid var(--card-border);
+      border-top-color: #3b82f6; border-radius: 50%;
       animation: spin .7s linear infinite;
     }
     @keyframes spin { to { transform: rotate(360deg); } }
     .error-msg {
-      padding: 20px;
-      background: rgba(239,68,68,.08);
-      border: 1px solid rgba(239,68,68,.2);
-      border-radius: 10px;
-      color: #fca5a5; font-size: .83rem; line-height: 1.5;
+      padding: 20px; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2);
+      border-radius: 10px; color: #fca5a5; font-size: .83rem; line-height: 1.5; margin: 12px;
     }
     [data-theme="light"] .error-msg { color: #b91c1c; }
-
-    /* ── SETUP PANEL ── */
-    .setup-panel {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px; padding: 24px;
-      display: flex; flex-direction: column; gap: 16px;
-      box-shadow: 0 4px 20px var(--shadow);
-    }
-    .setup-panel h2 { color: var(--text-h); font-size: 1rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
-    .setup-steps { display: flex; flex-direction: column; gap: 10px; }
-    .setup-step { display: flex; gap: 10px; align-items: flex-start; }
-    .step-num {
-      background: #3b82f6; color: #fff;
-      width: 20px; height: 20px; border-radius: 50%;
-      font-size: .7rem; font-weight: 700;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0; margin-top: 1px;
-    }
-    .step-text { color: var(--text-sub); font-size: .83rem; line-height: 1.55; }
-    .step-text strong { color: var(--text-h); }
-    .step-text code {
-      background: var(--card-border); color: var(--text-h);
-      padding: 1px 5px; border-radius: 4px;
-      font-family: monospace; font-size: .8rem;
-    }
-    .setup-input-wrap { display: flex; flex-direction: column; gap: 8px; }
-    .setup-input-wrap label { color: var(--text-sub); font-size: .8rem; font-weight: 600; }
-    .setup-input-row { display: flex; gap: 8px; }
-    .setup-input {
-      flex: 1;
-      background: var(--input-bg); border: 1px solid var(--input-border);
-      border-radius: 8px; padding: 9px 12px;
-      color: var(--text-h); font-size: .83rem;
-      outline: none; transition: border-color .2s;
-    }
-    .setup-input:focus { border-color: #3b82f6; }
-    .setup-input::placeholder { color: var(--text-muted); }
-    .btn-save {
-      background: #3b82f6; color: #fff;
-      border: none; border-radius: 8px;
-      padding: 9px 18px; font-size: .83rem; font-weight: 600;
-      cursor: pointer; white-space: nowrap; transition: opacity .2s;
-    }
-    .btn-save:hover { opacity: .85; }
-
-    .btn-reconfig {
-      background: none; border: 1px solid var(--card-border);
-      border-radius: 8px; padding: 7px 14px;
-      font-size: .78rem; color: var(--text-muted);
-      cursor: pointer; transition: color .2s, border-color .2s;
-    }
-    .btn-reconfig:hover { color: var(--text-h); border-color: var(--text-sub); }
 
     footer { margin-top: 8px; color: var(--text-muted); font-size: .75rem; text-align: center; }
   </style>
@@ -242,53 +154,18 @@
 </button>
 
 <div class="page-wrap">
-
   <div class="header">
     <div class="header-icon">🏢</div>
     <h1>Condomínio Parque dos Rios</h1>
     <p>Comunicados e avisos do condomínio</p>
   </div>
 
-  <!-- Setup (aparece só quando não configurado) -->
-  <div id="setup-panel" class="setup-panel" style="display:none">
-    <h2>⚙️ Configurar planilha</h2>
-    <p style="color:var(--text-sub);font-size:.83rem;line-height:1.5">
-      A planilha precisa ser <strong style="color:var(--text-h)">Publicada na Web</strong> para funcionar sem login. Faça isso uma vez só:
-    </p>
-    <div class="setup-steps">
-      <div class="setup-step">
-        <div class="step-num">1</div>
-        <div class="step-text">Na planilha, vá em <strong>Arquivo → Compartilhar → Publicar na Web</strong></div>
-      </div>
-      <div class="setup-step">
-        <div class="step-num">2</div>
-        <div class="step-text">Em "Link", selecione a aba <code>Comunicados</code> e o formato <code>Valores separados por vírgula (.csv)</code></div>
-      </div>
-      <div class="setup-step">
-        <div class="step-num">3</div>
-        <div class="step-text">Clique em <strong>Publicar</strong> e cole a URL gerada abaixo</div>
-      </div>
-    </div>
-    <div class="setup-input-wrap">
-      <label>URL publicada da aba Comunicados</label>
-      <div class="setup-input-row">
-        <input id="csv-url-input" class="setup-input" type="url"
-          placeholder="https://docs.google.com/spreadsheets/d/e/.../pub?gid=...&output=csv" />
-        <button class="btn-save" onclick="saveUrl()">Salvar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Seção de comunicados -->
   <div class="section">
     <div class="section-head">
       <div class="section-title">
         📢 Comunicados Recentes
         <span class="section-count" id="count-badge" style="display:none">0</span>
       </div>
-      <button class="btn-reconfig" id="btn-reconfig" onclick="resetConfig()" style="display:none">
-        ⚙️ Reconfigurar
-      </button>
     </div>
     <div class="section-body" id="comunicados-body">
       <div class="loading"><div class="spinner"></div>Carregando…</div>
@@ -299,12 +176,13 @@
 </div>
 
 <script>
+  const SHEET_ID = '1kPpRfPsT3sL-6-5gCZzLwbb4zvxUVBOZHI7CtQ5GU2Q';
+
   /* ── Tema ── */
   const root = document.documentElement;
   const savedTheme = localStorage.getItem('theme') || 'dark';
   root.setAttribute('data-theme', savedTheme);
   updateThemeBtn(savedTheme);
-
   function toggleTheme() {
     const t = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
     root.setAttribute('data-theme', t);
@@ -316,162 +194,113 @@
     document.getElementById('theme-label').textContent = t === 'dark' ? 'Claro' : 'Escuro';
   }
 
-  /* ── Config ── */
-  const URL_KEY = 'condominioCSVUrl';
-
-  function saveUrl() {
-    const val = document.getElementById('csv-url-input').value.trim();
-    if (!val || !val.startsWith('https://')) return;
-    localStorage.setItem(URL_KEY, val);
-    document.getElementById('setup-panel').style.display = 'none';
-    document.getElementById('btn-reconfig').style.display = '';
-    fetchComunicados(val);
-  }
-
-  function resetConfig() {
-    localStorage.removeItem(URL_KEY);
-    document.getElementById('setup-panel').style.display = '';
-    document.getElementById('btn-reconfig').style.display = 'none';
-    renderLoading();
-  }
-
-  /* ── CSV parse ── */
+  /* ── CSV parse (idêntico ao blocoi) ── */
   function parseCSV(text) {
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) return [];
-    const headers = splitCSVLine(lines[0]);
-    return lines.slice(1)
-      .map(l => {
-        const cols = splitCSVLine(l);
-        const obj = {};
-        headers.forEach((h, i) => obj[h.trim()] = (cols[i] || '').trim());
-        return obj;
-      })
-      .filter(r => r['Título'] || r['Titulo']);
+    const rows = [];
+    let row = [], field = '', inQ = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === '"') {
+        if (inQ && text[i+1] === '"') { field += '"'; i++; }
+        else inQ = !inQ;
+      } else if (ch === ',' && !inQ) {
+        row.push(field); field = '';
+      } else if ((ch === '\n' || ch === '\r') && !inQ) {
+        if (ch === '\r' && text[i+1] === '\n') i++;
+        row.push(field); field = '';
+        if (row.some(c => c !== '')) rows.push(row);
+        row = [];
+      } else {
+        field += ch;
+      }
+    }
+    if (field || row.length) { row.push(field); if (row.some(c => c !== '')) rows.push(row); }
+    return rows;
   }
 
-  function splitCSVLine(line) {
-    const result = [];
-    let cur = '', inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQ = !inQ; continue; }
-      if (ch === ',' && !inQ) { result.push(cur); cur = ''; continue; }
-      cur += ch;
-    }
-    result.push(cur);
-    return result;
+  /* ── Fetch via gviz (mesmo método do blocoi) ── */
+  async function fetchComunicados() {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=Comunicados`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return parseCSV(await res.text());
   }
 
   /* ── Filtros ── */
-  function parseDate(str) {
-    if (!str) return null;
-    // dd/MM/yyyy
-    const m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
-    return new Date(str);
-  }
-
-  function isAtivo(c) {
-    const v = c['Ativo'];
-    return v === true || String(v).toUpperCase() === 'TRUE';
-  }
-
-  function dentroValidade(c) {
-    const val = c['Validade'];
-    if (!val) return true;
-    const d = parseDate(val);
-    if (!d || isNaN(d)) return true;
-    return d >= new Date(new Date().setHours(0, 0, 0, 0));
-  }
-
-  /* ── Fetch ── */
-  async function fetchComunicados(url) {
-    renderLoading();
-    try {
-      const resp = await fetch(url);
-      if (!resp.ok) throw new Error('HTTP ' + resp.status);
-      const text = await resp.text();
-      const data = parseCSV(text);
-      renderComunicados(data);
-    } catch (e) {
-      renderError(e.message);
-    }
+  function parseComunicados(rows) {
+    return rows.slice(1)
+      .filter(r => (r[0] || '').trim())
+      .map(r => {
+        const ativo  = (r[3] || '').trim();
+        const valStr = (r[4] || '').trim();
+        let validade = null;
+        if (valStr) {
+          const p = valStr.split('/');
+          validade = p.length === 3
+            ? new Date(+p[2], +p[1] - 1, +p[0])
+            : new Date(valStr);
+        }
+        return {
+          titulo:   r[0] || '',
+          texto:    r[1] || '',
+          data:     r[2] || '',
+          ativo:    ativo === '' || ativo.toUpperCase() === 'TRUE',
+          validade
+        };
+      })
+      .filter(c => c.ativo && (!c.validade || c.validade >= new Date()));
   }
 
   /* ── Render ── */
-  function renderLoading() {
-    document.getElementById('comunicados-body').innerHTML =
-      '<div class="loading"><div class="spinner"></div>Carregando…</div>';
-    document.getElementById('count-badge').style.display = 'none';
-  }
-
-  function renderError(msg) {
-    document.getElementById('comunicados-body').innerHTML =
-      '<div style="padding:16px"><div class="error-msg">⚠️ Não foi possível carregar os comunicados.<br><small>' + msg + '</small></div></div>';
-    document.getElementById('count-badge').style.display = 'none';
-  }
-
-  function renderComunicados(data) {
-    const ativos = data.filter(c => isAtivo(c) && dentroValidade(c));
-
+  function render(comunicados) {
     const badge = document.getElementById('count-badge');
-    badge.textContent = ativos.length;
-    badge.style.display = ativos.length ? '' : 'none';
+    badge.textContent = comunicados.length;
+    badge.style.display = comunicados.length ? '' : 'none';
 
     document.getElementById('footer-ts').textContent =
       'Atualizado às ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-    if (!ativos.length) {
+    if (!comunicados.length) {
       document.getElementById('comunicados-body').innerHTML =
         '<div class="empty"><div class="empty-icon">📭</div>Nenhum comunicado ativo no momento.</div>';
       return;
     }
 
-    const html = ativos.map(c => {
-      const titulo = c['Título'] || c['Titulo'] || '';
-      const texto  = c['Texto'] || '';
-      const data   = c['Data'] || '';
-      const valid  = c['Validade'] || '';
-
-      const emojiMatch = titulo.match(/^(\p{Emoji_Presentation}|\p{Emoji}️)/u);
+    document.getElementById('comunicados-body').innerHTML = comunicados.map(c => {
+      const emojiMatch = c.titulo.match(/^(\p{Emoji_Presentation}|\p{Emoji}️)/u);
       const emoji = emojiMatch ? emojiMatch[0] : '📌';
-      const tituloLimpo = titulo.replace(/^(\p{Emoji_Presentation}|\p{Emoji}️)\s*/u, '').trim();
-
-      const dataTag   = data  ? `<span class="meta-tag">🗓 ${esc(data)}</span>` : '';
-      const validTag  = valid ? `<span class="badge-val">até ${esc(valid)}</span>` : '';
-
+      const titulo = c.titulo.replace(/^(\p{Emoji_Presentation}|\p{Emoji}️)\s*/u, '').trim();
+      const dataTag  = c.data     ? `<span class="meta-tag">🗓 ${esc(c.data)}</span>` : '';
+      const validTag = c.validade
+        ? `<span class="badge-val">até ${esc(c.validade.toLocaleDateString('pt-BR'))}</span>`
+        : '';
       return `
         <div class="comunicado">
           <div class="comunicado-icon">${emoji}</div>
           <div class="comunicado-body">
-            <div class="comunicado-titulo">${esc(tituloLimpo)}</div>
-            <div class="comunicado-texto">${esc(texto)}</div>
+            <div class="comunicado-titulo">${esc(titulo)}</div>
+            <div class="comunicado-texto">${esc(c.texto)}</div>
             <div class="comunicado-meta">${dataTag}${validTag}</div>
           </div>
         </div>`;
     }).join('');
-
-    document.getElementById('comunicados-body').innerHTML = html;
   }
 
   function esc(s) {
     return String(s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
   /* ── Init ── */
-  const savedUrl = localStorage.getItem(URL_KEY);
-  if (savedUrl) {
-    document.getElementById('btn-reconfig').style.display = '';
-    fetchComunicados(savedUrl);
-  } else {
-    document.getElementById('setup-panel').style.display = '';
-    document.getElementById('comunicados-body').innerHTML =
-      '<div class="empty"><div class="empty-icon">⚙️</div>Configure a integração acima para ver os comunicados.</div>';
-    document.getElementById('count-badge').style.display = 'none';
-  }
+  fetchComunicados()
+    .then(rows => render(parseComunicados(rows)))
+    .catch(err => {
+      document.getElementById('comunicados-body').innerHTML =
+        `<div class="error-msg">⚠️ Erro ao carregar comunicados: ${esc(err.message)}<br>
+        <small>Verifique se você está logado no Google e se a planilha está acessível.</small></div>`;
+      document.getElementById('footer-ts').textContent = '';
+    });
 </script>
 </body>
 </html>
