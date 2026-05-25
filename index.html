@@ -126,6 +126,15 @@
       transition: color .2s;
     }
     .profile .email:hover { color: var(--text-sub); }
+    .frase-do-dia {
+      color: var(--text-muted);
+      font-size: .82rem;
+      font-style: italic;
+      text-align: center;
+      max-width: 320px;
+      line-height: 1.45;
+      padding: 4px 0;
+    }
 
     .copy-btn {
       background: none;
@@ -405,10 +414,7 @@
     <div class="avatar"><img src="foto.jpeg" alt="César Azevedo"></div>
     <h1>César Azevedo</h1>
     <span class="role">Professor · IFRN</span>
-    <div class="email-wrap">
-      <a class="email" href="mailto:cesar.augusto@ifrn.edu.br">✉ cesar.augusto@ifrn.edu.br</a>
-      <button class="copy-btn" onclick="copyEmail(this)" title="Copiar e-mail">⧉</button>
-    </div>
+    <p class="frase-do-dia" id="frase-do-dia"></p>
     <button class="qr-btn" onclick="openQR()">⬛ QR Code da página</button>
   </div>
 
@@ -647,11 +653,42 @@
       document.getElementById('theme-label').textContent = isDark ? 'Claro' : 'Escuro';
     }
 
-    function copyEmail(btn) {
-      navigator.clipboard.writeText('cesar.augusto@ifrn.edu.br');
-      btn.textContent = '✓';
-      setTimeout(() => btn.textContent = '⧉', 2000);
-    }
+    (function() {
+      const frases = [
+        "Daqui a cinco anos, o tempo terá passado de qualquer forma. A diferença estará no que você decidiu construir durante esse caminho.",
+        "Grandes conquistas quase nunca nascem de um único esforço gigantesco, mas da repetição silenciosa de pequenas ações diárias.",
+        "O futuro não é criado em um dia de motivação extrema, e sim em dias comuns onde você escolhe continuar.",
+        "O relógio não espera ninguém. Por isso, o mais importante não é quanto tempo algo vai levar, mas começar agora.",
+        "A consistência faz o que a motivação não consegue sustentar.",
+        "Metas enormes assustam. Pequenas tarefas diárias transformam o impossível em inevitável.",
+        "O tempo vai passar de qualquer jeito. Então faça com que ele encontre uma versão melhor de você.",
+        "Quem evolui não é quem faz tudo de uma vez, mas quem faz um pouco sem parar.",
+        "O primeiro passo raramente impressiona alguém, mas é ele que torna qualquer conquista possível.",
+        "Não abandone um sonho apenas porque ele levará anos. Os anos também levarão embora a chance de tentar.",
+        "Pequenos progressos acumulados durante muito tempo criam resultados que parecem impossíveis para quem só observa o final.",
+        "A disciplina é a arte de continuar mesmo nos dias em que a vontade desaparece.",
+        "A jornada fica mais leve quando você entende que crescer devagar ainda é crescer.",
+        "Todo objetivo distante começa parecendo grande demais até virar rotina.",
+        "O maior risco não é falhar. É deixar o tempo passar sem construir nada com ele.",
+        "A vida muda quando suas ações diárias começam a combinar com os seus objetivos.",
+        "O segredo de quem chega longe é simples: não parar nos dias difíceis.",
+        "Resultados extraordinários geralmente são construídos em silêncio, longe da pressa e da aprovação imediata.",
+        "Você não precisa transformar sua vida em um dia. Precisa apenas não desistir dela todos os dias.",
+        "O hábito de continuar vale mais do que explosões passageiras de motivação.",
+        "O tempo recompensa quem aceita evoluir passo a passo.",
+        "Toda versão forte de alguém já foi uma versão cansada que decidiu continuar.",
+        "Sonhos deixam de ser abstratos quando ganham espaço na rotina.",
+        "Quem aprende a respeitar os pequenos avanços dificilmente volta para o ponto de partida.",
+        "O futuro é construído nas escolhas pequenas que parecem insignificantes hoje.",
+        "Não espere se sentir pronto para começar. O caminho também ensina enquanto você anda.",
+        "A diferença entre quem realiza e quem apenas deseja costuma estar na constância.",
+        "Fazer pouco ainda é infinitamente melhor do que não fazer nada.",
+        "A paciência é mais poderosa quando anda junto com a disciplina.",
+        "Um dia você vai olhar para trás e perceber que aquelas pequenas ações diárias mudaram completamente sua vida."
+      ];
+      const el = document.getElementById('frase-do-dia');
+      if (el) el.textContent = frases[Math.floor(Math.random() * frases.length)];
+    })();
 
     function openQR() {
       const overlay = document.getElementById('qr-overlay');
