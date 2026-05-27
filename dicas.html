@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dicas de Estudo — César Azevedo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    [data-theme="dark"] {
+      --bg: #0f1117; --card-bg: #1e2130; --card-border: #2a2f45;
+      --text-h: #f1f5f9; --text-sub: #94a3b8; --text-muted: #64748b;
+      --shadow: rgba(0,0,0,.35); --grid-line: rgba(255,255,255,.03);
+      --toggle-bg: #1e2130; --toggle-border: #2a2f45;
+      --accent: #f59e0b; --accent-dim: rgba(245,158,11,.12);
+      --example-bg: rgba(245,158,11,.06); --example-border: rgba(245,158,11,.2);
+      --divider: rgba(255,255,255,.06);
+      --tag-bg: rgba(245,158,11,.15); --tag-text: #fbbf24;
+      --book-bg: #1a1e2e;
+    }
+    [data-theme="light"] {
+      --bg: #f0f4f8; --card-bg: #ffffff; --card-border: #dde3ec;
+      --text-h: #0f172a; --text-sub: #475569; --text-muted: #94a3b8;
+      --shadow: rgba(0,0,0,.10); --grid-line: rgba(0,0,0,.04);
+      --toggle-bg: #ffffff; --toggle-border: #dde3ec;
+      --accent: #d97706; --accent-dim: rgba(217,119,6,.10);
+      --example-bg: rgba(217,119,6,.06); --example-border: rgba(217,119,6,.25);
+      --divider: rgba(0,0,0,.08);
+      --tag-bg: rgba(217,119,6,.12); --tag-text: #b45309;
+      --book-bg: #fef9f0;
+    }
+
+    body {
+      min-height: 100vh; background: var(--bg);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 40px 16px 80px; transition: background .3s;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+                        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 40px 40px; pointer-events: none;
+    }
+
+    /* ── Fixed buttons ── */
+    .fixed-btn {
+      position: fixed; border-radius: 999px; padding: 6px 14px;
+      cursor: pointer; display: flex; align-items: center; gap: 7px;
+      font-size: .82rem; color: var(--text-sub);
+      background: var(--toggle-bg); border: 1px solid var(--toggle-border);
+      transition: color .2s; text-decoration: none;
+      box-shadow: 0 2px 8px var(--shadow); z-index: 20; user-select: none;
+    }
+    .fixed-btn:hover { color: var(--text-h); }
+    .fixed-btn.left  { top: 18px; left: 18px; }
+    .fixed-btn.right { top: 18px; right: 18px; }
+
+    /* ── Header ── */
+    .header { text-align: center; margin: 12px 0 28px; position: relative; z-index: 1; }
+    .header-icon { font-size: 2.4rem; margin-bottom: 10px; }
+    .header h1 {
+      font-size: 1.6rem; font-weight: 800; color: var(--text-h);
+      letter-spacing: -.4px; margin-bottom: 6px;
+    }
+    .header p { font-size: .84rem; color: var(--text-muted); }
+
+    /* ── Content wrapper ── */
+    .content { width: 100%; max-width: 600px; position: relative; z-index: 1; }
+
+    /* ── Book banner ── */
+    .book-banner {
+      background: var(--book-bg); border: 1px solid var(--card-border);
+      border-left: 4px solid var(--accent); border-radius: 14px;
+      padding: 18px 20px; margin-bottom: 28px;
+      display: flex; gap: 14px; align-items: flex-start;
+    }
+    .book-icon { font-size: 2rem; flex-shrink: 0; }
+    .book-info { flex: 1; }
+    .book-label {
+      font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 4px;
+    }
+    .book-title {
+      font-size: .95rem; font-weight: 700; color: var(--text-h); line-height: 1.35;
+      margin-bottom: 4px;
+    }
+    .book-author { font-size: .8rem; color: var(--text-sub); }
+
+    /* ── Section label ── */
+    .section-label {
+      font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--text-muted);
+      margin: 28px 0 12px 2px;
+    }
+
+    /* ── Technique accordion ── */
+    .technique {
+      background: var(--card-bg); border: 1px solid var(--card-border);
+      border-radius: 14px; margin-bottom: 8px;
+      box-shadow: 0 2px 12px var(--shadow);
+      overflow: hidden; transition: border-color .2s;
+    }
+    .technique:hover { border-color: var(--accent); }
+    .technique.open   { border-color: var(--accent); }
+
+    .technique-header {
+      display: flex; align-items: center; gap: 14px;
+      padding: 16px 18px; cursor: pointer;
+      user-select: none;
+    }
+    .technique-num {
+      flex-shrink: 0; width: 30px; height: 30px;
+      background: var(--accent-dim); border: 1px solid var(--accent);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: .78rem; font-weight: 800; color: var(--accent);
+    }
+    .technique-title-wrap { flex: 1; }
+    .technique-title {
+      font-size: .92rem; font-weight: 700; color: var(--text-h);
+    }
+    .technique-tag {
+      display: inline-block; font-size: .68rem; font-weight: 600;
+      padding: 2px 8px; border-radius: 99px;
+      background: var(--tag-bg); color: var(--tag-text);
+      margin-top: 3px;
+    }
+    .technique-chevron {
+      font-size: .8rem; color: var(--text-muted);
+      transition: transform .25s; flex-shrink: 0;
+    }
+    .technique.open .technique-chevron { transform: rotate(180deg); }
+
+    .technique-body {
+      display: none; padding: 0 18px 18px;
+      border-top: 1px solid var(--divider);
+    }
+    .technique.open .technique-body { display: block; }
+
+    .technique-desc {
+      font-size: .84rem; color: var(--text-sub); line-height: 1.65;
+      margin: 14px 0 12px;
+    }
+    .example-block {
+      background: var(--example-bg); border: 1px solid var(--example-border);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .example-label {
+      font-size: .68rem; font-weight: 700; letter-spacing: .1em;
+      text-transform: uppercase; color: var(--accent); margin-bottom: 8px;
+    }
+    .example-text {
+      font-size: .82rem; color: var(--text-sub); line-height: 1.65;
+    }
+
+    /* ── Footer ── */
+    .footer {
+      margin-top: 40px; text-align: center;
+      font-size: .76rem; color: var(--text-muted);
+      position: relative; z-index: 1;
+    }
+    .footer a { color: var(--accent); text-decoration: none; }
+    .footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <a class="fixed-btn left" href="https://cesarazevedo.github.io">← Voltar</a>
+  <button class="fixed-btn right" onclick="toggleTheme()" id="theme-btn">☀ Claro</button>
+
+  <div class="header">
+    <div class="header-icon">📚</div>
+    <h1>Dicas de Estudo</h1>
+    <p>21 técnicas práticas para aprender melhor</p>
+  </div>
+
+  <div class="content">
+
+    <div class="book-banner">
+      <div class="book-icon">📖</div>
+      <div class="book-info">
+        <div class="book-label">Baseado no livro</div>
+        <div class="book-title">21 Estratégias Práticas para Estudar e Aprender Melhor</div>
+        <div class="book-author">Ismar Souza</div>
+      </div>
+    </div>
+
+    <div class="section-label">Planejamento &amp; Leitura</div>
+
+    <div class="technique" id="t1">
+      <div class="technique-header" onclick="toggle('t1')">
+        <div class="technique-num">1</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Planeje seu tempo de leitura</div>
+          <span class="technique-tag">Planejamento</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Calcule o tempo exato que você leva para ler uma página padrão e cruze esse dado com o total de páginas do livro. Isso tira a sensação de que a leitura é infinita.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Você cronometra que lê uma página técnica em 90 segundos. O livro tem 100 páginas úteis. O cálculo mostra que você precisa de 2h30 para terminar a obra; planejando 30 minutos por dia, você termina em 5 dias.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t2">
+      <div class="technique-header" onclick="toggle('t2')">
+        <div class="technique-num">2</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Como usar um livro</div>
+          <span class="technique-tag">Leitura</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Faça uma "leitura inspecional" antes de ler o texto corrido. Olhe o título, subtítulo, contracapa, sumário e a bibliografia para entender o contexto geral do autor.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Antes de começar a ler um livro sobre Gestão, gaste 10 minutos olhando o sumário para ver quais capítulos importam e leia a biografia do autor na aba para entender a linha de pensamento dele.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t3">
+      <div class="technique-header" onclick="toggle('t3')">
+        <div class="technique-num">3</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Método de leitura SQ3R</div>
+          <span class="technique-tag">Leitura</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Estrutura de cinco passos: Inspecionar (Survey), Questionar (Question), Ler (Read), Recitar (Recite) e Revisar (Review).</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Em um artigo científico, você dá uma olhada rápida nas conclusões (Inspeciona), transforma os subtítulos em perguntas (Questiona), lê o texto buscando as respostas (Lê), explica o que entendeu em voz alta (Recita) e relê os seus tópicos anotados no fim do dia (Revisa).</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t4">
+      <div class="technique-header" onclick="toggle('t4')">
+        <div class="technique-num">4</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Leitura ativa</div>
+          <span class="technique-tag">Leitura</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Leia aplicando seis perguntas jornalísticas ao texto: Quem, o quê, quando, onde, por quê e como. Isso evita que você seja um leitor passivo.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Ao ler sobre uma teoria de psicologia, pergunte-se: "Quem criou?", "Quando foi escrita (a data afeta a visão do autor?)", "Por que ele defende isso?" e "Como essa ideia foi testada?".</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t5">
+      <div class="technique-header" onclick="toggle('t5')">
+        <div class="technique-num">5</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Fazendo perguntas</div>
+          <span class="technique-tag">Análise</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Crie perguntas direcionadas para estimular a curiosidade da mente ou para forçar a análise do conteúdo.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Use a pergunta "E aí o quê?" para prever as consequências reais de uma teoria, ou a pergunta "Como eles sabem disso?" para avaliar se os dados vêm de experimentos válidos ou de mera opinião do autor.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Anotações &amp; Síntese</div>
+
+    <div class="technique" id="t6">
+      <div class="technique-header" onclick="toggle('t6')">
+        <div class="technique-num">6</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Faça anotações</div>
+          <span class="technique-tag">Registro</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Registre ideias centrais e conclusões misturando palavras próprias com símbolos gráficos rápidos para manter o foco e engajar o cérebro.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Enquanto assiste a uma videoaula, anote o conceito principal e use uma seta (→) para ligar causa ao efeito, ou um asterisco (*) na margem para destacar o ponto mais importante.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t7">
+      <div class="technique-header" onclick="toggle('t7')">
+        <div class="technique-num">7</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Resumo</div>
+          <span class="technique-tag">Síntese</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Condense o texto original reduzindo palavras por meio de três técnicas: eliminação (tirar o que é extra), generalização (agrupar itens por significado) ou construção (deduzir uma ação maior).</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático — Generalização</div>
+          <p class="example-text">O texto diz que o projeto gastou com "cimento, tijolos, areia e ferro". No seu resumo, você escreve apenas que houve gastos com "material de construção".</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t8">
+      <div class="technique-header" onclick="toggle('t8')">
+        <div class="technique-num">8</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Parafrasear</div>
+          <span class="technique-tag">Síntese</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Reescreva uma frase mantendo o mesmo tamanho e sentido original, mas utilizando o seu próprio vocabulário e estilo para tornar a ideia familiar.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">O livro diz: "A privação extrema do sono causa psicose e grave falta de aprendizado". Você parafraseia: "Dormir muito mal pode provocar surtos e prejudicar severamente a nossa capacidade de reter conteúdo".</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t9">
+      <div class="technique-header" onclick="toggle('t9')">
+        <div class="technique-num">9</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Autoexplicação</div>
+          <span class="technique-tag">Metacognição</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Pense em voz alta conversando consigo mesmo para monitorar o raciocínio enquanto resolve um problema específico.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Ao resolver uma questão de lógica, diga em voz alta: "Espera aí, acho que estou fazendo isso errado. Eu preciso descobrir primeiro o valor de X para depois aplicar a fórmula. Ah, entendi, o erro estava no passo dois!"</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t10">
+      <div class="technique-header" onclick="toggle('t10')">
+        <div class="technique-num">10</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Autoavaliação</div>
+          <span class="technique-tag">Metacognição</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Teste a si mesmo em intervalos regulares criando ferramentas práticas (como simulados ou cartões de lacunas) para obter feedback imediato do que foi aprendido.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Crie um "teste de lacunas" pegando o resumo de um texto e apagando palavras essenciais. Depois, tente preencher os espaços de memória para ver se realmente fixou o assunto.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t11">
+      <div class="technique-header" onclick="toggle('t11')">
+        <div class="technique-num">11</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Conexão de ideias</div>
+          <span class="technique-tag">Organização</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Organize anotações espalhadas procurando categorias, semelhanças ou contrastes para encontrar o "quadro geral" em meio a detalhes isolados.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Após ler vários artigos sobre comportamento organizacional, agrupe as anotações soltas em três grandes temas: "Liderança", "Motivação" e "Cultura", facilitando a revisão de 20 folhas em apenas 3 tópicos.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Visualização &amp; Memória</div>
+
+    <div class="technique" id="t12">
+      <div class="technique-header" onclick="toggle('t12')">
+        <div class="technique-num">12</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Mapeamento de ideias</div>
+          <span class="technique-tag">Visual</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Crie diagramas estruturados (mapas mentais) a partir de uma ideia central, puxando ramos em sentido horário organizados por cores, palavras-chave e imagens.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Para estudar o funcionamento do cérebro, desenhe "CÉREBRO" no centro. Puxe um ramo azul para "Sono", um ramo verde para "Foco" e distribua palavras-chave curtas ao longo deles.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t13">
+      <div class="technique-header" onclick="toggle('t13')">
+        <div class="technique-num">13</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Desenhando imagens</div>
+          <span class="technique-tag">Visual</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Represente graficamente a relação entre ideias por meio de metáforas visuais (escadas, fluxogramas, diagramas de teia), pois o cérebro processa imagens muito mais rápido que textos.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Para fixar uma doença e seus sintomas, coloque o nome "Gripe" no centro de um círculo e puxe ramificações contendo "Febre", "Dor de cabeça" e "Tosse".</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t14">
+      <div class="technique-header" onclick="toggle('t14')">
+        <div class="technique-num">14</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Conversação</div>
+          <span class="technique-tag">Social</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Explique a matéria em voz alta para outra pessoa (ou para um objeto inanimado) para estruturar o conhecimento e descobrir o que você realmente entendeu.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Finja que está dando uma palestra no seu quarto e explique a teoria que acabou de ler para uma parede, ou grave uma conversa com um colega simulando um telejornal para ouvir o áudio depois.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t15">
+      <div class="technique-header" onclick="toggle('t15')">
+        <div class="technique-num">15</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Ensaio mental</div>
+          <span class="technique-tag">Visualização</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Visualize na mente, passo a passo e com os olhos fechados, a execução perfeita de uma tarefa ou processo técnico para programar o cérebro.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Antes de uma apresentação importante, feche os olhos e imagine-se abrindo o arquivo, gesticulando de forma calma, respondendo às perguntas difíceis e concluindo com sucesso.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Sistemas de Revisão</div>
+
+    <div class="technique" id="t16">
+      <div class="technique-header" onclick="toggle('t16')">
+        <div class="technique-num">16</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Sistema Leitner</div>
+          <span class="technique-tag">Repetição Espaçada</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Método que usa flashcards distribuídos em caixas numeradas. Os cartões que você acerta avançam de caixa; os que erra voltam para a caixa 1. As caixas menores (onde estão seus erros) são revisadas com mais frequência.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">A Caixa 1 é revisada todo dia; a Caixa 3 é revisada duas vezes por semana. Se você errar um termo que já estava na Caixa 3, ele é rebaixado para a Caixa 1 para você vê-lo diariamente até reaprender.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t17">
+      <div class="technique-header" onclick="toggle('t17')">
+        <div class="technique-num">17</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Interação em grupo</div>
+          <span class="technique-tag">Social</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Formato de estudo coletivo estruturado onde os membros se revezam como apresentadores e os ouvintes fazem perguntas "fora da caixa" para forçar a integração do assunto.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Em um grupo de três estudantes, um explica o funcionamento de um sistema. O colega ouvinte interrompe e faz a pergunta: "Quem não concorda com essa tese e quais são os pontos fracos desse sistema?"</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t18">
+      <div class="technique-header" onclick="toggle('t18')">
+        <div class="technique-num">18</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Audição ativa</div>
+          <span class="technique-tag">Presença</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Comportamento focado para palestras e aulas: demonstre apoio não-verbal (olhar o falante, inclinar-se para a frente, balançar a cabeça) e processe a mensagem internamente em vez de apenas ouvir no piloto automático.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Em uma palestra, deixe o celular guardado, incline o corpo para a frente quando o professor disser "isso é o ponto-chave", e espere ele pausar para demonstrar compreensão parafraseando o argumento.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t19">
+      <div class="technique-header" onclick="toggle('t19')">
+        <div class="technique-num">19</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Fluência / Automaticidade</div>
+          <span class="technique-tag">Prática</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Continue praticando ou revisando um conteúdo mesmo depois de já tê-lo aprendido (superaprendizado) para que a velocidade de recordação seja instantânea e sem esforço mental.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Lembrar a tabuada de cabeça sem precisar somar nos dedos, ou decorar atalhos de teclado de um software que você usa toda hora até que o movimento se torne automático.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-label">Memorização</div>
+
+    <div class="technique" id="t20">
+      <div class="technique-header" onclick="toggle('t20')">
+        <div class="technique-num">20</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Memorização</div>
+          <span class="technique-tag">Mnemônica</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Uso de artifícios mnemônicos para fixar dados abstratos (listas, datas, números) que não oferecem lógica direta. Principais técnicas: acrósticos e Palácio da Memória.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo — Acróstico</div>
+          <p class="example-text">Decorar os planetas usando a frase: "Minha Vó Tem Muitas Joias e Só Usa Nua" (Mercúrio, Vênus, Terra, Marte, Júpiter, Saturno, Urano, Netuno).</p>
+        </div>
+        <div class="example-block" style="margin-top:10px;">
+          <div class="example-label">Exemplo — Palácio da Memória</div>
+          <p class="example-text">Imagine os cômodos da sua casa e associe uma lista de compras a objetos fixos: a porta de entrada suja de sorvete e o sofá coberto por maçãs gigantes.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="technique" id="t21">
+      <div class="technique-header" onclick="toggle('t21')">
+        <div class="technique-num">21</div>
+        <div class="technique-title-wrap">
+          <div class="technique-title">Automonitoramento</div>
+          <span class="technique-tag">Metacognição</span>
+        </div>
+        <span class="technique-chevron">▾</span>
+      </div>
+      <div class="technique-body">
+        <p class="technique-desc">Avalie de forma consciente o andamento do seu próprio aprendizado, identificando fraquezas, analisando o padrão dos seus erros e traçando planos de ação corretivos.</p>
+        <div class="example-block">
+          <div class="example-label">Exemplo prático</div>
+          <p class="example-text">Após errar três questões de um simulado, pergunte-se: "Existe um padrão para meus erros? Errei por falta de atenção ou porque confundi o conceito? Preciso criar cartões de resumo ou revisar o capítulo dois novamente?"</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      Baseado no livro <em>21 Estratégias Práticas para Estudar e Aprender Melhor</em> — Ismar Souza
+    </div>
+
+  </div>
+
+  <script>
+    function toggle(id) {
+      const el = document.getElementById(id);
+      el.classList.toggle('open');
+    }
+
+    function toggleTheme() {
+      const html = document.documentElement;
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      document.getElementById('theme-btn').textContent = isDark ? '🌙 Escuro' : '☀ Claro';
+    }
+  </script>
+</body>
+</html>
