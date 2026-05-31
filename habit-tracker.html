@@ -688,51 +688,68 @@
         return;
       }
 
-      const n    = data.daily.length;
-      const dotR = Math.max(3, Math.min(5, Math.floor(220 / (nDays * 2))));
-      const gap  = 2;
-      const ringW = dotR * 2 + gap;
-      const innerR = Math.max(22, dotR * 3);
-      const totalR = innerR + n * ringW;
-      const svgW  = Math.min(520, totalR * 2 + 20);
-      const svgH  = totalR + 10;
-      const cx    = svgW / 2;
-      const cy    = svgH;
+      const n = data.daily.length;
+      const SIZE = 300;
+      const cx = SIZE / 2, cy = SIZE / 2;
+      const innerR = Math.max(16, SIZE * 0.065);
+      const outerR = SIZE * 0.42;
+      const ringW  = (outerR - innerR) / n;
+      const dotR   = Math.max(1.5, Math.min(ringW * 0.3, 5));
+      const START_DEG = 75, SWEEP_DEG = 300;
 
+      function pt(dIdx, r) {
+        const theta = (START_DEG - dIdx / Math.max(nDays - 1, 1) * SWEEP_DEG) * Math.PI / 180;
+        return [cx + r * Math.cos(theta), cy - r * Math.sin(theta)];
+      }
+
+      // Ring arc separators (300° clockwise: large-arc=1, sweep=1)
+      let arcs = '';
+      for (let i = 0; i <= n; i++) {
+        const r = innerR + i * ringW;
+        const [x1, y1] = pt(0, r);
+        const [x2, y2] = pt(nDays - 1, r);
+        arcs += `<path d="M ${x1.toFixed(1)} ${y1.toFixed(1)} A ${r.toFixed(1)} ${r.toFixed(1)} 0 1 1 ${x2.toFixed(1)} ${y2.toFixed(1)}" fill="none" stroke="rgba(148,163,184,0.25)" stroke-width="0.7"/>`;
+      }
+
+      // Radial separators between each day
+      let radials = '';
+      for (let d = 0; d < nDays - 1; d++) {
+        const [x1, y1] = pt(d + 0.5, innerR);
+        const [x2, y2] = pt(d + 0.5, outerR);
+        radials += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="rgba(148,163,184,0.2)" stroke-width="0.4"/>`;
+      }
+
+      // Dots per habit per day
       let circles = '';
       data.daily.forEach((h, i) => {
-        const r = innerR + i * ringW + dotR;
+        const r = innerR + i * ringW + ringW / 2;
         for (let d = 1; d <= nDays; d++) {
-          const theta = Math.PI - ((d - 1) / Math.max(nDays - 1, 1)) * Math.PI;
-          const px = cx + r * Math.cos(theta);
-          const py = cy - r * Math.sin(theta);
+          const [px, py] = pt(d - 1, r);
           const fc = fill ? h.color : 'none';
-          circles += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${dotR}" fill="${fc}" stroke="${h.color}" stroke-width="1.5"/>`;
+          circles += `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${dotR.toFixed(1)}" fill="${fc}" stroke="${h.color}" stroke-width="1.1"/>`;
         }
       });
 
-      // Day labels at inner edge
+      // Day number labels on outer edge
       let dayLabels = '';
-      const labelR = innerR - 7;
-      [1, 7, 14, 21, 28].concat(nDays !== 28 ? [nDays] : []).forEach(d => {
-        if (d < 1 || d > nDays) return;
-        const theta = Math.PI - ((d - 1) / Math.max(nDays - 1, 1)) * Math.PI;
-        const lx = cx + labelR * Math.cos(theta);
-        const ly = cy - labelR * Math.sin(theta);
-        dayLabels += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="7" fill="#64748b">${d}</text>`;
-      });
+      const labelR = outerR + 10;
+      for (let d = 1; d <= nDays; d++) {
+        const [lx, ly] = pt(d - 1, labelR);
+        dayLabels += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="7.5" fill="#64748b">${String(d).padStart(2,'0')}</text>`;
+      }
 
-      // Legend
       const legendItems = data.daily.map((h, i) => `
         <div class="circ-legend-item">
           <div class="circ-legend-dot" style="background:${h.color}"></div>
           <span>${escH(h.name || `Hábito ${i + 1}`)}</span>
         </div>`).join('');
 
+      const pad = 20;
+      const vb = `${-pad} ${-pad} ${SIZE + pad * 2} ${SIZE + pad * 2}`;
       el.innerHTML = `<div class="circ-preview">
         <div style="overflow-x:auto;width:100%">
-          <svg xmlns="http://www.w3.org/2000/svg" width="${svgW}" height="${svgH}" viewBox="0 0 ${svgW} ${svgH}" style="display:block;margin:0 auto;max-width:100%">
-            ${circles}${dayLabels}
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" style="display:block;margin:0 auto;max-width:100%;width:${SIZE + pad * 2}px;height:${SIZE + pad * 2}px">
+            ${arcs}${radials}${circles}${dayLabels}
           </svg>
         </div>
         <div class="circ-legend">${legendItems}</div>
@@ -1154,7 +1171,7 @@
       doc.setFillColor(99, 102, 241);
       doc.rect(0, 0, PW, 3, 'F');
 
-      // Month title
+      // Header
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(17);
       doc.setTextColor(70, 70, 80);
@@ -1163,7 +1180,6 @@
       doc.setFontSize(6);
       doc.setTextColor(160, 160, 170);
       doc.text('MÊS', PW - MR, MT + 15, { align: 'right' });
-
       if (userName) {
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(13);
@@ -1175,166 +1191,176 @@
         doc.text('NOME', ML, MT + 15);
       }
 
-      // ── Circular fan (daily habits) ──
+      // ── Layout constants ──
+      // Legend on the left (x=ML..legendMaxX), circle on the right
+      const LEGEND_W = 68;
+      const circLeft = ML + LEGEND_W + 4;
+      const circRight = PW - MR;
+      const circTop = MT + 22;
+      const circBottom = PH - MB - 6;
+      const cx = (circLeft + circRight) / 2;
+      const cy = (circTop + circBottom) / 2;
+      const maxR = Math.min((circRight - circLeft) / 2, (circBottom - circTop) / 2) - 8;
+
+      const START_DEG = 75, SWEEP_DEG = 300;
       const n = data.daily.length;
+
+      // Point on the arc for day index dIdx (0-based), radius r
+      function pt(dIdx, r) {
+        const theta = (START_DEG - dIdx / Math.max(nDays - 1, 1) * SWEEP_DEG) * Math.PI / 180;
+        return [cx + r * Math.cos(theta), cy - r * Math.sin(theta)];
+      }
+
+      // Draw an arc as polyline segments
+      function drawArc(r, color, lw, steps = 80) {
+        doc.setDrawColor(color[0], color[1], color[2]);
+        doc.setLineWidth(lw);
+        for (let i = 0; i < steps; i++) {
+          const [x1, y1] = pt((i / steps) * (nDays - 1), r);
+          const [x2, y2] = pt(((i + 1) / steps) * (nDays - 1), r);
+          doc.line(x1, y1, x2, y2);
+        }
+      }
+
       if (n > 0) {
-        // Fan center: right-center of page, leaving left for legend
-        const legendW = 70;
-        const cx = ML + legendW + (PW - ML - legendW - MR) / 2;
-        const cy = PH - MB - 8;  // near bottom
+        const innerR = Math.max(8, maxR * 0.13);
+        const outerR = maxR;
+        const ringW  = (outerR - innerR) / n;
+        const dotR   = Math.min(2.5, ringW * 0.28);
+        const labelR = outerR + 5;
 
-        const maxR  = Math.min(cy - MT - 25, (PW - ML - legendW - MR) / 2 - 5);
-        const innerR = Math.max(10, Math.min(18, maxR * 0.18));
-        const ringW  = Math.min(7, (maxR - innerR) / Math.max(n, 1));
-        const dotR   = Math.min(2.4, ringW * 0.32);
+        // Ring arc separators
+        for (let i = 0; i <= n; i++) {
+          drawArc(innerR + i * ringW, [215, 215, 225], 0.12);
+        }
 
-        // Draw rings
+        // Radial separators between days
+        doc.setLineWidth(0.1);
+        for (let d = 0; d < nDays - 1; d++) {
+          const [x1, y1] = pt(d + 0.5, innerR);
+          const [x2, y2] = pt(d + 0.5, outerR);
+          doc.setDrawColor(215, 215, 225);
+          doc.line(x1, y1, x2, y2);
+        }
+
+        // Opening tick marks
+        doc.setDrawColor(180, 180, 195);
+        doc.setLineWidth(0.25);
+        [[0, innerR - 2, outerR + 2], [nDays - 1, innerR - 2, outerR + 2]].forEach(([dIdx, r1, r2]) => {
+          const [x1, y1] = pt(dIdx, r1);
+          const [x2, y2] = pt(dIdx, r2);
+          doc.line(x1, y1, x2, y2);
+        });
+
+        // Dots per habit per day
         data.daily.forEach((h, i) => {
           const r = innerR + i * ringW + ringW / 2;
           const { r: cr, g: cg, b: cb } = hexToRgb(h.color);
 
           for (let d = 1; d <= nDays; d++) {
-            const theta = Math.PI - ((d - 1) / Math.max(nDays - 1, 1)) * Math.PI;
-            const px = cx + r * Math.cos(theta);
-            const py = cy - r * Math.sin(theta);
-
+            const [px, py] = pt(d - 1, r);
             const isWknd = wkend && (() => { const dow = (firstDow + d - 1) % 7; return dow === 0 || dow === 6; })();
-
             if (fill) {
               doc.setFillColor(cr, cg, cb);
               doc.setDrawColor(cr, cg, cb);
               doc.circle(px, py, dotR, 'FD');
             } else {
-              // Light tint + stroke (weekend slightly dimmer)
-              const tint = isWknd ? 40 : 70;
+              const tint = isWknd ? 35 : 65;
               doc.setFillColor(Math.min(255, cr + tint), Math.min(255, cg + tint), Math.min(255, cb + tint));
               doc.setDrawColor(cr, cg, cb);
-              doc.setLineWidth(0.3);
+              doc.setLineWidth(0.28);
               doc.circle(px, py, dotR, 'FD');
             }
           }
         });
 
-        // Day number labels at inner arc
-        const labelR = innerR - 5;
-        [1, 7, 14, 21, 28].concat(nDays !== 28 ? [nDays] : []).forEach(d => {
-          if (d < 1 || d > nDays) return;
-          const theta = Math.PI - ((d - 1) / Math.max(nDays - 1, 1)) * Math.PI;
-          const lx = cx + labelR * Math.cos(theta);
-          const ly = cy - labelR * Math.sin(theta);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(5);
-          doc.setTextColor(150, 150, 165);
-          doc.text(String(d), lx, ly, { align: 'center', baseline: 'middle' });
-        });
-
-        // Tick marks at bottom of arc for each end
-        doc.setDrawColor(180, 180, 195);
-        doc.setLineWidth(0.2);
-        const outerR = innerR + n * ringW;
-        // Left end (day 1) and right end (day nDays)
-        [0, Math.PI].forEach(theta => {
-          doc.line(
-            cx + (innerR - 2) * Math.cos(theta), cy - (innerR - 2) * Math.sin(theta),
-            cx + (outerR + 2) * Math.cos(theta), cy - (outerR + 2) * Math.sin(theta)
-          );
-        });
-
-        // Legend on the left
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(6);
-        doc.setTextColor(120, 120, 130);
-        doc.text('HÁBITOS', ML, MT + 24);
-
-        const legendStartY = MT + 30;
-        const legendRowH   = Math.min(8, (cy - legendStartY - 5) / Math.max(n, 1));
-
-        data.daily.forEach((h, i) => {
-          const ly = legendStartY + i * legendRowH;
-          const { r: sr, g: sg, b: sb } = hexToRgb(h.color);
-
-          // Color swatch
-          doc.setFillColor(sr, sg, sb);
-          doc.roundedRect(ML, ly - 2, 4, 4, 0.5, 0.5, 'F');
-
-          // Habit name
-          const label = (nums ? `${i + 1}. ` : '') + (h.name.trim() || `Hábito ${i + 1}`);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(7.5);
-          doc.setTextColor(55, 55, 65);
-          doc.text(doc.splitTextToSize(label, legendW - 10)[0], ML + 6, ly + 0.5);
-        });
+        // Day number labels on outer edge
+        for (let d = 1; d <= nDays; d++) {
+          const [lx, ly] = pt(d - 1, labelR);
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(4.5);
+          doc.setTextColor(140, 140, 155);
+          doc.text(String(d).padStart(2, '0'), lx, ly, { align: 'center', baseline: 'middle' });
+        }
       }
 
-      // ── Weekly / Monthly side table (right column) ──
-      const hasWkl = data.weekly.length > 0;
-      const hasMly = data.monthly.length > 0;
+      // ── Legend (left column) ──
+      const headerY = MT + 24;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6);
+      doc.setTextColor(120, 120, 130);
+      doc.text('HÁBITOS', ML, headerY);
 
-      if (hasWkl || hasMly) {
-        const sideX = PW - MR - 58;
-        const sideW = 58;
-        let sideY = MT + 24;
+      const lStartY = headerY + 6;
+      const lRowH   = Math.min(8.5, (circBottom - lStartY - 4) / Math.max(n + data.weekly.length + data.monthly.length, 1));
+      let lY = lStartY;
 
-        if (hasWkl) {
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(6);
-          doc.setTextColor(16, 185, 129);
-          doc.text('SEMANAL', sideX, sideY);
-          sideY += 5;
+      data.daily.forEach((h, i) => {
+        const { r: sr, g: sg, b: sb } = hexToRgb(h.color);
+        doc.setFillColor(sr, sg, sb);
+        doc.roundedRect(ML, lY - 2, 4, 4, 0.5, 0.5, 'F');
+        const label = (nums ? `${i + 1}. ` : '') + (h.name.trim() || `Hábito ${i + 1}`);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(55, 55, 65);
+        doc.text(doc.splitTextToSize(label, LEGEND_W - 8)[0], ML + 6, lY + 0.4);
+        lY += lRowH;
+      });
 
-          // Column headers
-          const colW = (sideW - 30) / 5;
+      if (data.weekly.length > 0) {
+        lY += 3;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6);
+        doc.setTextColor(16, 185, 129);
+        doc.text('SEMANAL', ML, lY);
+        lY += 5;
+        const colW = (LEGEND_W - 32) / 5;
+        [1,2,3,4,5].forEach((w, wi) => {
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(5.5);
           doc.setTextColor(120, 120, 130);
-          [1,2,3,4,5].forEach((w, wi) => {
-            doc.text(`S${w}`, sideX + 30 + wi * colW + colW / 2, sideY, { align: 'center' });
+          doc.text(`S${w}`, ML + 32 + wi * colW + colW / 2, lY - 1, { align: 'center' });
+        });
+        data.weekly.forEach((h, i) => {
+          const { r: sr, g: sg, b: sb } = hexToRgb(h.color);
+          doc.setFillColor(sr, sg, sb);
+          doc.roundedRect(ML, lY - 1.5, 3, 3, 0.3, 0.3, 'F');
+          const label = (h.name.trim() || `Hábito ${i + 1}`);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(55, 55, 65);
+          doc.text(doc.splitTextToSize(label, 26)[0], ML + 4, lY + 0.3);
+          const sq = 1.6;
+          [0,1,2,3,4].forEach(wi => {
+            const bx = ML + 32 + wi * colW + colW / 2;
+            const { r: cr, g: cg, b: cb } = hexToRgb(h.color);
+            doc.setDrawColor(cr, cg, cb);
+            doc.setFillColor(Math.min(255,cr+70), Math.min(255,cg+70), Math.min(255,cb+70));
+            doc.setLineWidth(0.22);
+            doc.roundedRect(bx - sq, lY - sq, sq*2, sq*2, 0.3, 0.3, 'FD');
           });
-          sideY += 4;
+          lY += lRowH;
+        });
+      }
 
-          data.weekly.forEach((h, i) => {
-            const { r: sr, g: sg, b: sb } = hexToRgb(h.color);
-            doc.setFillColor(sr, sg, sb);
-            doc.roundedRect(sideX, sideY - 2, 3, 3, 0.3, 0.3, 'F');
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7);
-            doc.setTextColor(55, 55, 65);
-            doc.text(doc.splitTextToSize(h.name.trim() || `Hábito ${i+1}`, 25)[0], sideX + 4, sideY + 0.3);
-
-            const sq = 1.7;
-            [0,1,2,3,4].forEach(wi => {
-              const bx = sideX + 30 + wi * colW + colW / 2;
-              const { r: cr, g: cg, b: cb } = hexToRgb(h.color);
-              doc.setDrawColor(cr, cg, cb);
-              doc.setFillColor(Math.min(255,cr+70), Math.min(255,cg+70), Math.min(255,cb+70));
-              doc.setLineWidth(0.25);
-              doc.roundedRect(bx - sq, sideY - sq, sq*2, sq*2, 0.3, 0.3, 'FD');
-            });
-            sideY += 6;
-          });
-          sideY += 4;
-        }
-
-        if (hasMly) {
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(6);
-          doc.setTextColor(245, 158, 11);
-          doc.text('METAS MENSAIS', sideX, sideY);
-          sideY += 5;
-
-          data.monthly.forEach((item, i) => {
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(7);
-            doc.setTextColor(55, 55, 65);
-            doc.text(doc.splitTextToSize(item.name.trim() || `Meta ${i+1}`, sideW - 10)[0], sideX + 8, sideY + 0.3);
-
-            const sq = 1.8;
-            doc.setDrawColor(160, 160, 175);
-            doc.setLineWidth(0.3);
-            doc.roundedRect(sideX, sideY - sq, sq*2, sq*2, 0.3, 0.3, 'S');
-            sideY += 6;
-          });
-        }
+      if (data.monthly.length > 0) {
+        lY += 3;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(6);
+        doc.setTextColor(245, 158, 11);
+        doc.text('METAS', ML, lY);
+        lY += 5;
+        data.monthly.forEach((item, i) => {
+          const sq = 1.8;
+          doc.setDrawColor(160, 160, 175);
+          doc.setLineWidth(0.28);
+          doc.roundedRect(ML, lY - sq, sq*2, sq*2, 0.3, 0.3, 'S');
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(55, 55, 65);
+          doc.text(doc.splitTextToSize(item.name.trim() || `Meta ${i+1}`, LEGEND_W - 8)[0], ML + 6, lY + 0.3);
+          lY += lRowH;
+        });
       }
 
       // Footer
