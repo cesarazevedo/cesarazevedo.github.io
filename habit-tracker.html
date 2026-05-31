@@ -695,7 +695,8 @@
       const outerR = SIZE * 0.42;
       const ringW  = (outerR - innerR) / n;
       const dotR   = Math.max(1.5, Math.min(ringW * 0.3, 5));
-      const START_DEG = 75, SWEEP_DEG = 300;
+      // Gap on the LEFT: day 1 starts at upper-left (150°), arc sweeps 300° CW to lower-left (210°)
+      const START_DEG = 150, SWEEP_DEG = 300;
 
       function pt(dIdx, r) {
         const theta = (START_DEG - dIdx / Math.max(nDays - 1, 1) * SWEEP_DEG) * Math.PI / 180;
@@ -738,21 +739,27 @@
         dayLabels += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="7.5" fill="#64748b">${String(d).padStart(2,'0')}</text>`;
       }
 
-      const legendItems = data.daily.map((h, i) => `
-        <div class="circ-legend-item">
-          <div class="circ-legend-dot" style="background:${h.color}"></div>
-          <span>${escH(h.name || `Hábito ${i + 1}`)}</span>
-        </div>`).join('');
+      // Habit labels inside the left gap — one per ring, anchored at gap mid-angle (180°)
+      let habitLabels = '';
+      data.daily.forEach((h, i) => {
+        const r = innerR + i * ringW + ringW / 2;
+        // Place text just inside the gap at 180° (leftmost point of each ring)
+        const lx = cx - r - 4;
+        const ly = cy;
+        const label = escH(h.name || `Hábito ${i + 1}`);
+        habitLabels += `
+          <line x1="${(cx - r + 1).toFixed(1)}" y1="${cy}" x2="${(cx - r - 12).toFixed(1)}" y2="${cy}" stroke="${h.color}" stroke-width="1.2"/>
+          <text x="${(cx - r - 14).toFixed(1)}" y="${cy}" text-anchor="end" dominant-baseline="middle" font-size="8" fill="${h.color}" font-weight="600">${label}</text>`;
+      });
 
-      const pad = 20;
+      const pad = 22;
       const vb = `${-pad} ${-pad} ${SIZE + pad * 2} ${SIZE + pad * 2}`;
       el.innerHTML = `<div class="circ-preview">
         <div style="overflow-x:auto;width:100%">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" style="display:block;margin:0 auto;max-width:100%;width:${SIZE + pad * 2}px;height:${SIZE + pad * 2}px">
-            ${arcs}${radials}${circles}${dayLabels}
+            ${arcs}${radials}${circles}${dayLabels}${habitLabels}
           </svg>
         </div>
-        <div class="circ-legend">${legendItems}</div>
       </div>`;
     }
 
@@ -1192,17 +1199,15 @@
       }
 
       // ── Layout constants ──
-      // Legend on the left (x=ML..legendMaxX), circle on the right
-      const LEGEND_W = 68;
-      const circLeft = ML + LEGEND_W + 4;
-      const circRight = PW - MR;
-      const circTop = MT + 22;
+      // Circle fills most of the page; gap opens LEFT for habit labels
+      const circTop    = MT + 22;
       const circBottom = PH - MB - 6;
-      const cx = (circLeft + circRight) / 2;
+      const cx = PW / 2 + 20;           // slightly right of center
       const cy = (circTop + circBottom) / 2;
-      const maxR = Math.min((circRight - circLeft) / 2, (circBottom - circTop) / 2) - 8;
+      const maxR = Math.min(cx - ML - 4, PW - MR - cx - 4, cy - circTop - 4, circBottom - cy - 4);
 
-      const START_DEG = 75, SWEEP_DEG = 300;
+      // Gap on LEFT: day 1 at 150° (upper-left), 300° CW to 210° (lower-left)
+      const START_DEG = 150, SWEEP_DEG = 300;
       const n = data.daily.length;
 
       // Point on the arc for day index dIdx (0-based), radius r
@@ -1222,10 +1227,11 @@
         }
       }
 
+      const innerR = n > 0 ? Math.max(8, maxR * 0.12) : 0;
+      const outerR = maxR;
+      const ringW  = n > 0 ? (outerR - innerR) / n : 0;
+
       if (n > 0) {
-        const innerR = Math.max(8, maxR * 0.13);
-        const outerR = maxR;
-        const ringW  = (outerR - innerR) / n;
         const dotR   = Math.min(2.5, ringW * 0.28);
         const labelR = outerR + 5;
 
@@ -1284,82 +1290,86 @@
         }
       }
 
-      // ── Legend (left column) ──
-      const headerY = MT + 24;
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6);
-      doc.setTextColor(120, 120, 130);
-      doc.text('HÁBITOS', ML, headerY);
+      // ── Habit labels inside the C gap (gap opens LEFT, centered at 180°) ──
+      // Each ring's leftmost point (angle 180°): x = cx - r_i, y = cy
+      if (n > 0) {
+        data.daily.forEach((h, i) => {
+          const r = innerR + i * ringW + ringW / 2;
+          const gx = cx - r;  // leftmost point of this ring (angle 180°)
+          const gy = cy;
+          const { r: cr, g: cg, b: cb } = hexToRgb(h.color);
 
-      const lStartY = headerY + 6;
-      const lRowH   = Math.min(8.5, (circBottom - lStartY - 4) / Math.max(n + data.weekly.length + data.monthly.length, 1));
-      let lY = lStartY;
+          // Tick line extending left from ring boundary
+          doc.setDrawColor(cr, cg, cb);
+          doc.setLineWidth(0.4);
+          doc.line(gx - 1, gy, gx - 10, gy);
 
-      data.daily.forEach((h, i) => {
-        const { r: sr, g: sg, b: sb } = hexToRgb(h.color);
-        doc.setFillColor(sr, sg, sb);
-        doc.roundedRect(ML, lY - 2, 4, 4, 0.5, 0.5, 'F');
-        const label = (nums ? `${i + 1}. ` : '') + (h.name.trim() || `Hábito ${i + 1}`);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(7.5);
-        doc.setTextColor(55, 55, 65);
-        doc.text(doc.splitTextToSize(label, LEGEND_W - 8)[0], ML + 6, lY + 0.4);
-        lY += lRowH;
-      });
+          // Habit name label
+          const label = (nums ? `${i + 1}. ` : '') + (h.name.trim() || `Hábito ${i + 1}`);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7);
+          doc.setTextColor(cr, cg, cb);
+          doc.text(doc.splitTextToSize(label, gx - ML - 13)[0], gx - 12, gy + 0.5, { align: 'right' });
+        });
+      }
+
+      // ── Weekly / Monthly in top-left corner (above the gap) ──
+      let sideY = MT + 24;
+      const sideMaxX = cx - maxR * 0.866 - 4;  // stays left of arc's upper-left entry
 
       if (data.weekly.length > 0) {
-        lY += 3;
+        const sideW = Math.min(80, sideMaxX - ML);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(6);
         doc.setTextColor(16, 185, 129);
-        doc.text('SEMANAL', ML, lY);
-        lY += 5;
-        const colW = (LEGEND_W - 32) / 5;
+        doc.text('SEMANAL', ML, sideY);
+        sideY += 5;
+        const colW = (sideW - 28) / 5;
         [1,2,3,4,5].forEach((w, wi) => {
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(5.5);
           doc.setTextColor(120, 120, 130);
-          doc.text(`S${w}`, ML + 32 + wi * colW + colW / 2, lY - 1, { align: 'center' });
+          doc.text(`S${w}`, ML + 28 + wi * colW + colW / 2, sideY - 1, { align: 'center' });
         });
         data.weekly.forEach((h, i) => {
           const { r: sr, g: sg, b: sb } = hexToRgb(h.color);
           doc.setFillColor(sr, sg, sb);
-          doc.roundedRect(ML, lY - 1.5, 3, 3, 0.3, 0.3, 'F');
-          const label = (h.name.trim() || `Hábito ${i + 1}`);
+          doc.roundedRect(ML, sideY - 1.5, 3, 3, 0.3, 0.3, 'F');
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(7);
           doc.setTextColor(55, 55, 65);
-          doc.text(doc.splitTextToSize(label, 26)[0], ML + 4, lY + 0.3);
+          doc.text(doc.splitTextToSize(h.name.trim() || `Hábito ${i+1}`, 22)[0], ML + 4, sideY + 0.3);
           const sq = 1.6;
           [0,1,2,3,4].forEach(wi => {
-            const bx = ML + 32 + wi * colW + colW / 2;
+            const bx = ML + 28 + wi * colW + colW / 2;
             const { r: cr, g: cg, b: cb } = hexToRgb(h.color);
             doc.setDrawColor(cr, cg, cb);
             doc.setFillColor(Math.min(255,cr+70), Math.min(255,cg+70), Math.min(255,cb+70));
             doc.setLineWidth(0.22);
-            doc.roundedRect(bx - sq, lY - sq, sq*2, sq*2, 0.3, 0.3, 'FD');
+            doc.roundedRect(bx - sq, sideY - sq, sq*2, sq*2, 0.3, 0.3, 'FD');
           });
-          lY += lRowH;
+          sideY += 6;
         });
+        sideY += 3;
       }
 
       if (data.monthly.length > 0) {
-        lY += 3;
+        const sideW = Math.min(80, sideMaxX - ML);
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(6);
         doc.setTextColor(245, 158, 11);
-        doc.text('METAS', ML, lY);
-        lY += 5;
+        doc.text('METAS', ML, sideY);
+        sideY += 5;
         data.monthly.forEach((item, i) => {
           const sq = 1.8;
           doc.setDrawColor(160, 160, 175);
           doc.setLineWidth(0.28);
-          doc.roundedRect(ML, lY - sq, sq*2, sq*2, 0.3, 0.3, 'S');
+          doc.roundedRect(ML, sideY - sq, sq*2, sq*2, 0.3, 0.3, 'S');
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(7);
           doc.setTextColor(55, 55, 65);
-          doc.text(doc.splitTextToSize(item.name.trim() || `Meta ${i+1}`, LEGEND_W - 8)[0], ML + 6, lY + 0.3);
-          lY += lRowH;
+          doc.text(doc.splitTextToSize(item.name.trim() || `Meta ${i+1}`, sideW - 8)[0], ML + 6, sideY + 0.3);
+          sideY += 6;
         });
       }
 
