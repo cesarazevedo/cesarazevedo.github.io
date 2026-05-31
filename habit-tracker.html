@@ -739,27 +739,28 @@
         dayLabels += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="7.5" fill="#64748b">${String(d).padStart(2,'0')}</text>`;
       }
 
-      // Habit labels inside the left gap — one per ring, anchored at gap mid-angle (180°)
-      let habitLabels = '';
-      data.daily.forEach((h, i) => {
-        const r = innerR + i * ringW + ringW / 2;
-        // Place text just inside the gap at 180° (leftmost point of each ring)
-        const lx = cx - r - 4;
-        const ly = cy;
-        const label = escH(h.name || `Hábito ${i + 1}`);
-        habitLabels += `
-          <line x1="${(cx - r + 1).toFixed(1)}" y1="${cy}" x2="${(cx - r - 12).toFixed(1)}" y2="${cy}" stroke="${h.color}" stroke-width="1.2"/>
-          <text x="${(cx - r - 14).toFixed(1)}" y="${cy}" text-anchor="end" dominant-baseline="middle" font-size="8" fill="${h.color}" font-weight="600">${label}</text>`;
-      });
+      // Colored table legend
+      const tableRows = data.daily.map((h, i) => `
+        <tr>
+          <td style="padding:3px 8px;font-weight:700;background:${h.color}22;border:1px solid ${h.color}44;color:${h.color}">${i+1}</td>
+          <td style="padding:3px 10px;background:${h.color}11;border:1px solid ${h.color}33;color:var(--text-sub)">${escH(h.name || `Hábito ${i+1}`)}</td>
+        </tr>`).join('');
 
       const pad = 22;
       const vb = `${-pad} ${-pad} ${SIZE + pad * 2} ${SIZE + pad * 2}`;
       el.innerHTML = `<div class="circ-preview">
         <div style="overflow-x:auto;width:100%">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}" style="display:block;margin:0 auto;max-width:100%;width:${SIZE + pad * 2}px;height:${SIZE + pad * 2}px">
-            ${arcs}${radials}${circles}${dayLabels}${habitLabels}
+            ${arcs}${radials}${circles}${dayLabels}
           </svg>
         </div>
+        <table style="border-collapse:collapse;font-size:.78rem;width:100%;margin-top:6px">
+          <thead><tr>
+            <th style="padding:3px 8px;text-align:left;color:var(--text-muted);border-bottom:1px solid var(--card-border);font-size:.65rem;letter-spacing:.05em">Nº</th>
+            <th style="padding:3px 8px;text-align:left;color:var(--text-muted);border-bottom:1px solid var(--card-border);font-size:.65rem;letter-spacing:.05em">HÁBITO</th>
+          </tr></thead>
+          <tbody>${tableRows}</tbody>
+        </table>
       </div>`;
     }
 
@@ -1290,32 +1291,67 @@
         }
       }
 
-      // ── Habit labels inside the C gap (gap opens LEFT, centered at 180°) ──
-      // Each ring's leftmost point (angle 180°): x = cx - r_i, y = cy
+      // ── Habit table in upper-left (inside the C opening) ──
+      // The C gap spans from 150° (upper-left) to 210° (lower-left).
+      // Upper entry point at outerR: x = cx + outerR*cos(150°) = cx - outerR*0.866
+      const tableMaxX = cx - outerR * 0.866 - 3;
+      const tableW    = Math.min(90, tableMaxX - ML);
+      const tableX    = ML;
+      const tableY    = circTop;
+      const nRows     = n + 1;  // header + habit rows
+      const rowH      = Math.min(9, (cy - 15 - tableY) / nRows);
+
+      // Header row
+      doc.setFillColor(70, 72, 90);
+      doc.rect(tableX, tableY, tableW, rowH, 'F');
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(6);
+      doc.setTextColor(255, 255, 255);
+      doc.text('Nº', tableX + 3, tableY + rowH / 2, { baseline: 'middle' });
+      doc.text('HÁBITO DIÁRIO', tableX + 12, tableY + rowH / 2, { baseline: 'middle' });
+
+      // Habit rows
       if (n > 0) {
         data.daily.forEach((h, i) => {
-          const r = innerR + i * ringW + ringW / 2;
-          const gx = cx - r;  // leftmost point of this ring (angle 180°)
-          const gy = cy;
+          const ry = tableY + (i + 1) * rowH;
           const { r: cr, g: cg, b: cb } = hexToRgb(h.color);
 
-          // Tick line extending left from ring boundary
-          doc.setDrawColor(cr, cg, cb);
-          doc.setLineWidth(0.4);
-          doc.line(gx - 1, gy, gx - 10, gy);
+          // Light-tinted row background
+          doc.setFillColor(Math.min(255,cr+85), Math.min(255,cg+85), Math.min(255,cb+85));
+          doc.rect(tableX, ry, tableW, rowH, 'F');
 
-          // Habit name label
-          const label = (nums ? `${i + 1}. ` : '') + (h.name.trim() || `Hábito ${i + 1}`);
-          doc.setFont('helvetica', 'normal');
+          // Number cell (slightly stronger tint)
+          doc.setFillColor(Math.min(255,cr+55), Math.min(255,cg+55), Math.min(255,cb+55));
+          doc.rect(tableX, ry, 10, rowH, 'F');
+
+          // Number
+          doc.setFont('helvetica', 'bold');
           doc.setFontSize(7);
           doc.setTextColor(cr, cg, cb);
-          doc.text(doc.splitTextToSize(label, gx - ML - 13)[0], gx - 12, gy + 0.5, { align: 'right' });
+          doc.text(String(i + 1), tableX + 5, ry + rowH / 2, { align: 'center', baseline: 'middle' });
+
+          // Habit name
+          const label = h.name.trim() || `Hábito ${i + 1}`;
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(7.5);
+          doc.setTextColor(40, 40, 50);
+          doc.text(doc.splitTextToSize(label, tableW - 14)[0], tableX + 13, ry + rowH / 2, { baseline: 'middle' });
+
+          // Row border
+          doc.setDrawColor(Math.min(255,cr+30), Math.min(255,cg+30), Math.min(255,cb+30));
+          doc.setLineWidth(0.12);
+          doc.rect(tableX, ry, tableW, rowH);
         });
+
+        // Table outer border
+        doc.setDrawColor(130, 130, 145);
+        doc.setLineWidth(0.5);
+        doc.rect(tableX, tableY, tableW, rowH * nRows);
       }
 
-      // ── Weekly / Monthly in top-left corner (above the gap) ──
-      let sideY = MT + 24;
-      const sideMaxX = cx - maxR * 0.866 - 4;  // stays left of arc's upper-left entry
+      // ── Weekly / Monthly below the table ──
+      let sideY = tableY + rowH * nRows + 5;
+      const sideMaxX = tableMaxX;
 
       if (data.weekly.length > 0) {
         const sideW = Math.min(80, sideMaxX - ML);
