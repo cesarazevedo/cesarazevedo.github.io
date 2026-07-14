@@ -809,12 +809,12 @@
 
           doc.setFont('helvetica', 'bold');
           doc.setFontSize(fs(6.5));
-          doc.setTextColor(isWknd && wkend ? 130 : 100, isWknd && wkend ? 130 : 110, isWknd && wkend ? 150 : 120);
+          doc.setTextColor(isWknd && wkend ? 90 : 70, isWknd && wkend ? 90 : 75, isWknd && wkend ? 105 : 85);
           doc.text(String(d), cx, contentTop + 5, { align: 'center' });
 
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(fs(5.5));
-          doc.setTextColor(isWknd && wkend ? 140 : 160, 160, 175);
+          doc.setTextColor(isWknd && wkend ? 100 : 110, 110, 120);
           doc.text(DAY_LETTERS[dow], cx, contentTop + 10, { align: 'center' });
         }
 
@@ -1038,7 +1038,7 @@
       // ── Footer ──
       doc.setFont('helvetica', 'italic');
       doc.setFontSize(fs(10));
-      doc.setTextColor(130, 130, 145);
+      doc.setTextColor(90, 90, 100);
       doc.text(
         '"Nós somos o que fazemos repetidamente. A excelência, portanto, não é um ato, mas um hábito." — Aristóteles',
         ML, PH - MB + 5
