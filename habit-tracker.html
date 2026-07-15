@@ -770,6 +770,30 @@
         doc.roundedRect(cx - s, cy - s, s * 2, s * 2, 0.5, 0.5, filled ? 'FD' : 'FD');
       }
 
+      // Draw a habit/goal name inside a cell, wrapping onto extra lines
+      // (up to what the row height allows) instead of overflowing past it.
+      function drawNameLabel(x, y, w, rowH, label, fontSize) {
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(fontSize);
+        const maxW = w - 7;
+        const lineH = fontSize * 0.42;
+        const maxLines = Math.max(1, Math.floor(rowH / lineH));
+        let lines = doc.splitTextToSize(label, maxW);
+        if (lines.length > maxLines) {
+          let last = lines[maxLines - 1];
+          while (doc.getTextWidth(last + '…') > maxW && last.length > 1) {
+            last = last.slice(0, -1);
+          }
+          lines = lines.slice(0, maxLines - 1).concat(last + '…');
+        }
+        const blockH = lineH * lines.length;
+        let ty = y + rowH / 2 - blockH / 2 + lineH * 0.78;
+        lines.forEach(line => {
+          doc.text(line, x, ty);
+          ty += lineH;
+        });
+      }
+
       // ── DAILY SECTION ──
       if (hasDly) {
         const n = data.daily.length;
@@ -852,11 +876,8 @@
 
           // Habit name
           const label = (nums ? `${i+1}. ` : '') + (h.name.trim() || `Hábito ${i+1}`);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(fs(8.5));
-          const truncated = doc.splitTextToSize(label, NAME_W - 7)[0];
           doc.setTextColor(55, 55, 65);
-          doc.text(truncated, ML + LBL_W + 5, y + rowH / 2 + 1.5);
+          drawNameLabel(ML + LBL_W + 5, y, NAME_W, rowH, label, fs(8.5));
 
           // Circles
           const cr2 = Math.min(2.7, rowH * 0.27);
@@ -946,10 +967,8 @@
           doc.rect(ML + LBL_W, y, NAME_W, rowH);
 
           const label = (nums ? `${i+1}. ` : '') + (h.name.trim() || `Hábito ${i+1}`);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(fs(8.5));
           doc.setTextColor(55, 55, 65);
-          doc.text(doc.splitTextToSize(label, NAME_W - 7)[0], ML + LBL_W + 5, y + rowH / 2 + 1.5);
+          drawNameLabel(ML + LBL_W + 5, y, NAME_W, rowH, label, fs(8.5));
 
           const sq = Math.min(2.3, rowH * 0.25);
           for (let w = 0; w < WEEKS; w++) {
@@ -1012,10 +1031,8 @@
           doc.rect(mX, y, 2.5, rowH, 'F');
 
           const label = (item.name.trim() || `Meta ${i+1}`);
-          doc.setFont('helvetica', 'normal');
-          doc.setFontSize(fs(8.5));
           doc.setTextColor(55, 55, 65);
-          doc.text(doc.splitTextToSize(label, mNameW - 7)[0], mX + 5, y + rowH / 2 + 1.5);
+          drawNameLabel(mX + 5, y, mNameW, rowH, label, fs(8.5));
 
           // Checkbox
           doc.setDrawColor(160, 160, 175);
