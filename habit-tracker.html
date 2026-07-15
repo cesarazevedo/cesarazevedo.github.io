@@ -852,9 +852,9 @@
 
           // Habit name
           const label = (nums ? `${i+1}. ` : '') + (h.name.trim() || `Hábito ${i+1}`);
-          const truncated = doc.splitTextToSize(label, NAME_W - 7)[0];
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(fs(8.5));
+          const truncated = doc.splitTextToSize(label, NAME_W - 7)[0];
           doc.setTextColor(55, 55, 65);
           doc.text(truncated, ML + LBL_W + 5, y + rowH / 2 + 1.5);
 
