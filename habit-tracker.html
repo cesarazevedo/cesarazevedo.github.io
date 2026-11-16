@@ -6,6 +6,7 @@
   <title>Rastreador de Hábitos — César Azevedo</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -1075,6 +1076,89 @@
       doc.save(`rastreador-${month.toLowerCase()}-${year}.pdf`);
     }
 
+    // ── Gráficos nativos dentro do .xlsx (ExcelJS não cria gráficos; injetamos o XML) ──
+    async function injectCharts(buf, sheetName, charts) {
+      const zip = await JSZip.loadAsync(buf);
+      const rd = async p => (zip.file(p) ? await zip.file(p).async('string') : null);
+
+      const wbXml  = await rd('xl/workbook.xml');
+      const wbRels = await rd('xl/_rels/workbook.xml.rels');
+      const rid = (wbXml.match(new RegExp(`<sheet [^>]*name="${sheetName}"[^>]*r:id="([^"]+)"`)) || [])[1];
+      if (!rid) throw new Error('aba não encontrada');
+      let target = (wbRels.match(new RegExp(`<Relationship [^>]*Id="${rid}"[^>]*Target="([^"]+)"`)) || wbRels.match(new RegExp(`<Relationship [^>]*Target="([^"]+)"[^>]*Id="${rid}"`)) || [])[1];
+      target = target.replace(/^\/?(xl\/)?/, '');
+      const sheetPath = 'xl/' + target;
+      const sheetFile = sheetPath.split('/').pop();
+
+      // gráficos
+      const NS_C = 'http://schemas.openxmlformats.org/drawingml/2006/chart';
+      const NS_A = 'http://schemas.openxmlformats.org/drawingml/2006/main';
+      const NS_R = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+      let anchors = '', drawRels = '', ctypes = '';
+      charts.forEach((ch, i) => {
+        const n = i + 1;
+        zip.file(`xl/charts/chart${n}.xml`, ch.xml);
+        ctypes += `<Override PartName="/xl/charts/chart${n}.xml" ContentType="application/vnd.openxmlformats-officedocument.drawingml.chart+xml"/>`;
+        drawRels += `<Relationship Id="rId${n}" Type="${NS_R}/chart" Target="../charts/chart${n}.xml"/>`;
+        const [c1, r1, c2, r2, co2] = ch.pos;
+        anchors += `<xdr:twoCellAnchor editAs="oneCell"><xdr:from><xdr:col>${c1}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${r1}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from><xdr:to><xdr:col>${c2}</xdr:col><xdr:colOff>${co2}</xdr:colOff><xdr:row>${r2}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to><xdr:graphicFrame macro=""><xdr:nvGraphicFramePr><xdr:cNvPr id="${n + 1}" name="Grafico ${n}"/><xdr:cNvGraphicFramePr/></xdr:nvGraphicFramePr><xdr:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></xdr:xfrm><a:graphic><a:graphicData uri="${NS_C}"><c:chart xmlns:c="${NS_C}" xmlns:r="${NS_R}" r:id="rId${n}"/></a:graphicData></a:graphic></xdr:graphicFrame><xdr:clientData/></xdr:twoCellAnchor>`;
+      });
+      zip.file('xl/drawings/drawing1.xml', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="${NS_A}">${anchors}</xdr:wsDr>`);
+      zip.file('xl/drawings/_rels/drawing1.xml.rels', `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${drawRels}</Relationships>`);
+      ctypes += '<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>';
+
+      let ct = await rd('[Content_Types].xml');
+      zip.file('[Content_Types].xml', ct.replace('</Types>', ctypes + '</Types>'));
+
+      // liga o desenho à aba
+      const relPath = `xl/worksheets/_rels/${sheetFile}.rels`;
+      const drawRel = `<Relationship Id="rIdDraw1" Type="${NS_R}/drawing" Target="../drawings/drawing1.xml"/>`;
+      let rels = await rd(relPath);
+      zip.file(relPath, rels ? rels.replace('</Relationships>', drawRel + '</Relationships>')
+        : `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${drawRel}</Relationships>`);
+      let sx = await rd(sheetPath);
+      if (!/xmlns:r=/.test(sx.slice(0, 600))) sx = sx.replace('<worksheet ', `<worksheet xmlns:r="${NS_R}" `);
+      zip.file(sheetPath, sx.replace('</worksheet>', '<drawing r:id="rIdDraw1"/></worksheet>'));
+
+      return await zip.generateAsync({ type: 'arraybuffer', compression: 'DEFLATE' });
+    }
+
+    // helpers de XML de gráfico
+    const CH = (() => {
+      const NS = 'xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"';
+      const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      const fill = c => `<a:solidFill><a:srgbClr val="${c}"/></a:solidFill>`;
+      const txPr = (sz, bold, col) => `<c:txPr><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="${sz}" b="${bold ? 1 : 0}">${fill(col)}</a:defRPr></a:pPr><a:endParaRPr lang="pt-BR"/></a:p></c:txPr>`;
+      const title = t => `<c:title><c:tx><c:rich><a:bodyPr/><a:lstStyle/><a:p><a:pPr><a:defRPr sz="1400" b="1">${fill('2A2F45')}</a:defRPr></a:pPr><a:r><a:rPr lang="pt-BR" sz="1400" b="1">${fill('2A2F45')}</a:rPr><a:t>${esc(t)}</a:t></a:r></a:p></c:rich></c:tx><c:overlay val="0"/></c:title><c:autoTitleDeleted val="0"/>`;
+      const frame = (t, plot, legend) => `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><c:chartSpace ${NS}><c:roundedCorners val="0"/><c:chart>${title(t)}<c:plotArea><c:layout/>${plot}</c:plotArea>${legend ? `<c:legend><c:legendPos val="b"/><c:overlay val="0"/>${txPr(900, 0, '6B7088')}</c:legend>` : ''}<c:plotVisOnly val="1"/><c:dispBlanksAs val="gap"/></c:chart><c:spPr>${fill('FFFFFF')}<a:ln w="9525">${fill('E3E5EE')}</a:ln></c:spPr></c:chartSpace>`;
+      const catAx = `<c:catAx><c:axId val="111"/><c:scaling><c:orientation val="minMax"/></c:scaling><c:delete val="0"/><c:axPos val="b"/><c:numFmt formatCode="General" sourceLinked="1"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:spPr><a:ln w="9525">${fill('D5D7E3')}</a:ln></c:spPr>${txPr(900, 0, '6B7088')}<c:crossAx val="222"/><c:crosses val="autoZero"/><c:auto val="1"/><c:lblAlgn val="ctr"/><c:lblOffset val="100"/><c:noMultiLvlLbl val="0"/></c:catAx>`;
+      const valAx = `<c:valAx><c:axId val="222"/><c:scaling><c:orientation val="minMax"/><c:max val="1"/><c:min val="0"/></c:scaling><c:delete val="0"/><c:axPos val="l"/><c:majorGridlines><c:spPr><a:ln w="6350">${fill('ECEEF5')}</a:ln></c:spPr></c:majorGridlines><c:numFmt formatCode="0%" sourceLinked="0"/><c:majorTickMark val="none"/><c:minorTickMark val="none"/><c:tickLblPos val="nextTo"/><c:spPr><a:ln><a:noFill/></a:ln></c:spPr>${txPr(900, 0, '6B7088')}<c:crossAx val="111"/><c:crosses val="autoZero"/><c:crossBetween val="between"/><c:majorUnit val="0.25"/></c:valAx>`;
+      const ref = (f, num) => num ? `<c:numRef><c:f>${esc(f)}</c:f></c:numRef>` : `<c:strRef><c:f>${esc(f)}</c:f></c:strRef>`;
+
+      // 1) Rosca
+      const donut = (catF, valF, color) => frame('Conclusão do mês',
+        `<c:doughnutChart><c:varyColors val="1"/><c:ser><c:idx val="0"/><c:order val="0"/><c:tx><c:v>Conclusão</c:v></c:tx>` +
+        `<c:dPt><c:idx val="0"/><c:bubble3D val="0"/><c:spPr>${fill(color)}<a:ln w="19050">${fill('FFFFFF')}</a:ln></c:spPr></c:dPt>` +
+        `<c:dPt><c:idx val="1"/><c:bubble3D val="0"/><c:spPr>${fill('E9EBF3')}<a:ln w="19050">${fill('FFFFFF')}</a:ln></c:spPr></c:dPt>` +
+        `<c:dLbls><c:dLbl><c:idx val="1"/><c:delete val="1"/></c:dLbl><c:numFmt formatCode="0%" sourceLinked="0"/><c:spPr><a:noFill/><a:ln><a:noFill/></a:ln></c:spPr>${txPr(1800, 1, 'FFFFFF')}<c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/><c:showLeaderLines val="0"/></c:dLbls>` +
+        `<c:cat>${ref(catF)}</c:cat><c:val>${ref(valF, 1)}</c:val></c:ser><c:firstSliceAng val="0"/><c:holeSize val="62"/></c:doughnutChart>`, true);
+
+      // 2) Colunas por hábito (cada uma com a cor do hábito)
+      const bars = (catF, valF, colors) => frame('% de conclusão por hábito',
+        `<c:barChart><c:barDir val="col"/><c:grouping val="clustered"/><c:varyColors val="0"/><c:ser><c:idx val="0"/><c:order val="0"/><c:tx><c:v>% concluído</c:v></c:tx><c:spPr>${fill('6366F1')}</c:spPr><c:invertIfNegative val="0"/>` +
+        colors.map((c, i) => `<c:dPt><c:idx val="${i}"/><c:invertIfNegative val="0"/><c:bubble3D val="0"/><c:spPr>${fill(c)}</c:spPr></c:dPt>`).join('') +
+        `<c:dLbls><c:numFmt formatCode="0%" sourceLinked="0"/><c:spPr><a:noFill/><a:ln><a:noFill/></a:ln></c:spPr>${txPr(1000, 1, '2A2F45')}<c:dLblPos val="outEnd"/><c:showLegendKey val="0"/><c:showVal val="1"/><c:showCatName val="0"/><c:showSerName val="0"/><c:showPercent val="0"/><c:showBubbleSize val="0"/></c:dLbls>` +
+        `<c:cat>${ref(catF)}</c:cat><c:val>${ref(valF, 1)}</c:val></c:ser><c:gapWidth val="55"/><c:axId val="111"/><c:axId val="222"/></c:barChart>${catAx}${valAx}`);
+
+      // 3) Linha da evolução diária
+      const line = (catF, valF) => frame('Evolução no mês: % de hábitos feitos por dia',
+        `<c:lineChart><c:grouping val="standard"/><c:varyColors val="0"/><c:ser><c:idx val="0"/><c:order val="0"/><c:tx><c:v>% do dia</c:v></c:tx><c:spPr><a:ln w="31750" cap="rnd">${fill('6366F1')}<a:round/></a:ln></c:spPr>` +
+        `<c:marker><c:symbol val="circle"/><c:size val="6"/><c:spPr>${fill('FFFFFF')}<a:ln w="19050">${fill('6366F1')}</a:ln></c:spPr></c:marker>` +
+        `<c:cat>${ref(catF, 1)}</c:cat><c:val>${ref(valF, 1)}</c:val><c:smooth val="0"/></c:ser><c:marker val="1"/><c:axId val="111"/><c:axId val="222"/></c:lineChart>${catAx}${valAx}`);
+
+      return { donut, bars, line };
+    })();
+
     // ── Spreadsheet (XLSX) Generation ──
     async function generateXLSX() {
       if (totalHabits() === 0) return;
@@ -1102,8 +1186,9 @@
       const wb = new ExcelJS.Workbook();
       wb.creator = 'Rastreador de Hábitos';
       const dash = wb.addWorksheet('Dashboard', { views: [{ showGridLines: false }] });
+      const graf = nd > 0 ? wb.addWorksheet('Gráficos', { views: [{ showGridLines: false }] }) : null;
       const tr   = wb.addWorksheet('Rastreador', { views: [{ showGridLines: false, state: 'frozen', xSplit: 1, ySplit: 5 }] });
-      const calc = wb.addWorksheet('Cálculo', { state: 'hidden' });
+      const calc = wb.addWorksheet('Cálculo');
 
       // ════════ Aba RASTREADOR (onde se marca) ════════
       const lastC = nDays + 1;
@@ -1239,7 +1324,6 @@
           calc.getCell(r, d + 1).value = { formula: d === 1 ? `IF(${src}="${MARK}",1,0)` : `IF(${src}="${MARK}",${L(d)}${r}+1,0)` };
         }
       });
-      calc.state = 'hidden';
 
       // ════════ Aba DASHBOARD ════════
       [2, 32, 10, 10, 10, 17, 18, 30].forEach((w, i) => dash.getColumn(i + 1).width = w);
@@ -1381,7 +1465,81 @@
       }
       dash.pageSetup = { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
 
-      const buf = await wb.xlsx.writeBuffer();
+
+      // ════════ Aba GRÁFICOS ════════
+      let chartDefs = [];
+      if (nd > 0) {
+        // dados de apoio na aba Cálculo
+        calc.getCell('A6').value = '% do dia (até hoje)';
+        for (let d = 1; d <= nDays; d++) {
+          calc.getCell(6, d + 1).value = { formula: `IF(${L(d + 1)}3<=$B$1,${L(d + 1)}5/${nd},NA())` };
+          calc.getCell(6, d + 1).numFmt = '0%';
+        }
+        const dRow = 7 + nd + 1;
+        calc.getCell(dRow, 1).value = 'Feito';
+        calc.getCell(dRow, 2).value = { formula: `IF(${nd}*B1=0,0,SUM(Dashboard!C${dFirst}:C${dLast})/(${nd}*B1))` };
+        calc.getCell(dRow + 1, 1).value = 'Falta';
+        calc.getCell(dRow + 1, 2).value = { formula: `1-B${dRow}` };
+        calc.getCell(dRow, 2).numFmt = calc.getCell(dRow + 1, 2).numFmt = '0%';
+
+        // faixa de título (16 colunas B..Q)
+        graf.getColumn(1).width = 2;
+        for (let c = 2; c <= 17; c++) graf.getColumn(c).width = 9;
+        graf.getRow(2).height = 34; graf.getRow(3).height = 20;
+        [[2, `📈 Gráficos · ${month} ${year}`, 20, true, 'FFFFFFFF'], [3, 'Atualizam sozinhos conforme você marca na aba Rastreador', 10, false, 'FFE0E1FF']].forEach(([r, t, sz, b, col]) => {
+          graf.mergeCells(r, 2, r, 17);
+          const c = graf.getCell(r, 2); c.value = t; c.font = { size: sz, bold: b, color: { argb: col } }; c.alignment = { vertical: 'middle', indent: 1 };
+          for (let k = 2; k <= 17; k++) graf.getCell(r, k).fill = fillOf(INDIGO);
+        });
+
+        // mapa de calor (calendário), segunda → domingo
+        const hmTitle = 35, offset = (firstDow + 6) % 7, nWeeks = Math.ceil((offset + nDays) / 7);
+        graf.mergeCells(hmTitle, 2, hmTitle, 8);
+        const ht = graf.getCell(hmTitle, 2); ht.value = '🔥 Mapa de calor do mês'; ht.font = { size: 14, bold: true, color: { argb: DARK } };
+        graf.getRow(hmTitle).height = 26; ht.alignment = { vertical: 'middle' };
+        ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'].forEach((t, k) => {
+          const c = graf.getCell(hmTitle + 1, k + 2); c.value = t;
+          c.font = { size: 9, bold: true, color: { argb: GRAY } }; c.alignment = { horizontal: 'center' };
+        });
+        for (let w = 0; w < nWeeks; w++) {
+          const rNum = hmTitle + 2 + w * 2, rPct = rNum + 1;
+          graf.getRow(rNum).height = 14; graf.getRow(rPct).height = 30;
+          for (let k = 0; k < 7; k++) {
+            const day = w * 7 + k + 1 - offset, col = k + 2;
+            if (day < 1 || day > nDays) continue;
+            const cn = graf.getCell(rNum, col), cp = graf.getCell(rPct, col);
+            cn.value = day; cn.font = { size: 8, color: { argb: GRAY } }; cn.alignment = { horizontal: 'center', vertical: 'bottom' };
+            cp.value = { formula: `IF(${day}>Cálculo!$B$1,"",Cálculo!${L(day + 1)}5/${nd})` };
+            cp.numFmt = '0%'; cp.font = { size: 10, bold: true, color: { argb: DARK } }; cp.alignment = { horizontal: 'center', vertical: 'middle' };
+            cp.fill = fillOf('FFF1F2F7');
+            const wb2 = { style: 'medium', color: { argb: 'FFFFFFFF' } };
+            cp.border = { left: wb2, right: wb2, bottom: wb2 };
+            cn.border = { left: wb2, right: wb2, top: wb2 };
+          }
+          graf.addConditionalFormatting({ ref: `B${rPct}:H${rPct}`, rules: [{ type: 'colorScale', cfvo: [{ type: 'num', value: 0 }, { type: 'num', value: 0.5 }, { type: 'num', value: 1 }], color: [{ argb: 'FFFCA5A5' }, { argb: 'FFFEF08A' }, { argb: 'FF4ADE80' }] }] });
+        }
+        graf.mergeCells(hmTitle + 2, 10, hmTitle + 6, 17);
+        const lg = graf.getCell(hmTitle + 2, 10);
+        lg.value = 'Como ler: cada quadrado é um dia e mostra a % dos seus hábitos que você cumpriu.\n🟥 vermelho = dia fraco\n🟨 amarelo = dia mais ou menos\n🟩 verde = dia forte\nQuadrado cinza = dia que ainda não chegou.';
+        lg.font = { size: 10, color: { argb: GRAY } }; lg.alignment = { wrapText: true, vertical: 'top', indent: 1 };
+        graf.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
+
+        const lastCol = L(lastC);
+        const COLW = 600000; // quase uma coluna (em EMU) pra deixar um respiro entre gráficos
+        chartDefs = [
+          { xml: CH.donut(`'Cálculo'!$A$${dRow}:$A$${dRow + 1}`, `'Cálculo'!$B$${dRow}:$B$${dRow + 1}`, '4ADE80'), pos: [1, 4, 5, 18, COLW] },
+          { xml: CH.bars(`Dashboard!$B$${dFirst}:$B$${dLast}`, `Dashboard!$E$${dFirst}:$E$${dLast}`, data.daily.map(h => h.color.replace('#', '').toUpperCase())), pos: [6, 4, 16, 18, COLW] },
+          { xml: CH.line(`'Cálculo'!$B$3:$${lastCol}$3`, `'Cálculo'!$B$6:$${lastCol}$6`), pos: [1, 19, 16, 33, COLW] },
+        ];
+      }
+
+      let buf = await wb.xlsx.writeBuffer();
+      if (chartDefs.length) {
+        try {
+          if (typeof JSZip === 'undefined') throw new Error('JSZip não carregou');
+          buf = await injectCharts(buf, 'Gráficos', chartDefs);
+        } catch (e) { console.warn('Gráficos não incluídos:', e); }
+      }
       const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
