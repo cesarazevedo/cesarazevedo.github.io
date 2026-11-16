@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Rastreador de Hábitos — César Azevedo</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -286,6 +287,10 @@
       box-shadow: 0 4px 14px rgba(99,102,241,.4);
     }
     .generate-btn:hover  { opacity: .9; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,.5); }
+    .gen-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .gen-row .generate-btn { flex: 1 1 200px; width: auto; }
+    .generate-btn-alt { background: linear-gradient(135deg,#10b981,#059669); box-shadow: 0 4px 14px rgba(16,185,129,.4); }
+    .generate-btn-alt:hover { box-shadow: 0 6px 20px rgba(16,185,129,.5); }
     .generate-btn:active { transform: translateY(0); }
     .generate-btn:disabled { opacity: .4; cursor: not-allowed; transform: none; }
 
@@ -302,7 +307,7 @@
 
   <div class="header">
     <h1>📋 Rastreador de Hábitos</h1>
-    <p>Preencha seus hábitos e gere um PDF mensal para imprimir</p>
+    <p>Preencha seus hábitos e gere um PDF para imprimir ou uma planilha com dashboard</p>
   </div>
 
   <div class="container">
@@ -407,7 +412,10 @@
     </div>
 
     <!-- Gerar -->
-    <button class="generate-btn" id="gen-btn" onclick="generatePDF()" disabled>⬇ Gerar PDF</button>
+    <div class="gen-row">
+      <button class="generate-btn" id="gen-btn" onclick="generatePDF()" disabled>⬇ Gerar PDF</button>
+      <button class="generate-btn generate-btn-alt" id="gen-xlsx-btn" onclick="generateXLSX()" disabled>📊 Gerar Planilha</button>
+    </div>
 
     </div><!-- /mode-config -->
 
@@ -549,6 +557,7 @@
       }
 
       document.getElementById('gen-btn').disabled = totalHabits() === 0;
+      document.getElementById('gen-xlsx-btn').disabled = totalHabits() === 0;
     }
 
     function togglePalette(sec, idx, e) {
@@ -1064,6 +1073,321 @@
       );
 
       doc.save(`rastreador-${month.toLowerCase()}-${year}.pdf`);
+    }
+
+    // ── Spreadsheet (XLSX) Generation ──
+    async function generateXLSX() {
+      if (totalHabits() === 0) return;
+      if (typeof ExcelJS === 'undefined') { alert('Biblioteca de planilha não carregou. Verifique a internet e tente de novo.'); return; }
+
+      const month    = document.getElementById('sel-month').value;
+      const year     = parseInt(document.getElementById('inp-year').value);
+      const userName = document.getElementById('inp-name').value.trim();
+      const nDays    = getDays(month, year);
+      const firstDow = getFirstDow(month, year);
+      const mIdx     = MONTHS.indexOf(month) + 1;
+      const checks   = loadChecks(month, year);   // já traz o que foi marcado na aba "Preencher"
+      const nd = data.daily.length, nw = data.weekly.length, nm = data.monthly.length;
+      const MARK = '✔';
+
+      const L = n => { let s = ''; while (n > 0) { const m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; };
+      const argb = hex => 'FF' + hex.replace('#', '').toUpperCase();
+      const tint = (hex, k) => { const { r, g, b } = hexToRgb(hex); const m = v => Math.round(v + (255 - v) * k).toString(16).padStart(2, '0'); return ('FF' + m(r) + m(g) + m(b)).toUpperCase(); };
+      const INDIGO = 'FF6366F1', DARK = 'FF2A2F45', GRAY = 'FF8A8FA3', LINE = 'FFE3E5EE', WKND = 'FFF1F2F7';
+      const fillOf = c => ({ type: 'pattern', pattern: 'solid', fgColor: { argb: c } });
+      const thin = { style: 'thin', color: { argb: LINE } };
+      const box = { top: thin, left: thin, bottom: thin, right: thin };
+      const nameOf = (h, i, p) => (h.name || '').trim() || `${p} ${i + 1}`;
+
+      const wb = new ExcelJS.Workbook();
+      wb.creator = 'Rastreador de Hábitos';
+      const dash = wb.addWorksheet('Dashboard', { views: [{ showGridLines: false }] });
+      const tr   = wb.addWorksheet('Rastreador', { views: [{ showGridLines: false, state: 'frozen', xSplit: 1, ySplit: 5 }] });
+      const calc = wb.addWorksheet('Cálculo', { state: 'hidden' });
+
+      // ════════ Aba RASTREADOR (onde se marca) ════════
+      const lastC = nDays + 1;
+      tr.getColumn(1).width = 30;
+      for (let c = 2; c <= lastC; c++) tr.getColumn(c).width = 4.6;
+      tr.mergeCells(1, 1, 1, Math.min(lastC, 20));
+      tr.getCell('A1').value = `${userName ? userName + ' · ' : ''}${month} ${year}`;
+      tr.getCell('A1').font = { size: 18, bold: true, color: { argb: DARK } };
+      tr.getRow(1).height = 28;
+      tr.mergeCells(2, 1, 2, Math.min(lastC, 20));
+      tr.getCell('A2').value = `Clique na célula do dia e escolha ${MARK} na setinha. O Dashboard atualiza sozinho.`;
+      tr.getCell('A2').font = { size: 10, italic: true, color: { argb: GRAY } };
+
+      const markValidation = { type: 'list', allowBlank: true, formulae: [`"${MARK}"`], showErrorMessage: false };
+      const isWknd = d => { const w = (firstDow + d - 1) % 7; return w === 0 || w === 6; };
+
+      // Cabeçalho dos dias
+      tr.getRow(4).height = 20;
+      const hdrA = tr.getCell(4, 1);
+      hdrA.value = 'DIÁRIO'; hdrA.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } }; hdrA.fill = fillOf(INDIGO);
+      tr.getCell(5, 1).fill = fillOf(INDIGO);
+      for (let d = 1; d <= nDays; d++) {
+        const c4 = tr.getCell(4, d + 1), c5 = tr.getCell(5, d + 1);
+        const wk = isWknd(d);
+        c4.value = d; c5.value = DAY_LETTERS[(firstDow + d - 1) % 7];
+        c4.font = { bold: true, size: 9, color: { argb: wk ? DARK : 'FFFFFFFF' } };
+        c5.font = { size: 8, color: { argb: wk ? DARK : 'FFE0E1FF' } };
+        c4.fill = c5.fill = fillOf(wk ? 'FFD9DBF5' : INDIGO);
+        c4.alignment = c5.alignment = { horizontal: 'center', vertical: 'middle' };
+      }
+
+      const dailyRow = i => 6 + i;
+      data.daily.forEach((h, i) => {
+        const r = dailyRow(i);
+        tr.getRow(r).height = 22;
+        const a = tr.getCell(r, 1);
+        a.value = nameOf(h, i, 'Hábito');
+        a.font = { bold: true, size: 11, color: { argb: DARK } };
+        a.fill = fillOf(tint(h.color, 0.45)); a.border = box;
+        a.alignment = { vertical: 'middle', indent: 1 };
+        const hc = (checks.daily || {})[i] || {};
+        for (let d = 1; d <= nDays; d++) {
+          const c = tr.getCell(r, d + 1);
+          c.value = hc[d] ? MARK : null;
+          c.dataValidation = markValidation;
+          c.alignment = { horizontal: 'center', vertical: 'middle' };
+          c.font = { bold: true, size: 12, color: { argb: DARK } };
+          c.border = box;
+          if (isWknd(d)) c.fill = fillOf(WKND);
+        }
+        tr.addConditionalFormatting({ ref: `B${r}:${L(lastC)}${r}`, rules: [{ type: 'expression', formulae: [`B${r}="${MARK}"`], style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: argb(h.color) } } } }] });
+      });
+
+      // Totais do dia
+      let nextRow = 6 + nd;
+      if (nd > 0) {
+        const rTot = nextRow, rPct = nextRow + 1;
+        tr.getCell(rTot, 1).value = 'Feitos no dia';
+        tr.getCell(rPct, 1).value = '% do dia';
+        [rTot, rPct].forEach(r => { const c = tr.getCell(r, 1); c.font = { bold: true, size: 9, color: { argb: GRAY } }; c.alignment = { horizontal: 'right', indent: 1 }; });
+        for (let d = 1; d <= nDays; d++) {
+          const col = L(d + 1);
+          const t = tr.getCell(rTot, d + 1), p = tr.getCell(rPct, d + 1);
+          t.value = { formula: `COUNTIF(${col}6:${col}${5 + nd},"${MARK}")` };
+          p.value = { formula: `${col}${rTot}/${nd}` };
+          p.numFmt = '0%';
+          t.font = { size: 9, color: { argb: DARK } }; p.font = { size: 8, color: { argb: GRAY } };
+          t.alignment = p.alignment = { horizontal: 'center' };
+        }
+        tr.addConditionalFormatting({ ref: `B${rPct}:${L(lastC)}${rPct}`, rules: [{ type: 'colorScale', cfvo: [{ type: 'num', value: 0 }, { type: 'num', value: 1 }], color: [{ argb: 'FFFFFFFF' }, { argb: 'FF86EFAC' }] }] });
+        nextRow += 3;
+      }
+
+      // Semanal
+      const weeklyRow = {};
+      if (nw > 0) {
+        const h0 = nextRow;
+        const a = tr.getCell(h0, 1); a.value = 'SEMANAL'; a.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } }; a.fill = fillOf(INDIGO);
+        for (let w = 0; w < 5; w++) {
+          const c = tr.getCell(h0, w + 2); c.value = 'S' + (w + 1);
+          c.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } }; c.fill = fillOf(INDIGO); c.alignment = { horizontal: 'center' };
+        }
+        data.weekly.forEach((h, i) => {
+          const r = h0 + 1 + i; weeklyRow[i] = r;
+          tr.getRow(r).height = 22;
+          const n = tr.getCell(r, 1); n.value = nameOf(h, i, 'Hábito');
+          n.font = { bold: true, size: 11, color: { argb: DARK } }; n.fill = fillOf(tint(h.color, 0.45)); n.border = box; n.alignment = { vertical: 'middle', indent: 1 };
+          const hc = (checks.weekly || {})[i] || {};
+          for (let w = 0; w < 5; w++) {
+            const c = tr.getCell(r, w + 2);
+            c.value = hc[w] ? MARK : null; c.dataValidation = markValidation; c.border = box;
+            c.alignment = { horizontal: 'center', vertical: 'middle' }; c.font = { bold: true, size: 12, color: { argb: DARK } };
+          }
+          tr.addConditionalFormatting({ ref: `B${r}:F${r}`, rules: [{ type: 'expression', formulae: [`B${r}="${MARK}"`], style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: argb(h.color) } } } }] });
+        });
+        nextRow = h0 + nw + 2;
+      }
+
+      // Mensal
+      const monthlyRow = {};
+      if (nm > 0) {
+        const h0 = nextRow;
+        const a = tr.getCell(h0, 1); a.value = 'METAS DO MÊS'; a.font = { bold: true, size: 10, color: { argb: 'FFFFFFFF' } }; a.fill = fillOf(INDIGO);
+        const b = tr.getCell(h0, 2); b.value = 'OK'; b.font = { bold: true, size: 9, color: { argb: 'FFFFFFFF' } }; b.fill = fillOf(INDIGO); b.alignment = { horizontal: 'center' };
+        data.monthly.forEach((h, i) => {
+          const r = h0 + 1 + i; monthlyRow[i] = r;
+          tr.getRow(r).height = 22;
+          const n = tr.getCell(r, 1); n.value = nameOf(h, i, 'Meta');
+          n.font = { bold: true, size: 11, color: { argb: DARK } }; n.fill = fillOf(tint(h.color || '#93c5fd', 0.45)); n.border = box; n.alignment = { vertical: 'middle', indent: 1 };
+          const c = tr.getCell(r, 2);
+          c.value = (checks.monthly || {})[i] ? MARK : null; c.dataValidation = markValidation; c.border = box;
+          c.alignment = { horizontal: 'center', vertical: 'middle' }; c.font = { bold: true, size: 12, color: { argb: DARK } };
+          tr.addConditionalFormatting({ ref: `B${r}`, rules: [{ type: 'expression', formulae: [`B${r}="${MARK}"`], style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FF86EFAC' } } } }] });
+        });
+      }
+      tr.pageSetup = { orientation: 'landscape', fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
+
+      // ════════ Aba CÁLCULO (ajudante escondida: sequências) ════════
+      calc.getCell('A1').value = 'Dias decorridos';
+      calc.getCell('B1').value = { formula: `MAX(0,MIN(${nDays},TODAY()-DATE(${year},${mIdx},1)+1))` };
+      calc.getCell('A3').value = 'Dia'; calc.getCell('A4').value = 'Dia da semana (0=Dom)'; calc.getCell('A5').value = 'Feitos no dia';
+      for (let d = 1; d <= nDays; d++) {
+        calc.getCell(3, d + 1).value = d;
+        calc.getCell(4, d + 1).value = (firstDow + d - 1) % 7;
+        calc.getCell(5, d + 1).value = nd > 0 ? { formula: `COUNTIF(Rastreador!${L(d + 1)}6:${L(d + 1)}${5 + nd},"${MARK}")` } : 0;
+      }
+      const streakRow = i => 7 + i;
+      data.daily.forEach((h, i) => {
+        const r = streakRow(i), tRow = dailyRow(i);
+        calc.getCell(r, 1).value = nameOf(h, i, 'Hábito');
+        for (let d = 1; d <= nDays; d++) {
+          const src = `Rastreador!${L(d + 1)}${tRow}`;
+          calc.getCell(r, d + 1).value = { formula: d === 1 ? `IF(${src}="${MARK}",1,0)` : `IF(${src}="${MARK}",${L(d)}${r}+1,0)` };
+        }
+      });
+      calc.state = 'hidden';
+
+      // ════════ Aba DASHBOARD ════════
+      [2, 32, 10, 10, 10, 17, 18, 30].forEach((w, i) => dash.getColumn(i + 1).width = w);
+      const band = (r, text, size, bold, color) => {
+        dash.mergeCells(r, 2, r, 8);
+        const c = dash.getCell(r, 2); c.value = text; c.font = { size, bold, color: { argb: color } };
+        c.alignment = { vertical: 'middle', indent: 1 };
+        for (let k = 2; k <= 8; k++) dash.getCell(r, k).fill = fillOf(INDIGO);
+      };
+      dash.getRow(2).height = 34; dash.getRow(3).height = 20;
+      band(2, `📊 Dashboard · ${month} ${year}`, 20, true, 'FFFFFFFF');
+      band(3, `${userName ? userName + ' · ' : ''}Atualiza sozinho conforme você marca na aba Rastreador`, 10, false, 'FFE0E1FF');
+
+      const dFirst = 12, dLast = 11 + nd;      // linhas dos hábitos diários na tabela
+      const rngC = `C${dFirst}:C${dLast}`, rngE = `E${dFirst}:E${dLast}`, rngG = `G${dFirst}:G${dLast}`, rngB = `B${dFirst}:B${dLast}`;
+      // weekly/monthly row positions (calculados antes pra usar nos KPIs)
+      let rr = nd > 0 ? dLast + 2 : 10;
+      const wTitle = rr, wFirst = rr + 2, wLast = rr + 1 + nw;
+      if (nw > 0) rr = wLast + 2;
+      const mTitle = rr, mFirst = rr + 2, mLast = rr + 1 + nm;
+      if (nm > 0) rr = mLast + 2;
+      const wdTitle = rr;
+
+      // KPIs
+      const tile = (c1, c2, label, formula, fmt, size, accent) => {
+        dash.mergeCells(5, c1, 5, c2); dash.mergeCells(6, c1, 7, c2);
+        const lab = dash.getCell(5, c1); lab.value = label;
+        lab.font = { size: 9, bold: true, color: { argb: GRAY } }; lab.alignment = { horizontal: 'center', vertical: 'middle' };
+        const v = dash.getCell(6, c1); v.value = formula; if (fmt) v.numFmt = fmt;
+        v.font = { size, bold: true, color: { argb: accent } }; v.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        for (let r = 5; r <= 7; r++) for (let c = c1; c <= c2; c++) {
+          const cell = dash.getCell(r, c); cell.fill = fillOf('FFF7F8FC');
+          cell.border = { top: r === 5 ? { style: 'medium', color: { argb: accent } } : undefined, left: c === c1 ? thin : undefined, right: c === c2 ? thin : undefined, bottom: r === 7 ? thin : undefined };
+        }
+      };
+      dash.getRow(5).height = 20; dash.getRow(6).height = 24; dash.getRow(7).height = 24;
+      const parts = [];
+      if (nd > 0) parts.push(`SUM(${rngC})`);
+      if (nw > 0) parts.push(`SUM(C${wFirst}:C${wLast})`);
+      if (nm > 0) parts.push(`COUNTIF(Rastreador!B${monthlyRow[0]}:B${monthlyRow[nm - 1]},"${MARK}")`);
+      tile(2, 2, 'CONCLUSÃO GERAL (DIÁRIOS)', nd > 0 ? { formula: `IF(${nd}*Cálculo!B1=0,0,SUM(${rngC})/(${nd}*Cálculo!B1))` } : '—', '0%', 28, 'FF6366F1');
+      tile(3, 4, 'MARCAÇÕES', { formula: parts.join('+') }, '0', 28, 'FF16A34A');
+      tile(5, 6, 'MELHOR SEQUÊNCIA', nd > 0 ? { formula: `MAX(${rngG})` } : 0, '0" dias"', 22, 'FFEA580C');
+      tile(7, 8, 'HÁBITO DESTAQUE', nd > 0 ? { formula: `IF(MAX(${rngE})=0,"—",INDEX(${rngB},MATCH(MAX(${rngE}),${rngE},0)))` } : '—', null, 14, 'FF9333EA');
+
+      const sectionTitle = (r, text) => {
+        dash.mergeCells(r, 2, r, 8);
+        const c = dash.getCell(r, 2); c.value = text; c.font = { size: 13, bold: true, color: { argb: DARK } };
+        for (let k = 2; k <= 8; k++) dash.getCell(r, k).border = { bottom: { style: 'medium', color: { argb: INDIGO } } };
+        dash.getRow(r).height = 24; c.alignment = { vertical: 'middle' };
+      };
+      const headRow = (r, labels) => {
+        labels.forEach((t, k) => {
+          const c = dash.getCell(r, k + 2); c.value = t;
+          c.font = { size: 9, bold: true, color: { argb: GRAY } }; c.fill = fillOf('FFF7F8FC'); c.border = box;
+          c.alignment = { horizontal: k === 0 ? 'left' : 'center', vertical: 'middle', indent: k === 0 ? 1 : 0 };
+        });
+        dash.getRow(r).height = 20;
+      };
+      const styleBody = (r, h, nameVal) => {
+        dash.getRow(r).height = 24;
+        const n = dash.getCell(r, 2); n.value = nameVal;
+        n.font = { bold: true, size: 11, color: { argb: DARK } }; n.fill = fillOf(tint(h.color, 0.5)); n.alignment = { vertical: 'middle', indent: 1 };
+        for (let k = 2; k <= 8; k++) {
+          const c = dash.getCell(r, k); c.border = box;
+          if (k > 2) c.alignment = { horizontal: 'center', vertical: 'middle' };
+          if (k > 2 && k < 8) c.font = { size: 11, color: { argb: DARK } };
+        }
+      };
+
+      if (nd > 0) {
+        sectionTitle(10, '📅 Hábitos diários');
+        headRow(11, ['Hábito', 'Feitos', 'Dias', '%', 'Sequência atual', 'Melhor sequência', 'Progresso']);
+        data.daily.forEach((h, i) => {
+          const r = dFirst + i, tRow = dailyRow(i), sRow = streakRow(i);
+          styleBody(r, h, nameOf(h, i, 'Hábito'));
+          dash.getCell(r, 3).value = { formula: `COUNTIF(Rastreador!B${tRow}:${L(lastC)}${tRow},"${MARK}")` };
+          dash.getCell(r, 4).value = { formula: 'Cálculo!B1' };
+          dash.getCell(r, 5).value = { formula: `IF(D${r}=0,0,C${r}/D${r})` }; dash.getCell(r, 5).numFmt = '0%';
+          dash.getCell(r, 5).font = { size: 11, bold: true, color: { argb: DARK } };
+          const rowRng = `Cálculo!B${sRow}:${L(lastC)}${sRow}`;
+          dash.getCell(r, 6).value = { formula: `IF(Cálculo!B1=0,0,IF(INDEX(${rowRng},Cálculo!B1)=0,IF(Cálculo!B1>1,INDEX(${rowRng},Cálculo!B1-1),0),INDEX(${rowRng},Cálculo!B1)))` };
+          dash.getCell(r, 7).value = { formula: `MAX(${rowRng})` };
+          const bar = dash.getCell(r, 8);
+          bar.value = { formula: `REPT("█",ROUND(E${r}*20,0))` };
+          bar.font = { size: 10, color: { argb: argb(h.color) } }; bar.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+        });
+        dash.addConditionalFormatting({ ref: `E${dFirst}:E${dLast}`, rules: [
+          { type: 'cellIs', operator: 'greaterThanOrEqual', formulae: [0.8], style: { font: { color: { argb: 'FF16A34A' } } } },
+          { type: 'cellIs', operator: 'lessThan', formulae: [0.5], style: { font: { color: { argb: 'FFDC2626' } } } } ] });
+      }
+
+      if (nw > 0) {
+        sectionTitle(wTitle, '🗓️ Hábitos semanais');
+        headRow(wTitle + 1, ['Hábito', 'Semanas ✔', 'Total', '%', '', '', 'Progresso']);
+        data.weekly.forEach((h, i) => {
+          const r = wFirst + i, tRow = weeklyRow[i];
+          styleBody(r, h, nameOf(h, i, 'Hábito'));
+          dash.getCell(r, 3).value = { formula: `COUNTIF(Rastreador!B${tRow}:F${tRow},"${MARK}")` };
+          dash.getCell(r, 4).value = 5;
+          dash.getCell(r, 5).value = { formula: `C${r}/D${r}` }; dash.getCell(r, 5).numFmt = '0%';
+          dash.getCell(r, 5).font = { size: 11, bold: true, color: { argb: DARK } };
+          const bar = dash.getCell(r, 8); bar.value = { formula: `REPT("█",ROUND(E${r}*20,0))` };
+          bar.font = { size: 10, color: { argb: argb(h.color) } }; bar.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+        });
+      }
+
+      if (nm > 0) {
+        sectionTitle(mTitle, '🎯 Metas do mês');
+        headRow(mTitle + 1, ['Meta', 'Status', '', '', '', '', '']);
+        data.monthly.forEach((h, i) => {
+          const r = mFirst + i;
+          styleBody(r, { color: h.color || '#93c5fd' }, nameOf(h, i, 'Meta'));
+          dash.mergeCells(r, 3, r, 8);
+          const s = dash.getCell(r, 3);
+          s.value = { formula: `IF(Rastreador!B${monthlyRow[i]}="${MARK}","✔ Concluída!","⏳ Em andamento")` };
+          s.font = { size: 11, bold: true, color: { argb: DARK } };
+        });
+        dash.addConditionalFormatting({ ref: `C${mFirst}:H${mLast}`, rules: [{ type: 'expression', formulae: [`LEFT($C${mFirst},1)="${MARK}"`], style: { fill: { type: 'pattern', pattern: 'solid', bgColor: { argb: 'FFBBF7D0' } } } }] });
+      }
+
+      if (nd > 0) {
+        sectionTitle(wdTitle, '📈 Em quais dias da semana você vai melhor?');
+        headRow(wdTitle + 1, ['Dia da semana', '%', '', '', '', '', 'Progresso']);
+        const names = { 1: 'Segunda', 2: 'Terça', 3: 'Quarta', 4: 'Quinta', 5: 'Sexta', 6: 'Sábado', 0: 'Domingo' };
+        [1, 2, 3, 4, 5, 6, 0].forEach((k, j) => {
+          const r = wdTitle + 2 + j;
+          dash.getRow(r).height = 22;
+          const lastCol = L(lastC);
+          const wd = `Cálculo!$B$4:$${lastCol}$4`, dy = `Cálculo!$B$3:$${lastCol}$3`, dn = `Cálculo!$B$5:$${lastCol}$5`;
+          const n = dash.getCell(r, 2); n.value = names[k]; n.font = { bold: true, size: 11, color: { argb: DARK } }; n.alignment = { vertical: 'middle', indent: 1 };
+          const p = dash.getCell(r, 3);
+          p.value = { formula: `SUMPRODUCT((${wd}=${k})*(${dy}<=Cálculo!$B$1)*${dn})/(${nd}*MAX(1,SUMPRODUCT((${wd}=${k})*(${dy}<=Cálculo!$B$1))))` };
+          p.numFmt = '0%'; p.font = { bold: true, size: 11, color: { argb: DARK } }; p.alignment = { horizontal: 'center', vertical: 'middle' };
+          const bar = dash.getCell(r, 8); bar.value = { formula: `REPT("█",ROUND(C${r}*20,0))` };
+          bar.font = { size: 10, color: { argb: INDIGO } }; bar.alignment = { horizontal: 'left', vertical: 'middle', indent: 1 };
+          for (let c = 2; c <= 8; c++) dash.getCell(r, c).border = { bottom: thin };
+        });
+      }
+      dash.pageSetup = { orientation: 'portrait', fitToPage: true, fitToWidth: 1, fitToHeight: 1 };
+
+      const buf = await wb.xlsx.writeBuffer();
+      const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `rastreador-${month.toLowerCase()}-${year}.xlsx`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     }
 
     // ── Persistence ──
