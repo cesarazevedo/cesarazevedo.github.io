@@ -212,7 +212,7 @@
       }
       $('map').innerHTML = h + '<circle id="packet" r="8" cx="-20" cy="-20" fill="#f59e0b"/>';
     }
-    const COLOR = { DNS: '#3b82f6', TCP: '#10b981', HTTP: '#f59e0b', TLS: '#8b5cf6', DHCP: '#ec4899', RESP: '#8b5cf6' };
+    const COLOR = { UDP: '#f97316', DNS: '#3b82f6', TCP: '#10b981', HTTP: '#f59e0b', TLS: '#8b5cf6', DHCP: '#ec4899', RESP: '#8b5cf6' };
 
     // ===== Roteiros: cada protocolo é só uma lista de passos =====
     // Para criar um novo, copie um bloco e troque os textos.
@@ -280,6 +280,22 @@
         ]
       },
       {
+        id: 'udp', scene: 'web', name: 'UDP', tag: 'Envio rápido, sem garantia',
+        text: 'O UDP manda os dados sem apertar a mão antes e sem confirmar a chegada. É como mandar cartas pelo correio: rápido e leve, mas se uma se perder, ninguém avisa. Por isso é usado onde velocidade importa mais que perfeição, como chamadas de vídeo, jogos online e DNS. Compare com o TCP, que é uma ligação telefônica com confirmação.',
+        steps: [
+          { from:'client', to:'web', proto:'UDP', info:'50000 → 5004 Len=172 (áudio 1)', size:'214 B', t:0,
+            why:'O cliente já manda o primeiro pedaço do áudio, direto. Não houve aperto de mãos (nada de SYN): é só colocar a carta no correio.' },
+          { from:'client', to:'web', proto:'UDP', info:'50000 → 5004 Len=172 (áudio 2)', size:'214 B', t:20,
+            why:'Segunda carta, logo em seguida. O cliente não espera resposta nem confirmação para continuar enviando.' },
+          { from:'client', to:'web', lost:true, proto:'UDP', info:'50000 → 5004 Len=172 (áudio 3) — PERDIDO', size:'214 B', t:40,
+            why:'Esta carta se perdeu no caminho (o pacote some no roteador). No UDP ninguém avisa nem reenvia. Na chamada de vídeo você ouve um pequeno "pulo" e a conversa segue. No TCP, o envio pararia para repetir esse pedaço.' },
+          { from:'client', to:'web', proto:'UDP', info:'50000 → 5004 Len=172 (áudio 4)', size:'214 B', t:60,
+            why:'A transmissão continua normalmente, sem se importar com a carta perdida. É isso que deixa o UDP tão rápido.' },
+          { from:'web', to:'client', proto:'UDP', info:'5004 → 50000 Len=172 (áudio da outra pessoa)', size:'214 B', t:65,
+            why:'O outro lado também manda o áudio dele, pelo mesmo jeito. Cada pacote UDP (datagrama) é independente dos outros.' }
+        ]
+      },
+      {
         id: 'dhcp', scene: 'local', name: 'DHCP', tag: 'Configuração automática de rede',
         text: 'O DHCP entrega um endereço IP para quem acabou de entrar na rede. É como a recepção de um hotel entregando o número do seu quarto. O servidor fica na MESMA rede do cliente (em casa, é o próprio roteador), então nada disso sai para a internet. São 4 passos, conhecidos como DORA.',
         steps: [
@@ -339,7 +355,8 @@
     }
 
     function movePacket(s, done) {
-      const pts = path(s.from, s.to), pk = $('packet');
+      let pts = path(s.from, s.to); const pk = $('packet');
+      if (s.lost) pts = pts.slice(0, Math.max(2, Math.ceil(pts.length / 2)));
       pk.setAttribute('fill', color(s.proto));
       const dur = parseFloat($('speed').value) * 1000;
       const start = performance.now();
