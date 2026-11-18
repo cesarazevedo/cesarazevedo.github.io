@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explorador de Protocolos — César Azevedo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    [data-theme="dark"] {
+      --bg: #0f1117; --card-bg: #1e2130; --card-border: #2a2f45;
+      --text-h: #f1f5f9; --text-sub: #94a3b8; --text-muted: #64748b;
+      --grid-line: rgba(255,255,255,.03); --shadow: rgba(0,0,0,.4);
+      --toggle-bg: #1e2130; --toggle-border: #2a2f45; --row-hover: rgba(255,255,255,.04);
+      --node-fill: #131720;
+    }
+    [data-theme="light"] {
+      --bg: #f0f4f8; --card-bg: #ffffff; --card-border: #dde3ec;
+      --text-h: #0f172a; --text-sub: #475569; --text-muted: #94a3b8;
+      --grid-line: rgba(0,0,0,.04); --shadow: rgba(0,0,0,.12);
+      --toggle-bg: #ffffff; --toggle-border: #dde3ec; --row-hover: rgba(0,0,0,.04);
+      --node-fill: #f8fafc;
+    }
+    :root { --dns: #3b82f6; --tcp: #10b981; --req: #f59e0b; --res: #8b5cf6; --accent: #0ea5e9; }
+
+    body {
+      min-height: 100vh; background: var(--bg); color: var(--text-h);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      padding: 64px 16px 40px; transition: background .3s;
+    }
+    body::before {
+      content: ''; position: fixed; inset: 0;
+      background-image: linear-gradient(var(--grid-line) 1px, transparent 1px),
+                        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 40px 40px; pointer-events: none;
+    }
+    .back-btn, .theme-toggle {
+      position: fixed; top: 18px; z-index: 20;
+      background: var(--toggle-bg); border: 1px solid var(--toggle-border);
+      border-radius: 999px; padding: 6px 14px; font-size: .82rem; color: var(--text-sub);
+      text-decoration: none; display: flex; align-items: center; gap: 6px;
+      box-shadow: 0 2px 8px var(--shadow); cursor: pointer; transition: color .2s;
+    }
+    .back-btn { left: 18px; } .theme-toggle { right: 18px; }
+    .back-btn:hover, .theme-toggle:hover { color: var(--text-h); }
+
+    .wrap { position: relative; max-width: 1200px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; }
+    .sub { color: var(--text-sub); font-size: .9rem; margin: 4px 0 18px; }
+
+    .layout { display: grid; grid-template-columns: 260px 1fr; gap: 14px; }
+    .panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; }
+    .panel h2 { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+
+    /* lista de protocolos */
+    .proto-btn {
+      display: block; width: 100%; text-align: left; background: transparent;
+      border: 1px solid transparent; border-radius: 8px; padding: 9px 10px; margin-bottom: 4px;
+      color: var(--text-h); cursor: pointer; font: inherit; transition: background .15s;
+    }
+    .proto-btn:hover { background: var(--row-hover); }
+    .proto-btn.active { border-color: var(--accent); background: rgba(14,165,233,.1); }
+    .proto-btn b { display: block; font-size: .95rem; }
+    .proto-btn span { font-size: .78rem; color: var(--text-sub); }
+
+    .main { display: grid; gap: 14px; min-width: 0; }
+    .top { display: grid; grid-template-columns: 1fr 300px; gap: 14px; }
+
+    /* mapa */
+    svg { width: 100%; height: 260px; display: block; }
+    .link { stroke: var(--card-border); stroke-width: 2; stroke-dasharray: 5 5; }
+    .node rect { fill: var(--node-fill); stroke: var(--card-border); stroke-width: 2; transition: stroke .2s; }
+    .node.on rect { stroke: var(--accent); }
+    .node text { fill: var(--text-h); text-anchor: middle; }
+    .node .ico { font-size: 26px; }
+    .node .lbl { font-size: 11px; font-weight: 700; }
+    .node .ip { font-size: 10px; fill: var(--text-muted); }
+    #packet { transition: none; }
+
+    .ov h3 { font-size: 1.6rem; margin-bottom: 2px; }
+    .ov .tag { color: var(--text-sub); margin-bottom: 10px; font-size: .9rem; }
+    .ov p { font-size: .85rem; line-height: 1.55; color: var(--text-sub); }
+    .explain {
+      margin-top: 12px; padding: 10px 12px; border-left: 3px solid var(--accent);
+      background: rgba(14,165,233,.08); border-radius: 0 8px 8px 0;
+      font-size: .85rem; line-height: 1.5; min-height: 64px;
+    }
+
+    /* controles */
+    .bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .bar h2 { margin: 0 auto 0 0; }
+    .btn {
+      background: var(--toggle-bg); color: var(--text-h); border: 1px solid var(--toggle-border);
+      border-radius: 8px; padding: 6px 14px; font: inherit; font-size: .85rem; cursor: pointer;
+    }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+    .btn:hover { filter: brightness(1.15); }
+
+    table { width: 100%; border-collapse: collapse; font-family: ui-monospace, Consolas, monospace; font-size: .8rem; }
+    th { text-align: left; color: var(--text-muted); font-size: .7rem; letter-spacing: .08em; padding: 6px 8px; }
+    td { padding: 7px 8px; border-top: 1px solid var(--card-border); }
+    tr.row { cursor: pointer; opacity: .45; transition: opacity .2s, background .2s; }
+    tr.row.seen { opacity: 1; }
+    tr.row.cur { background: rgba(14,165,233,.15); opacity: 1; }
+    .num { display: inline-block; width: 20px; height: 20px; line-height: 20px; border-radius: 50%; text-align: center; color: #fff; font-size: .7rem; font-weight: 700; }
+    .scroll { overflow-x: auto; }
+
+    @media (max-width: 860px) {
+      .layout, .top { grid-template-columns: 1fr; }
+      .protos { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px; }
+    }
+  </style>
+</head>
+<body>
+  <a class="back-btn" href="https://cesarazevedo.github.io">← Voltar</a>
+  <button class="theme-toggle" onclick="toggleTheme()">
+    <span id="theme-icon">☀️</span><span id="theme-label">Claro</span>
+  </button>
+
+  <div class="wrap">
+    <h1>🔍 Explorador de Protocolos</h1>
+    <p class="sub">Escolha um protocolo, aperte <b>Reproduzir</b> e veja a conversa passo a passo.</p>
+
+    <div class="layout">
+      <div class="panel">
+        <h2>Protocolos</h2>
+        <div class="protos" id="protos"></div>
+      </div>
+
+      <div class="main">
+        <div class="top">
+          <div class="panel">
+            <svg id="map" viewBox="0 0 600 260">
+              <line class="link" x1="90" y1="130" x2="300" y2="130"/>
+              <line class="link" x1="300" y1="130" x2="510" y2="50"/>
+              <line class="link" x1="300" y1="130" x2="510" y2="210"/>
+              <g class="node" id="n-client"><rect x="40" y="95" width="100" height="70" rx="10"/><text class="ico" x="90" y="125">💻</text><text class="lbl" x="90" y="142">Cliente</text><text class="ip" x="90" y="156">192.168.1.10</text></g>
+              <g class="node" id="n-router"><rect x="250" y="95" width="100" height="70" rx="10"/><text class="ico" x="300" y="125">📡</text><text class="lbl" x="300" y="142">Roteador</text><text class="ip" x="300" y="156">192.168.1.1</text></g>
+              <g class="node" id="n-dns"><rect x="460" y="15" width="100" height="70" rx="10"/><text class="ico" x="510" y="45">📖</text><text class="lbl" x="510" y="62">Servidor DNS</text><text class="ip" x="510" y="76">8.8.8.8</text></g>
+              <g class="node" id="n-web"><rect x="460" y="175" width="100" height="70" rx="10"/><text class="ico" x="510" y="205">🖥️</text><text class="lbl" x="510" y="222">Servidor Web</text><text class="ip" x="510" y="236">203.0.113.10</text></g>
+              <circle id="packet" r="8" cx="-20" cy="-20" fill="#f59e0b"/>
+            </svg>
+            <div class="explain" id="explain">Aperte <b>Reproduzir</b> ou <b>Passo</b> para começar.</div>
+          </div>
+          <div class="panel ov">
+            <h2>Visão geral</h2>
+            <h3 id="ov-name"></h3>
+            <div class="tag" id="ov-tag"></div>
+            <p id="ov-text"></p>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="bar">
+            <h2>Fluxo de pacotes</h2>
+            <select class="btn" id="speed">
+              <option value="1.6">0.5×</option><option value="0.8" selected>1×</option><option value="0.4">2×</option>
+            </select>
+            <button class="btn primary" id="play" onclick="togglePlay()">▶ Reproduzir</button>
+            <button class="btn" onclick="stepOnce()">Passo</button>
+            <button class="btn" onclick="resetAll()">↺ Reiniciar</button>
+          </div>
+          <div class="scroll">
+            <table>
+              <thead><tr><th>Nº</th><th>TEMPO</th><th>ORIGEM</th><th>DESTINO</th><th>PROTOCOLO</th><th>INFO</th><th>TAMANHO</th></tr></thead>
+              <tbody id="rows"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== Posições dos nós no mapa =====
+    const POS = { client: [90,130], router: [300,130], dns: [510,50], web: [510,210] };
+    const IP  = { client: '192.168.1.10', router: '192.168.1.1', dns: '8.8.8.8', web: '203.0.113.10' };
+    const COLOR = { DNS: '#3b82f6', TCP: '#10b981', HTTP: '#f59e0b', TLS: '#8b5cf6', DHCP: '#ec4899', RESP: '#8b5cf6' };
+
+    // ===== Roteiros: cada protocolo é só uma lista de passos =====
+    // Para criar um novo, copie um bloco e troque os textos.
+    const PROTOCOLS = [
+      {
+        id: 'dns', name: 'DNS', tag: 'Sistema de nomes de domínio',
+        text: 'O DNS é a lista telefônica da internet. Você digita um nome (www.exemplo.com) e ele devolve o número (endereço IP) onde o site mora. Sem isso, teríamos que decorar números.',
+        steps: [
+          { from:'client', to:'dns', proto:'DNS', info:'Consulta A www.exemplo.com', size:'75 B', t:0,
+            why:'O cliente pergunta: "Qual é o endereço IP de www.exemplo.com?" É como procurar o telefone de alguém na lista.' },
+          { from:'dns', to:'client', proto:'DNS', info:'Resposta A 203.0.113.10', size:'91 B', t:12,
+            why:'O servidor DNS responde com o número: 203.0.113.10. Agora o cliente sabe para onde ligar.' }
+        ]
+      },
+      {
+        id: 'tcp', name: 'TCP', tag: 'Conexão confiável (aperto de mãos)',
+        text: 'O TCP garante que os dados chegam inteiros e na ordem certa. Antes de conversar, os dois lados fazem um "aperto de mãos" em 3 passos, como um telefonema: alô? / alô, pode falar? / posso!',
+        steps: [
+          { from:'client', to:'web', proto:'TCP', info:'52344 → 80 [SYN] Seq=0', size:'66 B', t:0,
+            why:'SYN = "Oi, quer conversar?" O cliente pede para abrir uma conexão com o servidor.' },
+          { from:'web', to:'client', proto:'TCP', info:'80 → 52344 [SYN, ACK] Seq=0 Ack=1', size:'66 B', t:17,
+            why:'SYN-ACK = "Quero! E você, está pronto?" O servidor aceita e também pede confirmação.' },
+          { from:'client', to:'web', proto:'TCP', info:'52344 → 80 [ACK] Seq=1 Ack=1', size:'60 B', t:34,
+            why:'ACK = "Estou!" Pronto: a conexão está aberta e os dados podem começar a fluir.' },
+          { from:'client', to:'web', proto:'TCP', info:'52344 → 80 [FIN, ACK]', size:'60 B', t:120,
+            why:'FIN = "Terminei de falar." O cliente avisa que quer encerrar a conversa, como dizer tchau.' },
+          { from:'web', to:'client', proto:'TCP', info:'80 → 52344 [FIN, ACK]', size:'60 B', t:138,
+            why:'O servidor também diz tchau. A conexão é fechada com educação dos dois lados.' }
+        ]
+      },
+      {
+        id: 'http', name: 'HTTP', tag: 'Transferência de hipertexto',
+        text: 'HTTP é o protocolo da web: o cliente pede um recurso (como uma página) e o servidor responde com um código de status, cabeçalhos e o conteúdo. É como pedir um prato no restaurante e receber o prato com a nota.',
+        steps: [
+          { from:'client', to:'dns', proto:'DNS', info:'Consulta A www.exemplo.com', size:'75 B', t:0,
+            why:'Antes de tudo, o navegador descobre o IP do site perguntando ao DNS.' },
+          { from:'dns', to:'client', proto:'DNS', info:'Resposta A 203.0.113.10', size:'91 B', t:12,
+            why:'O DNS devolve o endereço. Agora dá para ligar para o servidor.' },
+          { from:'client', to:'web', proto:'TCP', info:'52344 → 80 [SYN] Seq=0', size:'66 B', t:24,
+            why:'Começa o aperto de mãos TCP para abrir a conexão.' },
+          { from:'web', to:'client', proto:'TCP', info:'80 → 52344 [SYN, ACK]', size:'66 B', t:41,
+            why:'O servidor aceita a conexão.' },
+          { from:'client', to:'web', proto:'TCP', info:'52344 → 80 [ACK]', size:'60 B', t:58,
+            why:'A conexão está aberta.' },
+          { from:'client', to:'web', proto:'HTTP', info:'GET / HTTP/1.1', size:'484 B', t:58,
+            why:'O navegador faz o pedido: "Me dê a página inicial (GET /)". É o cliente fazendo o pedido ao garçom.' },
+          { from:'web', to:'client', proto:'RESP', info:'HTTP/1.1 200 OK (text/html)', size:'12.8 KB', t:76,
+            why:'O servidor responde "200 OK" (deu certo!) e envia o HTML da página. É o prato chegando à mesa.' }
+        ]
+      },
+      {
+        id: 'tls', name: 'TLS/SSL', tag: 'Segurança da camada de transporte',
+        text: 'O TLS põe a conversa dentro de um cofre. Os dois lados combinam uma chave secreta usando um aperto de mãos, e depois tudo é criptografado. É o cadeado do HTTPS.',
+        steps: [
+          { from:'client', to:'web', proto:'TLS', info:'ClientHello (versões, cifras)', size:'517 B', t:0,
+            why:'O cliente diz: "Sei falar nestes idiomas secretos (cifras). Qual você prefere?"' },
+          { from:'web', to:'client', proto:'TLS', info:'ServerHello + Certificado', size:'2.1 KB', t:20,
+            why:'O servidor escolhe uma cifra e mostra seu certificado, que é como mostrar um RG para provar quem ele é.' },
+          { from:'client', to:'web', proto:'TLS', info:'Troca de chaves + Finished', size:'126 B', t:42,
+            why:'O cliente confere o RG e os dois combinam a chave secreta, sem nunca enviá-la às claras.' },
+          { from:'web', to:'client', proto:'TLS', info:'Finished', size:'90 B', t:60,
+            why:'O servidor confirma. Daqui para frente tudo viaja embaralhado: quem espiar só vê lixo.' },
+          { from:'client', to:'web', proto:'TLS', info:'Application Data (criptografado)', size:'412 B', t:75,
+            why:'Os dados reais (como sua senha) já seguem protegidos dentro do cofre.' }
+        ]
+      },
+      {
+        id: 'dhcp', name: 'DHCP', tag: 'Configuração automática de rede',
+        text: 'O DHCP entrega um endereço IP para quem acabou de entrar na rede. É como a recepção de um hotel entregando o número do seu quarto. Tem 4 passos conhecidos como DORA.',
+        steps: [
+          { from:'client', to:'router', proto:'DHCP', info:'Discover (broadcast)', size:'342 B', t:0,
+            why:'D de Discover: o cliente grita para a rede: "Cheguei! Tem alguém que me dê um endereço?"' },
+          { from:'router', to:'client', proto:'DHCP', info:'Offer 192.168.1.10', size:'342 B', t:15,
+            why:'O de Offer: o servidor DHCP (o roteador) oferece: "Que tal o 192.168.1.10?"' },
+          { from:'client', to:'router', proto:'DHCP', info:'Request 192.168.1.10', size:'342 B', t:30,
+            why:'R de Request: o cliente responde: "Esse serve, eu quero!"' },
+          { from:'router', to:'client', proto:'DHCP', info:'ACK (lease 24h)', size:'342 B', t:45,
+            why:'A de Acknowledge: o servidor confirma e empresta o IP por 24 horas. Agora o cliente já pode navegar.' }
+        ]
+      }
+    ];
+
+    // ===== Estado =====
+    let cur = PROTOCOLS[0], idx = -1, timer = null, anim = null;
+    const $ = id => document.getElementById(id);
+
+    function color(p) { return COLOR[p] || '#0ea5e9'; }
+
+    function buildList() {
+      $('protos').innerHTML = PROTOCOLS.map(p =>
+        `<button class="proto-btn" data-id="${p.id}" onclick="selectProto('${p.id}')"><b>${p.name}</b><span>${p.tag}</span></button>`
+      ).join('');
+    }
+
+    function selectProto(id) {
+      stopPlay();
+      cur = PROTOCOLS.find(p => p.id === id);
+      document.querySelectorAll('.proto-btn').forEach(b => b.classList.toggle('active', b.dataset.id === id));
+      $('ov-name').textContent = cur.name;
+      $('ov-tag').textContent = cur.tag;
+      $('ov-text').textContent = cur.text;
+      $('rows').innerHTML = cur.steps.map((s, i) =>
+        `<tr class="row" id="r${i}" onclick="goTo(${i})">
+          <td><span class="num" style="background:${color(s.proto)}">${i + 1}</span></td>
+          <td>${(s.t / 1000).toFixed(3)}s</td><td>${IP[s.from]}</td><td>${IP[s.to]}</td>
+          <td>${s.proto === 'RESP' ? 'HTTP' : s.proto}</td><td>${s.info}</td><td>${s.size}</td></tr>`
+      ).join('');
+      resetAll();
+    }
+
+    // desenha o pacote percorrendo o caminho (passando pelo roteador quando preciso)
+    function path(a, b) {
+      const pts = [POS[a]];
+      if (a !== 'router' && b !== 'router') pts.push(POS.router);
+      pts.push(POS[b]);
+      return pts;
+    }
+
+    function movePacket(s, done) {
+      const pts = path(s.from, s.to), pk = $('packet');
+      pk.setAttribute('fill', color(s.proto));
+      const dur = parseFloat($('speed').value) * 1000;
+      const start = performance.now();
+      const segs = pts.slice(1).map((p, i) => [pts[i], p]);
+      cancelAnimationFrame(anim);
+      (function tick(now) {
+        const k = Math.max(0, Math.min((now - start) / dur, 1));
+        const f = k * segs.length, i = Math.min(Math.floor(f), segs.length - 1), r = f - i;
+        const [p, q] = segs[i];
+        pk.setAttribute('cx', p[0] + (q[0] - p[0]) * r);
+        pk.setAttribute('cy', p[1] + (q[1] - p[1]) * r);
+        if (k < 1) anim = requestAnimationFrame(tick);
+        else { pk.setAttribute('cx', -20); done && done(); }
+      })(start);
+    }
+
+    function show(i) {
+      idx = i;
+      const s = cur.steps[i];
+      cur.steps.forEach((_, j) => {
+        const r = $('r' + j);
+        r.classList.toggle('seen', j <= i);
+        r.classList.toggle('cur', j === i);
+      });
+      document.querySelectorAll('.node').forEach(n => n.classList.remove('on'));
+      $('n-' + s.from).classList.add('on'); $('n-' + s.to).classList.add('on');
+      $('explain').innerHTML = `<b>Passo ${i + 1} de ${cur.steps.length}:</b> ${s.why}`;
+      return s;
+    }
+
+    function stepOnce(cb) {
+      if (idx >= cur.steps.length - 1) { if (!cb) return; return cb(false); }
+      const s = show(idx + 1);
+      movePacket(s, () => cb && cb(true));
+    }
+    function goTo(i) { stopPlay(); movePacket(show(i)); }
+
+    function togglePlay() { timer ? stopPlay() : startPlay(); }
+    function startPlay() {
+      if (idx >= cur.steps.length - 1) resetAll();
+      $('play').textContent = '⏸ Pausar'; timer = true;
+      (function next() {
+        if (!timer) return;
+        stepOnce(ok => {
+          if (!ok) return stopPlay();
+          setTimeout(next, 500);
+        });
+      })();
+    }
+    function stopPlay() { timer = null; $('play').textContent = '▶ Reproduzir'; }
+
+    function resetAll() {
+      stopPlay(); cancelAnimationFrame(anim); idx = -1;
+      $('packet').setAttribute('cx', -20);
+      document.querySelectorAll('.row').forEach(r => r.classList.remove('seen', 'cur'));
+      document.querySelectorAll('.node').forEach(n => n.classList.remove('on'));
+      $('explain').innerHTML = 'Aperte <b>Reproduzir</b> ou <b>Passo</b> para começar.';
+    }
+
+    // ===== Tema =====
+    function toggleTheme() { setTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'); }
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      try { localStorage.setItem('theme', t); } catch (e) {}
+      const d = t === 'dark';
+      $('theme-icon').textContent = d ? '☀️' : '🌙';
+      $('theme-label').textContent = d ? 'Claro' : 'Escuro';
+    }
+    let saved = 'dark'; try { saved = localStorage.getItem('theme') || 'dark'; } catch (e) {}
+    setTheme(saved);
+
+    buildList();
+    selectProto('http');
+  </script>
+</body>
+</html>
