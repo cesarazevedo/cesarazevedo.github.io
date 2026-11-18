@@ -75,7 +75,9 @@
     .node .ico { font-size: 26px; }
     .node .lbl { font-size: 11px; font-weight: 700; }
     .node .ip { font-size: 10px; fill: var(--text-muted); }
-    #packet { transition: none; }
+    .zone { fill: none; stroke: var(--text-muted); stroke-width: 1.5; stroke-dasharray: 3 6; opacity: .6; }
+    .zlbl { fill: var(--text-muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; }
+    .link { stroke-linecap: round; }
 
     .ov h3 { font-size: 1.6rem; margin-bottom: 2px; }
     .ov .tag { color: var(--text-sub); margin-bottom: 10px; font-size: .9rem; }
@@ -130,16 +132,7 @@
       <div class="main">
         <div class="top">
           <div class="panel">
-            <svg id="map" viewBox="0 0 600 260">
-              <line class="link" x1="90" y1="130" x2="300" y2="130"/>
-              <line class="link" x1="300" y1="130" x2="510" y2="50"/>
-              <line class="link" x1="300" y1="130" x2="510" y2="210"/>
-              <g class="node" id="n-client"><rect x="40" y="95" width="100" height="70" rx="10"/><text class="ico" x="90" y="125">💻</text><text class="lbl" x="90" y="142">Cliente</text><text class="ip" x="90" y="156">192.168.1.10</text></g>
-              <g class="node" id="n-router"><rect x="250" y="95" width="100" height="70" rx="10"/><text class="ico" x="300" y="125">📡</text><text class="lbl" x="300" y="142">Roteador</text><text class="ip" x="300" y="156">192.168.1.1</text></g>
-              <g class="node" id="n-dns"><rect x="460" y="15" width="100" height="70" rx="10"/><text class="ico" x="510" y="45">📖</text><text class="lbl" x="510" y="62">Servidor DNS</text><text class="ip" x="510" y="76">8.8.8.8</text></g>
-              <g class="node" id="n-web"><rect x="460" y="175" width="100" height="70" rx="10"/><text class="ico" x="510" y="205">🖥️</text><text class="lbl" x="510" y="222">Servidor Web</text><text class="ip" x="510" y="236">203.0.113.10</text></g>
-              <circle id="packet" r="8" cx="-20" cy="-20" fill="#f59e0b"/>
-            </svg>
+            <svg id="map" viewBox="0 0 600 260"></svg>
             <div class="explain" id="explain">Aperte <b>Reproduzir</b> ou <b>Passo</b> para começar.</div>
           </div>
           <div class="panel ov">
@@ -172,16 +165,60 @@
   </div>
 
   <script>
-    // ===== Posições dos nós no mapa =====
-    const POS = { client: [90,130], router: [300,130], dns: [510,50], web: [510,210] };
-    const IP  = { client: '192.168.1.10', router: '192.168.1.1', dns: '8.8.8.8', web: '203.0.113.10' };
+    // ===== Cenários: cada protocolo escolhe o seu mapa =====
+    const N = {
+      client: { ico:'💻', lbl:'Cliente' },
+      router: { ico:'📡', lbl:'Roteador', ip:'192.168.1.1' },
+      dns:    { ico:'📖', lbl:'Servidor DNS', ip:'8.8.8.8' },
+      web:    { ico:'🖥️', lbl:'Servidor Web', ip:'203.0.113.10' },
+      switch: { ico:'🔀', lbl:'Switch' },
+      dhcp:   { ico:'🗂️', lbl:'Servidor DHCP', ip:'192.168.1.1' },
+      pc2:    { ico:'🖨️', lbl:'Outro PC', ip:'192.168.1.20' }
+    };
+    const SCENES = {
+      // Casa + internet
+      internet: {
+        zones: [ { x:10, y:20, w:300, h:220, label:'REDE LOCAL (casa)' }, { x:330, y:20, w:260, h:220, label:'INTERNET' } ],
+        nodes: { client:[80,130,'192.168.1.10'], router:[250,130], dns:[490,60], web:[490,200] },
+        links: [['client','router'], ['router','dns'], ['router','web']]
+      },
+      web: {
+        zones: [ { x:10, y:20, w:300, h:220, label:'REDE LOCAL (casa)' }, { x:330, y:20, w:260, h:220, label:'INTERNET' } ],
+        nodes: { client:[80,130,'192.168.1.10'], router:[250,130], web:[490,130] },
+        links: [['client','router'], ['router','web']]
+      },
+      dns: {
+        zones: [ { x:10, y:20, w:300, h:220, label:'REDE LOCAL (casa)' }, { x:330, y:20, w:260, h:220, label:'INTERNET' } ],
+        nodes: { client:[80,130,'192.168.1.10'], router:[250,130], dns:[490,130] },
+        links: [['client','router'], ['router','dns']]
+      },
+      // Tudo dentro da mesma rede
+      local: {
+        zones: [ { x:10, y:20, w:580, h:220, label:'REDE LOCAL 192.168.1.0/24' } ],
+        nodes: { client:[90,150,'sem IP ainda'], switch:[300,150], dhcp:[510,150], pc2:[300,60] },
+        links: [['client','switch'], ['switch','dhcp'], ['switch','pc2']]
+      }
+    };
+    let POS = {}, IP = {}, LINKS = [];
+
+    function renderScene(key) {
+      const sc = SCENES[key]; POS = {}; IP = {}; LINKS = sc.links;
+      let h = sc.zones.map(z => `<rect class="zone" x="${z.x}" y="${z.y}" width="${z.w}" height="${z.h}" rx="14"/><text class="zlbl" x="${z.x + 12}" y="${z.y + 18}">${z.label}</text>`).join('');
+      h += sc.links.map(([a, b]) => { const p = sc.nodes[a], q = sc.nodes[b]; return `<line class="link" x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}"/>`; }).join('');
+      for (const id in sc.nodes) {
+        const [x, y, ip] = sc.nodes[id], n = N[id], addr = ip || n.ip || '';
+        POS[id] = [x, y]; IP[id] = addr;
+        h += `<g class="node" id="n-${id}"><rect x="${x - 50}" y="${y - 35}" width="100" height="70" rx="10"/><text class="ico" x="${x}" y="${y - 5}">${n.ico}</text><text class="lbl" x="${x}" y="${y + 12}">${n.lbl}</text><text class="ip" x="${x}" y="${y + 26}">${addr}</text></g>`;
+      }
+      $('map').innerHTML = h + '<circle id="packet" r="8" cx="-20" cy="-20" fill="#f59e0b"/>';
+    }
     const COLOR = { DNS: '#3b82f6', TCP: '#10b981', HTTP: '#f59e0b', TLS: '#8b5cf6', DHCP: '#ec4899', RESP: '#8b5cf6' };
 
     // ===== Roteiros: cada protocolo é só uma lista de passos =====
     // Para criar um novo, copie um bloco e troque os textos.
     const PROTOCOLS = [
       {
-        id: 'dns', name: 'DNS', tag: 'Sistema de nomes de domínio',
+        id: 'dns', scene: 'dns', name: 'DNS', tag: 'Sistema de nomes de domínio',
         text: 'O DNS é a lista telefônica da internet. Você digita um nome (www.exemplo.com) e ele devolve o número (endereço IP) onde o site mora. Sem isso, teríamos que decorar números.',
         steps: [
           { from:'client', to:'dns', proto:'DNS', info:'Consulta A www.exemplo.com', size:'75 B', t:0,
@@ -191,7 +228,7 @@
         ]
       },
       {
-        id: 'tcp', name: 'TCP', tag: 'Conexão confiável (aperto de mãos)',
+        id: 'tcp', scene: 'web', name: 'TCP', tag: 'Conexão confiável (aperto de mãos)',
         text: 'O TCP garante que os dados chegam inteiros e na ordem certa. Antes de conversar, os dois lados fazem um "aperto de mãos" em 3 passos, como um telefonema: alô? / alô, pode falar? / posso!',
         steps: [
           { from:'client', to:'web', proto:'TCP', info:'52344 → 80 [SYN] Seq=0', size:'66 B', t:0,
@@ -207,7 +244,7 @@
         ]
       },
       {
-        id: 'http', name: 'HTTP', tag: 'Transferência de hipertexto',
+        id: 'http', scene: 'internet', name: 'HTTP', tag: 'Transferência de hipertexto',
         text: 'HTTP é o protocolo da web: o cliente pede um recurso (como uma página) e o servidor responde com um código de status, cabeçalhos e o conteúdo. É como pedir um prato no restaurante e receber o prato com a nota.',
         steps: [
           { from:'client', to:'dns', proto:'DNS', info:'Consulta A www.exemplo.com', size:'75 B', t:0,
@@ -227,7 +264,7 @@
         ]
       },
       {
-        id: 'tls', name: 'TLS/SSL', tag: 'Segurança da camada de transporte',
+        id: 'tls', scene: 'web', name: 'TLS/SSL', tag: 'Segurança da camada de transporte',
         text: 'O TLS põe a conversa dentro de um cofre. Os dois lados combinam uma chave secreta usando um aperto de mãos, e depois tudo é criptografado. É o cadeado do HTTPS.',
         steps: [
           { from:'client', to:'web', proto:'TLS', info:'ClientHello (versões, cifras)', size:'517 B', t:0,
@@ -243,17 +280,17 @@
         ]
       },
       {
-        id: 'dhcp', name: 'DHCP', tag: 'Configuração automática de rede',
-        text: 'O DHCP entrega um endereço IP para quem acabou de entrar na rede. É como a recepção de um hotel entregando o número do seu quarto. Tem 4 passos conhecidos como DORA.',
+        id: 'dhcp', scene: 'local', name: 'DHCP', tag: 'Configuração automática de rede',
+        text: 'O DHCP entrega um endereço IP para quem acabou de entrar na rede. É como a recepção de um hotel entregando o número do seu quarto. O servidor fica na MESMA rede do cliente (em casa, é o próprio roteador), então nada disso sai para a internet. São 4 passos, conhecidos como DORA.',
         steps: [
-          { from:'client', to:'router', proto:'DHCP', info:'Discover (broadcast)', size:'342 B', t:0,
-            why:'D de Discover: o cliente grita para a rede: "Cheguei! Tem alguém que me dê um endereço?"' },
-          { from:'router', to:'client', proto:'DHCP', info:'Offer 192.168.1.10', size:'342 B', t:15,
-            why:'O de Offer: o servidor DHCP (o roteador) oferece: "Que tal o 192.168.1.10?"' },
-          { from:'client', to:'router', proto:'DHCP', info:'Request 192.168.1.10', size:'342 B', t:30,
-            why:'R de Request: o cliente responde: "Esse serve, eu quero!"' },
-          { from:'router', to:'client', proto:'DHCP', info:'ACK (lease 24h)', size:'342 B', t:45,
-            why:'A de Acknowledge: o servidor confirma e empresta o IP por 24 horas. Agora o cliente já pode navegar.' }
+          { from:'client', to:'dhcp', src:'0.0.0.0', dst:'255.255.255.255', proto:'DHCP', info:'Discover (broadcast)', size:'342 B', t:0,
+            why:'D de Discover: o cliente ainda não tem IP (origem 0.0.0.0) e grita para TODOS da rede (255.255.255.255): "Cheguei! Alguém me dá um endereço?" O switch repassa o grito a todos os aparelhos.' },
+          { from:'dhcp', to:'client', src:'192.168.1.1', dst:'192.168.1.10', proto:'DHCP', info:'Offer 192.168.1.10', size:'342 B', t:15,
+            why:'O de Offer: o servidor DHCP responde: "Que tal o 192.168.1.10?" É a oferta do quarto de hotel.' },
+          { from:'client', to:'dhcp', src:'0.0.0.0', dst:'255.255.255.255', proto:'DHCP', info:'Request 192.168.1.10 (broadcast)', size:'342 B', t:30,
+            why:'R de Request: "Esse serve, eu quero!" Ainda é um grito para todos, para avisar que, se houver outros servidores DHCP, podem guardar as ofertas deles.' },
+          { from:'dhcp', to:'client', src:'192.168.1.1', dst:'192.168.1.10', proto:'DHCP', info:'ACK (lease 24h)', size:'342 B', t:45,
+            why:'A de Acknowledge: o servidor confirma e empresta o IP por 24 horas. Agora o cliente tem endereço e já pode navegar.' }
         ]
       }
     ];
@@ -273,6 +310,7 @@
     function selectProto(id) {
       stopPlay();
       cur = PROTOCOLS.find(p => p.id === id);
+      renderScene(cur.scene);
       document.querySelectorAll('.proto-btn').forEach(b => b.classList.toggle('active', b.dataset.id === id));
       $('ov-name').textContent = cur.name;
       $('ov-tag').textContent = cur.tag;
@@ -280,7 +318,7 @@
       $('rows').innerHTML = cur.steps.map((s, i) =>
         `<tr class="row" id="r${i}" onclick="goTo(${i})">
           <td><span class="num" style="background:${color(s.proto)}">${i + 1}</span></td>
-          <td>${(s.t / 1000).toFixed(3)}s</td><td>${IP[s.from]}</td><td>${IP[s.to]}</td>
+          <td>${(s.t / 1000).toFixed(3)}s</td><td>${s.src || IP[s.from]}</td><td>${s.dst || IP[s.to]}</td>
           <td>${s.proto === 'RESP' ? 'HTTP' : s.proto}</td><td>${s.info}</td><td>${s.size}</td></tr>`
       ).join('');
       resetAll();
@@ -288,10 +326,16 @@
 
     // desenha o pacote percorrendo o caminho (passando pelo roteador quando preciso)
     function path(a, b) {
-      const pts = [POS[a]];
-      if (a !== 'router' && b !== 'router') pts.push(POS.router);
-      pts.push(POS[b]);
-      return pts;
+      const prev = { [a]: null }, q = [a];
+      while (q.length) {
+        const x = q.shift();
+        for (const [u, v] of LINKS) {
+          const y = u === x ? v : v === x ? u : null;
+          if (y && !(y in prev)) { prev[y] = x; q.push(y); }
+        }
+      }
+      const ids = []; for (let n = b; n !== null && n !== undefined; n = prev[n]) ids.unshift(n);
+      return ids.map(i => POS[i]);
     }
 
     function movePacket(s, done) {
